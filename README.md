@@ -90,13 +90,44 @@ Every number on screen comes from a live source or a calculation from one, with 
 
 ## Screens
 
-| | |
-|---|---|
-| ![Landing hero](docs/screenshots/landing-hero.png) | ![Story: drought chapter](docs/screenshots/story-02.png) |
-| ![Story: top-down planting view](docs/screenshots/story-03.png) | ![Story: flood chapter](docs/screenshots/story-04.png) |
-| ![App summary](docs/screenshots/app-ringkasan.png) | ![Drought tab](docs/screenshots/app-kering.png) |
-| ![Flood tab](docs/screenshots/app-banjir.png) | ![Scenario simulator](docs/screenshots/app-simulator.png) |
-| ![Chatbot](docs/screenshots/app-chat.png) | ![Mobile app](docs/screenshots/mobile-app.png) |
+**Landing story.** Scrolling plays the diorama through each chapter.
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/story-02.png" alt="The problem: drought arrives before the news" /><br/><sub>The problem: drought arrives before the news</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/story-03.png" alt="How it works, in three steps" /><br/><sub>How it works, in three steps</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/story-04.png" alt="Four guards: drought, flood, pests, Si Padi" /><br/><sub>Four guards: drought, flood, pests, Si Padi</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/story-05.png" alt="Real data only, at dusk" /><br/><sub>Real data only, at dusk</sub></td>
+  </tr>
+</table>
+
+**Field workspace.** One field, read from satellite, weather and terrain.
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-ringkasan.png" alt="Summary with risk gauges" /><br/><sub>Summary with risk gauges</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-kering.png" alt="Drought outlook and actions" /><br/><sub>Drought outlook and actions</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-banjir.png" alt="Flood outlook" /><br/><sub>Flood outlook</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-hama.png" alt="Pest risk" /><br/><sub>Pest risk</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-simulator.png" alt="Scenario simulator" /><br/><sub>Scenario simulator</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-chat.png" alt="Si Padi chatbot" /><br/><sub>Si Padi chatbot</sub></td>
+  </tr>
+</table>
+
+**On a phone.**
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/mobile-landing.png" alt="Landing" width="260" /><br/><sub>Landing</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/mobile-app.png" alt="Field workspace" width="260" /><br/><sub>Field workspace</sub></td>
+  </tr>
+</table>
 
 A sample printed report: [docs/screenshots/laporan-contoh.pdf](docs/screenshots/laporan-contoh.pdf).
 
