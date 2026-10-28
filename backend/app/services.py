@@ -11,7 +11,7 @@ from shapely.geometry import shape
 
 from app.ai import vegetation
 from app.config import settings
-from app.engine import pest, recommend
+from app.engine import pest, recommend, verdict
 from app.engine.waterbalance import FieldParams, ensemble_run, initial_state, stage_for
 from app.ingest import sentinel2, terrain, weather
 from app.ingest.http import SourceUnavailable
@@ -367,7 +367,7 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
     for p_ in pests:
         p_["action"] = recommend.PEST_ACTIONS.get(p_["id"])
 
-    return {
+    result = {
         "status": "ok",
         "mode": "test" if hypothetical else "real",
         "hypothetical": hypothetical,
@@ -422,3 +422,5 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
             "en": "Scientific estimate, not an official warning. For decisions follow BMKG, your agricultural extension officer (PPL) and BPBD.",
         },
     }
+    result["verdict"] = verdict.build(result)
+    return result
