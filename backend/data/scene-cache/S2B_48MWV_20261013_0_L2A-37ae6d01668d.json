@@ -1,0 +1,1 @@
+{"scene_id": "S2B_48MWV_20261013_0_L2A", "datetime": "2026-10-13T03:29:25.880000Z", "cloud_cover_tile": 45.209554, "field": {"valid_fraction": 0.035, "usable": false}, "neighbours": {"valid_fraction": 0.462, "usable": true, "ndvi_mean": 0.2447, "ndvi_p10": 0.137, "ndvi_p90": 0.3832, "ndwi_mean": -0.1395, "water_fraction": 0.0, "pixels": 13552}}

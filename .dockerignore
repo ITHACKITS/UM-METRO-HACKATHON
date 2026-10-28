@@ -1,0 +1,11 @@
+**/node_modules
+frontend/dist
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+backend/.env
+backend/data/sensors
+docs/screenshots
+scratch-*.log
+.git
+.claude

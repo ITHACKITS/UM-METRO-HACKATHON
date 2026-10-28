@@ -1,0 +1,210 @@
+html,
+body {
+  background: #f4ead9;
+}
+
+:root {
+  /* Felt palette sampled from the mascot photographs. */
+  --paper: 37 52% 90%; /* #f4ead9 cream felt */
+  --paper-2: 36 46% 84%;
+  --ink: 150 18% 13%; /* #1b2a23 deep paddy ink */
+  --ink-2: 150 10% 32%;
+  --ink-3: 150 6% 46%;
+  --sage: 95 28% 50%; /* #7fa35b blades */
+  --leaf: 100 30% 32%;
+  --grain: 39 74% 56%; /* #e2a93b panicles */
+  --teal: 183 66% 32%; /* #1c868b scarf, the one accent */
+  --teal-ink: 183 70% 22%;
+  --button: 44 66% 86%; /* #f3e6c4 felt button */
+  --sky: 202 62% 84%;
+  --cloud-pink: 350 70% 88%;
+  --lavender: 250 45% 84%;
+  --drought: 28 80% 46%;
+  --flood: 205 70% 40%;
+  --ok: 110 34% 38%;
+
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-state: cubic-bezier(0.4, 0, 0.2, 1);
+  --r-card: 28px;
+  --r-pill: 999px;
+  --shadow-felt: 0 1px 2px hsl(var(--ink) / 0.08), 0 6px 18px hsl(var(--ink) / 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: hsl(var(--ink));
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: hsl(var(--teal) / 0.28);
+}
+
+:focus-visible {
+  outline: 3px solid hsl(var(--teal));
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The one surface material: pressed felt. A matte fill, a stitched inner edge, a soft lift. */
+.felt {
+  background: hsl(var(--paper) / 0.92);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-felt), inset 0 0 0 1px hsl(0 0% 100% / 0.5);
+  position: relative;
+  isolation: isolate;
+}
+.felt::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: calc(var(--r-card) - 7px);
+  border: 1.5px dashed hsl(var(--ink) / 0.13);
+  pointer-events: none;
+  z-index: -1;
+}
+.felt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("/textures/felt-fiber.svg");
+  background-size: 220px;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 12px 24px;
+  border-radius: var(--r-pill);
+  border: 0;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms var(--ease-state), background 180ms var(--ease-state), box-shadow 180ms var(--ease-state);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: hsl(var(--teal));
+  color: hsl(var(--paper));
+  box-shadow: 0 1px 2px hsl(var(--teal-ink) / 0.3), 0 8px 20px hsl(var(--teal) / 0.28), inset 0 2px 6px hsl(0 0% 100% / 0.18);
+}
+.btn-primary:hover {
+  background: hsl(var(--teal-ink));
+}
+.btn-primary .chip {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: hsl(var(--button));
+  color: hsl(var(--teal-ink));
+  transition: transform 220ms var(--ease-out);
+}
+.btn-primary:hover .chip {
+  transform: translateX(2px) rotate(-45deg);
+}
+.btn-ghost {
+  background: hsl(var(--paper) / 0.55);
+  color: hsl(var(--ink));
+  box-shadow: inset 0 0 0 1px hsl(var(--ink) / 0.14);
+  backdrop-filter: blur(8px);
+}
+.btn-ghost:hover {
+  background: hsl(var(--paper) / 0.85);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--ink) / 0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.serif-accent {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.07;
+  background-image: url("/textures/grain.svg");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

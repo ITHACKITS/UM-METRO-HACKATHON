@@ -1,0 +1,34 @@
+# Brand
+
+## Name
+
+**Jagapadi** = *jaga* (guard, look after) + *padi* (rice). Short, pronounceable in every Indonesian region, says what it does.
+
+| Candidate | Meaning | Why not chosen |
+|---|---|---|
+| Jagapadi | guard the rice | chosen |
+| Padiloka | rice world | close to "-loka" names already used by other hackathon projects |
+| Bulir | grain | hard to extend; common word |
+| Sawala | old Javanese for paddy field | unclear to many users |
+| Tirta Padi | rice water | long, sounds like a water utility |
+
+Collision check (web search, 2026-10-28): no agriculture product named Jagapadi found. Domain and social-handle availability were not verified by the agent; check before registering.
+
+Sub-brands: Jagapadi Kering (drought), Jagapadi Banjir (flood), Jagapadi Hama (pest), Tanya Padi (chat), Laporan Jagapadi (report).
+
+## Logo
+
+A teal water drop holding a cream rice stem with a drooping golden panicle and a felt scarf band. Files in `frontend/public/logo/`:
+
+- `jagapadi-lockup.svg` primary (mark + wordmark)
+- `jagapadi-icon.svg` icon, also `favicon.svg`
+- `jagapadi-icon-mono-dark.svg`, `jagapadi-icon-mono-light.svg`
+- `jagapadi-icon-512.png`, `-192.png`, `apple-touch-icon.png`, `favicon.ico`, `og-image.png`
+
+Legible at 16 px: the drop silhouette and gold panicle survive at favicon size.
+
+## Mascot: Si Padi
+
+Converted from the team's photographs with `scripts/mascot_to_png.py`: the backdrop is fitted as a smooth colour field, alpha comes from Lab chroma distance (shadow excluded), small enclosed holes (eyes, buttons) are filled only if they differ from the backdrop colour, and edge colours are decontaminated. Checked at 400% on dark and light backgrounds. Remaining artefact: a faint peach tint in the narrowest gaps between blades.
+
+Outputs in `frontend/public/mascot/`: `mascot-waving` and `mascot-laptop` at 64-1024 px, `@2x` up to 512, and square avatars (64/128/256). The waving source photo is smaller, so its 1024 px export is upscaled.

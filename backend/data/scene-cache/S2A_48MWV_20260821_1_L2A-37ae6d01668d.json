@@ -1,0 +1,1 @@
+{"scene_id": "S2A_48MWV_20260821_1_L2A", "datetime": "2026-08-21T03:29:41.560000Z", "cloud_cover_tile": 51.062316, "field": {"valid_fraction": 0.784, "usable": true, "ndvi_mean": 0.3881, "ndvi_p10": 0.1695, "ndvi_p90": 0.6427, "ndwi_mean": -0.0133, "water_fraction": 0.0004, "pixels": 2388}, "neighbours": {"valid_fraction": 0.334, "usable": false}}

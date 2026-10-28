@@ -1,0 +1,27 @@
+# secrets
+backend/.env
+.env
+backend/config/sensor_tokens.json
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# node
+node_modules/
+frontend/dist/
+
+# runtime data (recorded replay responses and scene stats ARE committed for the offline demo)
+backend/data/sensors/
+backend/data/osm-cache/
+
+# local scratch
+scratch-*.log
+*.log
+
+# local agent tooling and ad-hoc screenshots
+.claude/
+/image*.png

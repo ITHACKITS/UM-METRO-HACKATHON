@@ -1,0 +1,10 @@
+services:
+  jagapadi:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: backend/.env
+        required: false
+    environment:
+      JAGAPADI_CORS: http://localhost:8000

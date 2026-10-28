@@ -1,0 +1,17 @@
+{
+  "name": "jagapadi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Rice field drought, flood and pest monitoring from real satellite and weather data.",
+  "scripts": {
+    "setup": "pip install -r backend/requirements-dev.txt && npm --prefix frontend install",
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "cd backend && python -m uvicorn app.main:app --reload --port 8000",
+    "dev:web": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "test": "cd backend && python -m pytest -q && ruff check app tests",
+    "qa": "python scripts/qa.py http://localhost:5173 docs/screenshots/qa"
+  },
+  "license": "MIT"
+}

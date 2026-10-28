@@ -1,0 +1,121 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-word {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: hsl(var(--ink));
+  transform: translateY(1px);
+}
+
+.boot,
+.notfound {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px 16px;
+}
+.notfound h1 {
+  margin: 8px 0 0;
+  font-weight: 500;
+  font-size: clamp(30px, 5vw, 52px);
+  letter-spacing: -0.03em;
+}
+.notfound p {
+  margin: 0 0 12px;
+  color: hsl(var(--ink) / 0.7);
+}
+
+
+.credits {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 64px 20px;
+}
+.credits h1 {
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.credits li {
+  margin-bottom: 8px;
+}
+
+/* Language switch: shared by the landing page and the app. */
+.lang-toggle {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: hsl(var(--paper) / 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-felt);
+}
+.lang-toggle button {
+  min-width: 40px;
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  color: hsl(var(--ink) / 0.6);
+}
+.lang-toggle button[aria-pressed="true"] {
+  background: hsl(var(--ink));
+  color: hsl(var(--paper));
+}
+
+/* Paddy loader, shared by the boot screen, the landing and the app. */
+.paddy-loader .soil {
+  fill: hsl(32 30% 62%);
+}
+.paddy-loader .water {
+  fill: hsl(192 50% 62%);
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 500ms var(--ease-out) var(--d);
+}
+.paddy-loader .sprout {
+  stroke: hsl(100 45% 38%);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  fill: none;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 600ms var(--ease-out) calc(var(--d) + 380ms);
+}
+.paddy-loader .plot.on .water {
+  transform: scaleY(1);
+}
+.paddy-loader .plot.on .sprout {
+  stroke-dashoffset: 0;
+}
+/* Looping mode: plots flood and sprout in a wave, then drain, forever. */
+.paddy-loader.looping .water {
+  transition: none;
+  animation: paddy-flood 2.8s var(--ease-out) var(--d) infinite;
+}
+.paddy-loader.looping .sprout {
+  transition: none;
+  animation: paddy-sprout 2.8s var(--ease-out) var(--d) infinite;
+}
+@keyframes paddy-flood {
+  0% { transform: scaleY(0); }
+  30%, 75% { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}
+@keyframes paddy-sprout {
+  0%, 20% { stroke-dashoffset: 24; }
+  45%, 75% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 24; }
+}

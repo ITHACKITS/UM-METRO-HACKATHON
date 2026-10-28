@@ -1,0 +1,298 @@
+/* A4 field report. Hidden on screen; the only thing printed from the app. */
+.print-report {
+  display: none;
+}
+
+@page {
+  size: A4;
+  margin: 14mm 14mm 16mm;
+  @bottom-right {
+    content: "Jagapadi · " counter(page) " / " counter(pages);
+    font: 8pt "Manrope", sans-serif;
+    color: #6b6b6b;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  .ws {
+    display: block !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+  .ws > *:not(.print-report),
+  .grain {
+    display: none !important;
+  }
+  .print-report {
+    display: block !important;
+    width: 100%;
+    color: #1b2a23;
+    font: 9.5pt/1.45 "Manrope", system-ui, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-report h2 {
+    margin: 12pt 0 5pt;
+    font-size: 11pt;
+    letter-spacing: -0.01em;
+    break-after: avoid;
+  }
+  .print-report section {
+    break-inside: avoid;
+  }
+  .print-report .pr-break {
+    break-before: page;
+  }
+  .pr-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 8pt;
+    border-bottom: 2pt solid #1c868b;
+  }
+  .pr-brand {
+    display: flex;
+    gap: 8pt;
+    align-items: center;
+  }
+  .pr-word {
+    margin: 0;
+    font: italic 20pt "Instrument Serif", Georgia, serif;
+    line-height: 1;
+  }
+  .pr-sub {
+    margin: 2pt 0 0;
+    font-size: 8pt;
+    color: #5d6b63;
+  }
+  .pr-title {
+    text-align: right;
+  }
+  .pr-title h1 {
+    margin: 0;
+    font-size: 18pt;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .pr-title p {
+    margin: 2pt 0 0;
+    font-size: 8pt;
+    color: #5d6b63;
+  }
+  .pr-stamp {
+    margin: 8pt 0 0;
+    padding: 5pt 8pt;
+    border: 1.5pt solid #b3261e;
+    color: #b3261e;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+  .pr-meta dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6pt 14pt;
+    margin: 10pt 0 0;
+  }
+  .pr-meta dt {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b7a71;
+  }
+  .pr-meta dd {
+    margin: 1pt 0 0;
+    font-weight: 600;
+  }
+  .pr-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10pt;
+    margin-top: 10pt;
+  }
+  .pr-kpi {
+    padding: 8pt 10pt;
+    border-radius: 6pt;
+    border-left: 5pt solid #7b8a80;
+    background: #f5f1e8;
+  }
+  .pr-kpi.lv-high {
+    border-left-color: #c4571e;
+  }
+  .pr-kpi.lv-medium {
+    border-left-color: #d9a12e;
+  }
+  .pr-kpi.lv-low {
+    border-left-color: #4f8a3a;
+  }
+  .pr-kpi .k {
+    margin: 0;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #5d6b63;
+  }
+  .pr-kpi .v {
+    margin: 2pt 0;
+    font-size: 17pt;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .pr-kpi .v span {
+    font-size: 11pt;
+    color: #5d6b63;
+  }
+  .pr-kpi .d {
+    margin: 0;
+    font-size: 8.5pt;
+  }
+  .pr-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 12pt;
+    margin-top: 10pt;
+  }
+  .pr-map {
+    margin: 0;
+  }
+  .pr-map figcaption {
+    font-size: 8pt;
+    font-weight: 700;
+    margin-bottom: 4pt;
+  }
+  .pr-map img {
+    width: 100%;
+    border-radius: 6pt;
+    border: 0.75pt solid #d8d2c4;
+  }
+  .pr-why ul {
+    margin: 0;
+    padding-left: 12pt;
+  }
+  .pr-why li {
+    margin-bottom: 3pt;
+  }
+  .pr-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8pt;
+    margin-top: 10pt;
+  }
+  .pr-charts .chart {
+    background: #fff;
+    border: 0.75pt solid #e2ddd1;
+    border-radius: 6pt;
+    padding: 4pt;
+  }
+  .pr-charts .chart figcaption {
+    font-size: 7.5pt;
+  }
+  .print-report table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.8pt;
+  }
+  .print-report th {
+    text-align: left;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #5d6b63;
+    border-bottom: 1pt solid #1b2a23;
+    padding: 3pt 5pt;
+  }
+  .print-report td {
+    padding: 5pt;
+    border-bottom: 0.5pt solid #e2ddd1;
+    vertical-align: top;
+  }
+  .print-report tr {
+    break-inside: avoid;
+  }
+  .print-report td.c {
+    width: 52pt;
+    text-align: center;
+  }
+  .print-report td.c small {
+    display: block;
+    font-size: 6.8pt;
+    color: #6b7a71;
+    margin-top: 2pt;
+  }
+  .print-report td.num {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .print-report td.muted,
+  .pr-muted {
+    color: #5d6b63;
+    font-size: 8.3pt;
+  }
+  .pr-feas {
+    display: inline-grid;
+    place-items: center;
+    width: 16pt;
+    height: 16pt;
+    border-radius: 50%;
+    font-weight: 700;
+    background: #e3efdb;
+    color: #3d6e2c;
+  }
+  .pr-feas.f2 {
+    background: #f6e8c6;
+    color: #7a5512;
+  }
+  .pr-feas.f3 {
+    background: #e7e5df;
+    color: #4a4a4a;
+  }
+  .pr-pill {
+    padding: 1pt 6pt;
+    border-radius: 99pt;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #fff;
+    background: #7b8a80;
+    text-transform: capitalize;
+  }
+  .pr-pill.lv-high {
+    background: #c4571e;
+  }
+  .pr-pill.lv-medium {
+    background: #c99a2e;
+  }
+  .pr-pill.lv-low {
+    background: #4f8a3a;
+  }
+  .pr-sources td {
+    font-size: 8pt;
+  }
+  .pr-foot {
+    margin-top: 14pt;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16pt;
+    align-items: end;
+    break-inside: avoid;
+  }
+  .pr-disclaimer {
+    margin: 0;
+    padding: 7pt 9pt;
+    border-radius: 6pt;
+    background: #f6ecd2;
+    font-size: 8.3pt;
+  }
+  .pr-sign {
+    display: grid;
+    gap: 22pt;
+    font-size: 8pt;
+    color: #5d6b63;
+  }
+  .pr-sign .line {
+    border-bottom: 0.75pt solid #1b2a23;
+  }
+}
