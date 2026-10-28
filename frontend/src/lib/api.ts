@@ -140,15 +140,19 @@ export type AnalyzeOptions = {
   scenario?: Scenario | null;
 };
 
-async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  const r = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal,
-  });
+// Thrown when the backend cannot be reached (network failure, or the dev proxy's bare 5xx).
+export const API_DOWN = "api-down";
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let r: Response;
+  try {
+    r = await fetch(path, init);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") throw e;
+    throw new Error(API_DOWN);
+  }
   if (!r.ok) {
-    let detail = `${r.status}`;
+    let detail = r.status >= 500 ? API_DOWN : `${r.status}`;
     try {
       detail = (await r.json()).detail ?? detail;
     } catch {
@@ -159,8 +163,11 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return r.json() as Promise<T>;
 }
 
+const post = <T,>(path: string, body: unknown, signal?: AbortSignal) =>
+  request<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
+
 export const api = {
-  demoField: async () => (await fetch("/api/demo-field")).json() as Promise<{ name: string; geometry: Polygon; source: string }>,
+  demoField: () => request<{ name: string; geometry: Polygon; source: string }>("/api/demo-field"),
   validate: (geometry: Polygon) =>
     post<{ valid: boolean; reason?: string; area_ha?: number; lat?: number; lon?: number }>("/api/validate-field", { geometry }),
   analyze: (geometry: Polygon, opts: AnalyzeOptions = {}, signal?: AbortSignal) =>

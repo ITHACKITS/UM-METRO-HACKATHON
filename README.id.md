@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="frontend/public/logo/jagapadi-lockup.svg" alt="Jagapadi" width="300" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo/jagapadi-lockup-dark.svg" />
+    <img src="frontend/public/logo/jagapadi-lockup.svg" alt="Jagapadi" width="300" />
+  </picture>
 </p>
 
 <p align="center"><b>Jaga sawah sebelum kering atau banjir.</b><br/>

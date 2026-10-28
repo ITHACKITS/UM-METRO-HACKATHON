@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, tr, type Txt, type Analysis, type Polygon, type Rec, type Risk, type Scenario, type WaterFeature } from "../lib/api";
+import { api, API_DOWN, tr, type Txt, type Analysis, type Polygon, type Rec, type Risk, type Scenario, type WaterFeature } from "../lib/api";
 import { LangToggle, useLang } from "../lib/i18n";
 import { Logo } from "../components/Logo";
 import { FanChart, ProbBars, SeriesChart } from "../components/Charts";
@@ -27,6 +27,7 @@ const L = {
     finish: "Selesai",
     cancel: "Batal",
     demo: "Pakai lahan contoh",
+    apiDown: "Server Jagapadi tidak menjawab. Jalankan `npm run dev` (API di port 8000), lalu coba lagi.",
     analyzing: "Membaca data lahan…",
     steps: ["Mencari citra Sentinel-2 bebas awan", "Mengambil 51 skenario hujan ECMWF", "Membaca debit sungai dan ketinggian lahan", "Menjalankan neraca air harian"],
     firstRun: "Analisis pertama butuh sekitar satu menit karena citra satelit dibaca langsung. Berikutnya lebih cepat.",
@@ -126,6 +127,7 @@ const L = {
     finish: "Done",
     cancel: "Cancel",
     demo: "Use the sample field",
+    apiDown: "The Jagapadi server is not responding. Run `npm run dev` (API on port 8000), then try again.",
     analyzing: "Reading field data…",
     steps: ["Finding cloud-free Sentinel-2 scenes", "Fetching 51 ECMWF rain scenarios", "Reading river flow and terrain", "Running the daily water balance"],
     firstRun: "The first analysis takes about a minute because satellite scenes are read live. It is faster after that.",
@@ -260,14 +262,26 @@ export default function Workspace() {
       setDay(0);
       if (a.water_sources?.length) setRouteTo(a.water_sources[0]);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setError((e as Error).message);
+      if ((e as Error).name !== "AbortError") showError(e);
     } finally {
       setLoading(false);
     }
   };
 
+  const showError = (e: unknown) => {
+    const m = (e as Error).message;
+    setError(m === API_DOWN ? s.apiDown : m);
+  };
+
   const useDemo = async () => {
-    const d = await api.demoField();
+    setError(null);
+    let d;
+    try {
+      d = await api.demoField();
+    } catch (e) {
+      showError(e);
+      return;
+    }
     setField(d.geometry);
     setFieldName(d.name.split(" (")[0]);
     setDraft([]);
@@ -292,7 +306,7 @@ export default function Workspace() {
       setDraft([]);
       run(geom, { dat });
     } catch (e) {
-      setError((e as Error).message);
+      showError(e);
     }
   };
 
