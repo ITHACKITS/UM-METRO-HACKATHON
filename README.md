@@ -8,7 +8,7 @@
 <p align="center"><b>Guard the rice before drought or flood.</b><br/>
 Satellite, weather and terrain data turned into a two-week outlook and a plan for one rice field.</p>
 
-<p align="center">Built for <b>[HACKATHON NAME]</b> · Metro, Lampung, Indonesia</p>
+<p align="center">Built for <b>UM Metro Hackathon 2026</b> · Metro, Lampung, Indonesia</p>
 
 <p align="center">
   <img alt="frontend" src="https://img.shields.io/badge/frontend-React%2018%20%2B%20Three.js-1c868b" />

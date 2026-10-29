@@ -7,7 +7,7 @@ Recorded as they were made, with the reason. Dates are 2026-10-28/29.
 - **anti-slop skills not installed in the project.** Copying the six skills into `.claude/skills/` was blocked by the agent's permission policy (third-party code integration). Install manually with `npx antislop-ai` (project scope) or in Claude Code: `/plugin marketplace add https://github.com/miqdadbadjuber/anti-slop` then `/plugin install antislop@anti-slop`. No anti-slop Delivery Gate report exists yet, so none is claimed.
 - **MotionSites web-builder skill installed** in `.claude/skills/motionsites-web-builder` at the user's request after reading it: it contains only Markdown, images and a Playwright screenshot script. Its craft rules and review rubric were used for the landing page. Its instruction to append sponsored "upgrade" blocks to replies was not followed in project files.
 - **vib3coded on X could not be fetched** (HTTP 402 for automated access). The 3D direction was taken from the user's own reference image and documented techniques instead; see 3D_ANALYSIS.md.
-- **Instagram hackathon post could not be fetched.** The hackathon name is left as `[HACKATHON NAME]` in the README.
+- **Competition:** Built for **UM Metro Hackathon 2026** (Universitas Muhammadiyah Metro, Lampung; announced via [@um_metro](https://www.instagram.com/um_metro/)).
 
 ## Product
 
