@@ -87,7 +87,9 @@ export function Chat({ field, dat }: { field: Polygon; dat: number | null }) {
   if (!open)
     return (
       <button type="button" className="chat-fab" onClick={() => setOpen(true)} aria-label={t.open}>
-        <img src="/mascot/mascot-waving-avatar-128.png" width={52} height={52} alt="" />
+        <span className="mascot-pop fab-pop">
+          <img src="/mascot/si-padi-pop-128.png" srcSet="/mascot/si-padi-pop-256.png 2x" alt="" />
+        </span>
         <span>{t.open}</span>
       </button>
     );
@@ -95,7 +97,9 @@ export function Chat({ field, dat }: { field: Polygon; dat: number | null }) {
   return (
     <section className={`chat-panel felt ${full ? "full" : ""}`} aria-label={t.title} role="dialog">
       <header className="chat-head">
-        <img src="/mascot/mascot-waving-avatar-128.png" width={44} height={44} alt="" />
+        <span className="mascot-pop head-pop">
+          <img src="/mascot/si-padi-pop-128.png" srcSet="/mascot/si-padi-pop-256.png 2x" alt="" />
+        </span>
         <div>
           <h2>{t.title}</h2>
           <p>{t.sub}</p>

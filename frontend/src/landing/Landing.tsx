@@ -367,7 +367,16 @@ export default function Landing() {
         </section>
 
         <section id="cara-kerja" className="chap right" data-chapter="2" aria-labelledby="how-title">
-          <div className="felt chap-card" data-reveal="0">
+          <div className="felt chap-card has-mascot" data-reveal="0">
+            <img
+              className="how-mascot"
+              src="/mascot/mascot-laptop-256.png"
+              srcSet="/mascot/mascot-laptop-512.png 2x"
+              width={256}
+              height={256}
+              loading="lazy"
+              alt=""
+            />
             <p className="eyebrow">03 · {t("how_eyebrow")}</p>
             <h2 id="how-title" className="chapter-title">
               {t("how_title_a")} <em className="serif-accent muted">{t("how_title_b")}</em>

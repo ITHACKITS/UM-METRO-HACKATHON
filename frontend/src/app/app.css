@@ -388,7 +388,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   flex: 1 1 0;
   min-width: 0;
   min-height: 40px;
@@ -400,6 +400,9 @@
   font-size: 11.5px;
   cursor: pointer;
   color: hsl(var(--ink) / 0.65);
+}
+.tabs button svg {
+  flex: none;
 }
 .tabs button[aria-selected="true"] {
   background: hsl(var(--paper));
@@ -799,9 +802,49 @@
   cursor: pointer;
   box-shadow: 0 10px 28px hsl(var(--teal) / 0.35);
 }
-.chat-fab img {
+/* Mascot rising out of a felt disc: the lower half is clipped to the circle,
+   grains and leaves above it stay free. --d is the disc diameter. */
+.mascot-pop {
+  --d: 56px;
+  position: relative;
+  flex: none;
+  width: var(--d);
+  height: var(--d);
+}
+.mascot-pop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  background: hsl(var(--button));
+  background: radial-gradient(circle at 50% 35%, hsl(var(--paper)), hsl(var(--button)));
+  box-shadow: inset 0 -3px 6px hsl(30 30% 30% / 0.18);
+}
+.mascot-pop img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: calc(var(--d) * 1.75);
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 4px 5px hsl(30 30% 20% / 0.3));
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--d) / 2) no-repeat,
+    radial-gradient(circle calc(var(--d) / 2) at 50% calc(100% - var(--d) / 2), #000 98%, transparent 100%);
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--d) / 2) no-repeat,
+    radial-gradient(circle calc(var(--d) / 2) at 50% calc(100% - var(--d) / 2), #000 98%, transparent 100%);
+  transition: transform 0.25s ease;
+}
+.chat-fab:hover .mascot-pop img {
+  transform: translateX(-50%) translateY(-3px) rotate(-2deg);
+}
+.head-pop {
+  --d: 44px;
+  margin: 36px 16px 0 14px;
+}
+.fab-pop {
+  margin-right: 14px;
 }
 .chat-panel {
   position: fixed;
@@ -825,10 +868,6 @@
   gap: 10px;
   padding: 14px 14px 10px;
   border-bottom: 1px dashed hsl(var(--ink) / 0.15);
-}
-.chat-head img {
-  border-radius: 50%;
-  background: hsl(var(--button));
 }
 .chat-head h2 {
   margin: 0;

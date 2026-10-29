@@ -308,7 +308,7 @@ The end-to-end suite drives every feature in Chrome: landing story and dock, far
 ├── frontend/
 │   ├── public/{mascot,logo,textures}
 │   └── src/{landing,app,components,lib,styles}
-├── scripts/                     dev runner, QA, screenshots, mascot cut-out, ESP32 firmware
+├── scripts/                     dev runner, QA, screenshots, logo set (brand_assets.py), mascot cut-out, ESP32 firmware
 └── docs/                        decisions, brand, analyses, verification, pitch, demo script, screenshots
 ```
 

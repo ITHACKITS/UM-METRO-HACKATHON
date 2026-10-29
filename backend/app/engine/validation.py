@@ -65,7 +65,7 @@ def backtest(lat: float, lon: float) -> dict:
         "drought_event_skill": _event_skill(lat, lon),
         "flood_event_skill": {
             "status": "not_testable",
-            "reason": "no field-level inundation record; Sentinel-1 flood maps not yet integrated",
+            "reason": "no field-level inundation record to score against; Sentinel-1 radar is used as a live signal only",
         },
         "source": wx["source"],
         "captured_at": wx["captured_at"],

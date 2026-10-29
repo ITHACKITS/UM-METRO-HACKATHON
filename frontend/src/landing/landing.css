@@ -115,6 +115,26 @@
   align-items: flex-start;
   padding-top: clamp(104px, 18vh, 170px);
 }
+/* Si Padi at work, sitting half off the bottom-left corner of the "how it works" card. */
+.has-mascot {
+  position: relative;
+}
+.how-mascot {
+  position: absolute;
+  right: calc(100% - 64px);
+  bottom: -28px;
+  width: clamp(150px, 13vw, 200px);
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 12px hsl(30 30% 25% / 0.22)) drop-shadow(0 3px 3px hsl(30 30% 25% / 0.18));
+  animation: how-mascot-bob 4.8s ease-in-out infinite;
+}
+@keyframes how-mascot-bob {
+  50% {
+    translate: 0 -6px;
+    rotate: -1deg;
+  }
+}
 .chap-card {
   width: min(540px, 100%);
   padding: clamp(24px, 3vw, 40px);
@@ -697,6 +717,11 @@ main {
   }
   .hero-copy {
     transform: none;
+  }
+  .how-mascot {
+    right: 4px;
+    bottom: calc(100% - 26px);
+    width: 112px;
   }
   .hero-sub {
     font-size: 14.5px;

@@ -1,18 +1,6 @@
+// Mark drawn by scripts/brand_assets.py; rebuild the logo set there, not here.
 export function LogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 3C32 3 9 28 9 41a23 23 0 0 0 46 0C55 28 32 3 32 3Z" fill="#1c868b" />
-      <path d="M31 57V31c0-6 4-10 9-12" fill="none" stroke="#f3e6c4" strokeWidth="3.6" strokeLinecap="round" />
-      <g fill="#e2a93b">
-        <ellipse cx="41" cy="18.5" rx="3.6" ry="2.6" transform="rotate(-20 41 18.5)" />
-        <ellipse cx="45.5" cy="21" rx="3.4" ry="2.5" transform="rotate(30 45.5 21)" />
-        <ellipse cx="47.5" cy="26.5" rx="3.2" ry="2.4" transform="rotate(70 47.5 26.5)" />
-        <ellipse cx="47" cy="32.5" rx="3" ry="2.2" transform="rotate(95 47 32.5)" />
-      </g>
-      <rect x="21" y="40" width="20" height="5.5" rx="2.75" fill="#f3e6c4" />
-      <circle cx="35.5" cy="42.75" r="1.5" fill="#1c868b" />
-    </svg>
-  );
+  return <img src="/logo/jagapadi-icon.svg" width={size} height={size} alt="" aria-hidden="true" />;
 }
 
 export function Logo({ size = 30 }: { size?: number }) {

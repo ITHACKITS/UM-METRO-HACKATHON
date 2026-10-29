@@ -27,3 +27,5 @@ scratch-*.log
 # local agent tooling and ad-hoc screenshots
 .claude/
 /image*.png
+Gemini_Generated_Image*.jpg
+

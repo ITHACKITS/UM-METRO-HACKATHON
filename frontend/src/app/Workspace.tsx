@@ -727,49 +727,58 @@ function FieldHeader({ a, s, name }: { a: Analysis; s: S; name: string }) {
 }
 
 function TabIcon({ tab }: { tab: Tab }) {
-  const p = { width: 15, height: 15, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  const p = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
   switch (tab) {
     case "summary":
       return (
         <svg {...p}>
-          <rect x="2" y="2" width="5" height="5" rx="1.2" />
-          <rect x="9" y="2" width="5" height="5" rx="1.2" />
-          <rect x="2" y="9" width="5" height="5" rx="1.2" />
-          <rect x="9" y="9" width="5" height="5" rx="1.2" />
+          <path d="M3.5 17.5a8.5 8.5 0 1 1 17 0" />
+          <path d="M12 17.5 16 12" />
+          <circle cx="12" cy="17.5" r="1.3" />
+          <path d="M3 21h18" />
         </svg>
       );
     case "drought":
       return (
         <svg {...p}>
-          <circle cx="8" cy="6" r="3" />
-          <path d="M2 13h12M4 10.5l1 1M12 10.5l-1 1M8 1v1" />
+          <circle cx="12" cy="9" r="3.5" />
+          <path d="M12 2.5V4M5.5 9H4M20 9h-1.5M7.4 4.4l1 1M16.6 4.4l-1 1" />
+          <path d="M3 20h6l1.5-2.5 2 2.5 1.5-2 1.5 2H21" />
         </svg>
       );
     case "flood":
       return (
         <svg {...p}>
-          <path d="M8 1.5S4 6 4 8.5a4 4 0 0 0 8 0C12 6 8 1.5 8 1.5Z" />
-          <path d="M1.5 14.5c1.5-1 2.5 1 4 0s2.5 1 4 0 2.5 1 5 0" />
+          <path d="M12 3v7.5M8.5 6.5 12 3l3.5 3.5" />
+          <path d="M3 15c1.5-1.2 3-1.2 4.5 0s3 1.2 4.5 0 3-1.2 4.5 0 3 1.2 4.5 0" />
+          <path d="M3 19.5c1.5-1.2 3-1.2 4.5 0s3 1.2 4.5 0 3-1.2 4.5 0 3 1.2 4.5 0" />
         </svg>
       );
     case "pest":
       return (
         <svg {...p}>
-          <ellipse cx="8" cy="9" rx="3" ry="4.5" />
-          <path d="M5 6 2.5 4.5M11 6l2.5-1.5M5 10H2M11 10h3M6.5 4.5 6 2M9.5 4.5 10 2" />
+          <path d="M8 11a4 4 0 0 1 8 0v4a4 4 0 0 1-8 0Z" />
+          <path d="M9.5 8.2a2.5 2.5 0 0 1 5 0" />
+          <path d="M10.3 6.2 8.8 3.5M13.7 6.2l1.5-2.7M12 11.5V19" />
+          <path d="M8 12.5H4.5M16 12.5h3.5M8.3 16.5 5 18M15.7 16.5 19 18M8.6 9.4 6 8M15.4 9.4 18 8" />
         </svg>
       );
     case "water":
       return (
         <svg {...p}>
-          <path d="M1.5 5c2-1.5 3 1.5 5 0s3 1.5 5 0 2 1 3 0M1.5 10c2-1.5 3 1.5 5 0s3 1.5 5 0 2 1 3 0" />
+          <path d="M12 3s-6 6.6-6 11.2a6 6 0 0 0 12 0C18 9.6 12 3 12 3Z" />
+          <path d="M9.4 14.6a2.6 2.6 0 0 0 2.6 2.6" />
         </svg>
       );
     default:
       return (
         <svg {...p}>
-          <ellipse cx="8" cy="3.5" rx="5.5" ry="2" />
-          <path d="M2.5 3.5v9c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2v-9M2.5 8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2" />
+          <rect x="9.5" y="10" width="5" height="5" rx="1" />
+          <rect x="2.5" y="10.5" width="4.5" height="4" rx=".6" />
+          <rect x="17" y="10.5" width="4.5" height="4" rx=".6" />
+          <path d="M7 12.5h2.5M14.5 12.5H17M12 10V7.5" />
+          <path d="M9 5.2a4.2 4.2 0 0 1 6 0" />
+          <path d="M12 15v3M9.5 20.5h5" />
         </svg>
       );
   }
