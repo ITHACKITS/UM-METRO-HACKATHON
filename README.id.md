@@ -10,7 +10,7 @@ Citra satelit, cuaca dan ketinggian lahan diolah menjadi prakiraan dua minggu da
 
 <p align="center">Dibuat untuk <b>[NAMA HACKATHON]</b> · Metro, Lampung · <a href="README.md">English</a></p>
 
-![Halaman depan Jagapadi: diorama lanskap sawah di dalam balok air](docs/screenshots/landing-hero.png)
+![Halaman depan Jagapadi: diorama lanskap sawah di dalam balok air, dengan petani, kuntul, kerbau dan ikan](docs/screenshots/landing-hero.png)
 
 > [!WARNING]
 > Jagapadi adalah alat perkiraan ilmiah, **bukan sistem peringatan resmi**. Untuk keputusan, ikuti BMKG, penyuluh pertanian (PPL) dan BPBD.

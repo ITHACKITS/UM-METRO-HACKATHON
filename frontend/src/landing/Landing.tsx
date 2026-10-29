@@ -156,7 +156,9 @@ export default function Landing() {
           }
           attach(h);
         })
-        .catch(() => {
+        .catch((err) => {
+          // Shown as "no WebGL"; log the cause so a real failure is not mistaken for an old browser.
+          console.error("Diorama failed to start", err);
           setWebgl(false);
           setReady(true);
         });

@@ -27,7 +27,7 @@ Satellite, weather and terrain data turned into a two-week outlook and a plan fo
   <a href="README.id.md">Bahasa Indonesia</a>
 </p>
 
-![Jagapadi landing page: a rice landscape diorama in a block of water](docs/screenshots/landing-hero.png)
+![Jagapadi landing page: a rice landscape diorama in a block of water, with farmers, egrets, buffalo and fish](docs/screenshots/landing-hero.png)
 
 > [!WARNING]
 > Jagapadi is a scientific estimation tool, **not an official warning system**. For decisions, follow BMKG, your agricultural extension officer (PPL) and BPBD.
@@ -96,7 +96,7 @@ Every number on screen comes from a live source or a calculation from one, with 
 
 ## Screens
 
-**Landing story.** Scrolling plays the diorama through each chapter.
+**Landing story.** Scrolling plays the diorama through each chapter: a Lampung rice landscape with farmers in caping hats, egrets, water buffalo, koi in the reservoir and a fisherman's boat, all generated in the browser.
 
 <table>
   <tr>
@@ -215,7 +215,7 @@ flowchart LR
 
 | Layer | Location | Notes |
 |---|---|---|
-| Landing | `frontend/src/landing` | Procedural diorama (`Diorama.ts`): heightfield terraces, 16k instanced rice plants, water with depth-based absorption, scroll story. |
+| Landing | `frontend/src/landing` | Procedural diorama (`Diorama.ts`): heightfield terraces, up to 22k instanced rice clumps with per-plot growth, flooded paddies, sky light (PMREM), farmers, egrets, buffalo, fish and a flock in flight, water with depth-based absorption, scroll story. |
 | App | `frontend/src/app` | Map workspace, drawer tabs, charts, simulator, chatbot, print report. |
 | API | `backend/app/main.py` | Analyze, validate, chat, sensors, validation, health; serves the built web app. |
 | Ingest | `backend/app/ingest` | One module per source, shared HTTP layer with cache, retries and record/replay. |

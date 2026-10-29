@@ -309,7 +309,7 @@ type LandUniforms = {
 };
 
 function landMaterial(u: LandUniforms) {
-  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.6 });
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
@@ -336,6 +336,11 @@ function landMaterial(u: LandUniforms) {
         // Drought: paddy soil dries pale and cracks.
         vec3 dryCol = vec3(0.66, 0.56, 0.40) * (1.0 - crackNoise(vWPos.xz) * 0.55);
         diffuseColor.rgb = mix(diffuseColor.rgb, dryCol, uDry * paddy);
+        // Every petak is a little different: soil tone, puddling, when it was last worked.
+        float plotId = cHash(floor(vec2((vWPos.x + 7.3) / 0.86, (vWPos.z + 9.1) / 0.64)));
+        diffuseColor.rgb *= mix(1.0, 0.82 + 0.34 * plotId, isPlot);
+        // Irrigated paddies hold a few centimetres of standing water: dark, glossy, tinted by the sky.
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.22, 0.29, 0.27) * (0.88 + 0.24 * plotId), uWet * isPlot * 0.72);
         // Terraces hold their own shallow water when irrigated.
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.27, 0.36, 0.33), uWet * isTerrace * 0.6);
         // Floods leave a muddy film on everything they reach.
@@ -353,7 +358,7 @@ function landMaterial(u: LandUniforms) {
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-        roughnessFactor = mix(roughnessFactor, 0.18, uWet * step(0.5, vKind) * step(vKind, 1.5));`,
+        roughnessFactor = mix(roughnessFactor, 0.24, uWet * step(0.5, vKind) * step(vKind, 2.5));`,
       );
   };
   m.customProgramCacheKey = () => "jagapadi-land";
@@ -379,6 +384,9 @@ class Builder {
   }
   cyl(r: number, h: number, color: string, at: THREE.Vector3, seg = 6) {
     this.add(new THREE.CylinderGeometry(r, r, h, seg), color, new THREE.Matrix4().makeTranslation(at.x, at.y, at.z));
+  }
+  place(geo: THREE.BufferGeometry, m: THREE.Matrix4) {
+    this.parts.push(geo.clone().applyMatrix4(m));
   }
   merged() {
     return this.parts.length ? mergeGeometries(this.parts, false) : new THREE.BufferGeometry();
@@ -460,7 +468,7 @@ function buildArchitecture(r: () => number) {
   }
   // Coconut palms along the river and the village.
   const palmSpots: [number, number][] = [
-    [2.65, -1.9], [2.7, 1.9], [4.5, 1.6], [4.55, -2.0], [2.5, 3.3], [1.0, -1.6], [-2.2, 3.9], [-4.1, 1.9], [2.9, -0.95], [4.6, -0.8],
+    [2.65, -1.9], [2.7, 1.9], [4.5, 1.6], [4.55, -2.0], [2.5, 3.3], [1.0, -1.6], [-1.75, 4.15], [-4.1, 1.9], [2.9, -0.95], [4.6, -0.8],
   ];
   for (const [x, z] of palmSpots) {
     const base = sampleLand(x, z).h;
@@ -486,6 +494,153 @@ function buildArchitecture(r: () => number) {
     }
   }
   return { solid: b.merged(), glow: glow.merged() };
+}
+
+// ---------- life in the fields ----------
+
+/** Points inside paddy plots, away from the river, the reservoir and each other. */
+function plotSpots(r: () => number, n: number, gap: number, taken: [number, number][]) {
+  const out: [number, number][] = [];
+  let guard = 0;
+  while (out.length < n && guard++ < n * 400) {
+    const x = (r() * 2 - 1) * (HALF - 1.0), z = (r() * 2 - 1) * (HALF - 1.0);
+    const s = sampleLand(x, z);
+    if (s.kind !== KIND.plot || s.h >= 0) continue;
+    if (Math.abs(x - riverX(z)) < 0.75 || Math.hypot(x - POND.x, z - POND.z) < POND.r + 0.5 || hillDome(x, z) > 0.01) continue;
+    if ([...taken, ...out].some(([tx, tz]) => Math.hypot(tx - x, tz - z) < gap)) continue;
+    out.push([x, z]);
+  }
+  taken.push(...out);
+  return out;
+}
+
+const at = (x: number, y: number, z: number, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) =>
+  new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz, "YXZ")), new THREE.Vector3(sx, sy, sz));
+
+/** A small figure built facing +z at the origin, then placed: miniature scale, so it reads from the camera. */
+function figure(build: (b: Builder) => void) {
+  const b = new Builder();
+  build(b);
+  return b.merged();
+}
+
+const SHIRTS = ["#3d6e8f", "#b5523b", "#e6dcc3", "#5b7d4a", "#7a4b6b"];
+
+function farmer(shirt: string, bend: number) {
+  return figure((b) => {
+    const sphere = new THREE.SphereGeometry(1, 10, 8);
+    for (const sx of [-0.016, 0.016]) b.add(new THREE.CylinderGeometry(0.008, 0.009, 0.07, 6), "#2f2a26", at(sx, 0.035, 0));
+    const lean = new THREE.Euler(bend, 0, 0);
+    b.add(new THREE.CylinderGeometry(0.019, 0.023, 0.065, 8).translate(0, 0.0325, 0), shirt, at(0, 0.07, 0, bend));
+    const shoulder = new THREE.Vector3(0, 0.062, 0).applyEuler(lean).add(new THREE.Vector3(0, 0.07, 0));
+    for (const sx of [-0.022, 0.022])
+      b.add(new THREE.CylinderGeometry(0.006, 0.006, 0.06, 5).translate(0, -0.03, 0), shirt, at(shoulder.x + sx, shoulder.y, shoulder.z, bend * 0.3));
+    const head = new THREE.Vector3(0, 0.083, 0).applyEuler(lean).add(new THREE.Vector3(0, 0.07, 0));
+    b.add(sphere, "#9a6a46", at(head.x, head.y, head.z, 0, 0, 0, 0.014, 0.015, 0.014));
+    b.add(new THREE.ConeGeometry(0.05, 0.026, 14), "#d9c08a", at(head.x, head.y + 0.014, head.z, bend * 0.5));
+  });
+}
+
+function egret() {
+  return figure((b) => {
+    const sphere = new THREE.SphereGeometry(1, 10, 8);
+    for (const sx of [-0.006, 0.006]) b.add(new THREE.CylinderGeometry(0.0025, 0.0025, 0.045, 4), "#3a3530", at(sx, 0.022, 0));
+    b.add(sphere, "#f6f4ee", at(0, 0.055, 0, 0, 0, 0, 0.014, 0.012, 0.026));
+    b.add(new THREE.CylinderGeometry(0.0035, 0.004, 0.035, 5).translate(0, 0.0175, 0), "#f6f4ee", at(0, 0.062, 0.018, 0.35));
+    b.add(sphere, "#f6f4ee", at(0, 0.094, 0.03, 0, 0, 0, 0.0065, 0.0065, 0.0065));
+    b.add(new THREE.ConeGeometry(0.0025, 0.022, 4), "#e0b23a", at(0, 0.093, 0.045, Math.PI / 2));
+  });
+}
+
+function buffalo() {
+  return figure((b) => {
+    const sphere = new THREE.SphereGeometry(1, 12, 10);
+    const hide = "#4b4643";
+    for (const [lx, lz] of [[-0.035, -0.06], [0.035, -0.06], [-0.035, 0.06], [0.035, 0.06]]) b.add(new THREE.CylinderGeometry(0.011, 0.01, 0.06, 6), hide, at(lx, 0.03, lz));
+    b.add(sphere, hide, at(0, 0.08, 0, 0, 0, 0, 0.05, 0.045, 0.1));
+    b.add(sphere, "#3f3a37", at(0, 0.085, 0.115, 0.4, 0, 0, 0.026, 0.026, 0.04));
+    for (const sx of [-1, 1]) b.add(new THREE.TorusGeometry(0.03, 0.005, 5, 10, Math.PI * 0.8), "#cdbf9f", at(sx * 0.018, 0.105, 0.105, 0, sx > 0 ? 0 : Math.PI, 0, 1, 0.7, 1));
+  });
+}
+
+function scarecrow(shirt: string) {
+  return figure((b) => {
+    b.add(new THREE.CylinderGeometry(0.005, 0.006, 0.2, 5), "#6a4a2e", at(0, 0.1, 0));
+    b.add(new THREE.BoxGeometry(0.12, 0.008, 0.008), "#6a4a2e", at(0, 0.155, 0));
+    b.add(new THREE.BoxGeometry(0.07, 0.06, 0.03), shirt, at(0, 0.13, 0, 0, 0, 0.08));
+    b.add(new THREE.SphereGeometry(1, 10, 8), "#d8c7a3", at(0, 0.19, 0, 0, 0, 0, 0.016, 0.018, 0.016));
+    b.add(new THREE.ConeGeometry(0.045, 0.024, 12), "#c9a35c", at(0, 0.212, 0, 0.15));
+  });
+}
+
+function buildLife(r: () => number) {
+  const b = new Builder();
+  const taken: [number, number][] = [];
+  const put = (geo: THREE.BufferGeometry, x: number, z: number, scale: number) => {
+    const y = sampleLand(x, z).h;
+    b.place(geo, at(x, y, z, 0, r() * Math.PI * 2, 0, scale, scale, scale));
+  };
+  // Petani in caping hats, bent over the rice: planting or weeding.
+  for (const [x, z] of plotSpots(r, 8, 0.9, taken)) put(farmer(SHIRTS[Math.floor(r() * SHIRTS.length)], 0.65 + r() * 0.4), x, z, 1.9);
+  // A pair standing upright, talking at the edge of a plot.
+  for (const [x, z] of plotSpots(r, 1, 1.2, taken)) {
+    put(farmer(SHIRTS[0], 0.05), x, z, 1.9);
+    put(farmer(SHIRTS[1], 0.1), x + 0.12, z + 0.05, 1.9);
+  }
+  // Kuntul (egrets) wading between the rows.
+  for (const [x, z] of plotSpots(r, 16, 0.35, taken)) put(egret(), x, z, 2.1);
+  // Kerbau (water buffalo): out of the rice, where they can be seen. Two graze the grass at the foot of the
+  // hill on the side facing the camera, one wallows in the shallows of the embung.
+  const grazing: [number, number][] = [];
+  for (let guard = 0; grazing.length < 2 && guard < 4000; guard++) {
+    const x = HILL.x + (r() * 2 - 1) * HILL.r, z = HILL.z + r() * HILL.r;
+    const s = sampleLand(x, z), dome = hillDome(x, z);
+    if (dome < 0.04 || dome > 0.22 || s.kind === KIND.plot || s.kind === KIND.terrace || s.h < 0.02) continue;
+    if (Math.abs(x - riverX(z)) < 0.7 || x + z < -1.2) continue;
+    if (grazing.some(([gx, gz]) => Math.hypot(gx - x, gz - z) < 0.6)) continue;
+    grazing.push([x, z]);
+  }
+  for (const [x, z] of grazing) put(buffalo(), x, z, 2.4);
+  {
+    const a = -0.6, x = POND.x + Math.cos(a) * POND.r * 0.86, z = POND.z + Math.sin(a) * POND.r * 0.86;
+    b.place(buffalo(), at(x, sampleLand(x, z).h - 0.06, z, 0, 2.2, 0, 2.4, 2.4, 2.4));
+  }
+  // Orang-orangan sawah (scarecrows).
+  for (const [x, z] of plotSpots(r, 3, 1.2, taken)) put(scarecrow(SHIRTS[Math.floor(r() * SHIRTS.length)]), x, z, 1.5);
+
+  // Pisang (banana plants) around the village and the field huts.
+  const bananas: [number, number][] = [[2.95, -1.95], [4.45, 0.3], [3.0, 1.35], [4.5, -1.75], [-1.05, 1.85], [0.95, 3.35], [-2.65, 0.6], [3.9, 1.65]];
+  for (const [x, z] of bananas) {
+    const y = sampleLand(x, z).h;
+    const h = 0.26 + r() * 0.08;
+    b.add(new THREE.CylinderGeometry(0.016, 0.022, h, 6), "#7c8a4a", new THREE.Matrix4().makeTranslation(x, y + h / 2, z));
+    for (let k = 0; k < 6; k++) {
+      const leaf = new THREE.PlaneGeometry(0.26, 0.08, 6, 1);
+      const pa = leaf.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < pa.count; i++) {
+        const lx = pa.getX(i) + 0.13;
+        pa.setXYZ(i, lx, 0.05 * Math.sin((lx / 0.26) * Math.PI) - lx * lx * 1.2, pa.getY(i) * Math.sin(Math.min(1, lx / 0.26 + 0.15) * Math.PI));
+      }
+      b.add(leaf, k % 2 ? "#6f9a3a" : "#88ad4a", at(x, y + h, z, 0, (k / 6) * Math.PI * 2 + r() * 0.4, 0.25 + r() * 0.25));
+    }
+  }
+  return b.merged();
+}
+
+/** A wooden perahu with a fisherman, built at the origin so it can ride the water level. */
+function buildBoat() {
+  const b = new Builder();
+  const hull = new THREE.CylinderGeometry(0.06, 0.06, 0.42, 10, 1, true, Math.PI / 2, Math.PI);
+  hull.rotateZ(Math.PI / 2);
+  hull.scale(1, 0.55, 1);
+  b.add(hull, "#7a4e30", new THREE.Matrix4());
+  for (const s of [-1, 1]) b.add(new THREE.ConeGeometry(0.06, 0.09, 10, 1, false, Math.PI / 2, Math.PI), "#6b4429", at(s * 0.255, 0, 0, 0, 0, -s * Math.PI / 2, 1, 1, 0.55));
+  b.add(new THREE.BoxGeometry(0.03, 0.01, 0.11), "#5a3a24", at(0.06, -0.005, 0));
+  b.add(new THREE.CylinderGeometry(0.016, 0.02, 0.05, 8), "#b5523b", at(0.06, 0.02, 0));
+  b.add(new THREE.SphereGeometry(0.012, 8, 6), "#9a6a46", at(0.06, 0.055, 0));
+  b.add(new THREE.ConeGeometry(0.04, 0.022, 14), "#d9c08a", at(0.06, 0.068, 0));
+  b.add(new THREE.CylinderGeometry(0.003, 0.003, 0.32, 4), "#6a4a2e", at(0.0, 0.05, 0.04, 0, 0, 1.1));
+  return b.merged();
 }
 
 // ---------- vegetation ----------
@@ -548,33 +703,36 @@ function treeMaterial(uDry: { value: number }) {
 }
 
 function riceMaterial(u: { uStage: { value: number }; uDry: { value: number }; uTime: { value: number } }) {
-  const m = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, side: THREE.DoubleSide });
+  const m = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.35 });
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform float uStage, uTime;\nattribute float aRand;\nvarying float vH;\nvarying float vRand;")
+      .replace("#include <common>", "#include <common>\nuniform float uStage, uTime;\nattribute float aRand;\nvarying float vH;\nvarying float vRand;\nvarying float vPlot;")
       .replace(
         "#include <begin_vertex>",
         /* glsl */ `#include <begin_vertex>
         // Height by growth stage: seedlings, tall green, heavy and bent, then stubble after harvest.
+        vec4 ip = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+        vPlot = fract(sin(dot(floor(vec2((ip.x + 7.3) / 0.86, (ip.z + 9.1) / 0.64)), vec2(127.1, 311.7))) * 43758.5453);
         float hScale = uStage < 1.0 ? mix(0.35, 1.0, uStage) : uStage < 2.0 ? 1.0 : uStage < 3.0 ? mix(1.0, 0.95, uStage - 2.0) : mix(0.95, 0.22, clamp(uStage - 3.0, 0.0, 1.0));
-        transformed.y *= hScale * (0.85 + aRand * 0.3);
+        transformed.y *= hScale * (0.85 + aRand * 0.3) * (0.86 + vPlot * 0.28);
         vH = position.y / 0.12;
         vRand = aRand;
-        vec4 ip = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
         float bend = (0.05 + 0.04 * sin(uTime * 1.7 + ip.x * 3.1 + ip.z * 2.3)) * (1.0 + clamp(uStage - 1.5, 0.0, 1.0) * 1.6);
         transformed.x += bend * vH * vH * hScale * 0.12;`,
       );
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nuniform float uStage, uDry;\nvarying float vH;\nvarying float vRand;")
+      .replace("#include <common>", "#include <common>\nuniform float uStage, uDry;\nvarying float vH;\nvarying float vRand;\nvarying float vPlot;")
       .replace(
         "#include <color_fragment>",
         /* glsl */ `#include <color_fragment>
         vec3 young = vec3(0.50, 0.78, 0.28), green = vec3(0.32, 0.56, 0.18), gold = vec3(0.86, 0.70, 0.30), stubble = vec3(0.62, 0.52, 0.34);
-        vec3 c = uStage < 1.0 ? mix(young, green, uStage) : uStage < 2.0 ? mix(green, gold, uStage - 1.0) : uStage < 3.0 ? gold : mix(gold, stubble, clamp(uStage - 3.0, 0.0, 1.0));
+        // Neighbouring plots were planted days apart, so they ripen a little out of step.
+        float st = clamp(uStage + (vPlot - 0.5) * 0.45, 0.0, 4.0);
+        vec3 c = st < 1.0 ? mix(young, green, st) : st < 2.0 ? mix(green, gold, st - 1.0) : st < 3.0 ? gold : mix(gold, stubble, clamp(st - 3.0, 0.0, 1.0));
         c = mix(c, vec3(0.62, 0.55, 0.36), uDry * 0.75);
         c *= (0.5 + 0.45 * vH) * 0.85;
-        c *= 0.9 + vRand * 0.2;
+        c *= (0.9 + vRand * 0.2) * (0.9 + vPlot * 0.2);
         diffuseColor.rgb = c;`,
       );
   };
@@ -583,15 +741,24 @@ function riceMaterial(u: { uStage: { value: number }; uDry: { value: number }; u
 }
 
 function riceTuft() {
-  // Three crossed tapering blades: reads as a clump from any angle.
+  // Five blades, each bending outward over two segments, splayed around the stem: a clump from any angle.
   const parts: THREE.BufferGeometry[] = [];
-  for (let k = 0; k < 3; k++) {
+  const n = 5;
+  for (let k = 0; k < n; k++) {
+    const w = 0.012, lean = 0.018 + (k % 2) * 0.012;
+    const b0 = [-w, 0], b1 = [w, 0];
+    const m0 = [-w * 0.7 + lean * 0.35, 0.068], m1 = [w * 0.7 + lean * 0.35, 0.068];
+    const tip = [lean, 0.12 - (k % 2) * 0.012];
+    const pos: number[] = [], nor: number[] = [];
+    for (const [x, y] of [b0, b1, m1, b0, m1, m0, m0, m1, tip]) {
+      pos.push(x, y, 0);
+      nor.push(x * 6, 0.45 + y * 2, 1);
+    }
     const g = new THREE.BufferGeometry();
-    const w = 0.014;
-    g.setAttribute("position", new THREE.Float32BufferAttribute([-w, 0, 0, w, 0, 0, 0.004, 0.12, 0, -w, 0, 0, 0.004, 0.12, 0, w, 0, 0], 3));
-    g.setAttribute("normal", new THREE.Float32BufferAttribute([0, 0.3, 1, 0, 0.3, 1, 0, 0.6, 1, 0, 0.3, -1, 0, 0.6, -1, 0, 0.3, -1], 3));
-    g.rotateY((k / 3) * Math.PI);
-    g.rotateZ((k - 1) * 0.18);
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    g.normalizeNormals();
+    g.rotateY((k / n) * Math.PI * 2);
     parts.push(g);
   }
   return mergeGeometries(parts, false);
@@ -599,7 +766,7 @@ function riceTuft() {
 
 function buildRicePositions(r: () => number, max: number) {
   const out: THREE.Matrix4[] = [];
-  const spacing = 0.085;
+  const spacing = 0.064;
   const q = new THREE.Quaternion();
   for (let z = -HALF + 0.3; z < HALF - 0.3; z += spacing * 0.9)
     for (let x = -HALF + 0.3; x < HALF - 0.3; x += spacing) {
@@ -880,7 +1047,7 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
   await progress();
 
   // 3. Rice
-  const ricePos = buildRicePositions(r, opts.mobile ? 6000 : 16000);
+  const ricePos = buildRicePositions(r, opts.mobile ? 6000 : 22000);
   const rice = new THREE.InstancedMesh(riceTuft(), riceMaterial(riceU), ricePos.length);
   const rand = new Float32Array(ricePos.length);
   ricePos.forEach((m, i) => {
@@ -913,12 +1080,103 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
 
   // 5. Village, huts, gate, bridge, palms
   const arch = buildArchitecture(r);
-  const archMesh = new THREE.Mesh(arch.solid, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 }));
+  const archMesh = new THREE.Mesh(arch.solid, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, side: THREE.DoubleSide }));
   archMesh.castShadow = archMesh.receiveShadow = true;
   scene.add(archMesh);
   const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, emissive: new THREE.Color("#ffb860"), emissiveIntensity: 0 });
   const glowMesh = new THREE.Mesh(arch.glow, glowMat);
   scene.add(glowMesh);
+  const lifeMesh = new THREE.Mesh(buildLife(r), archMesh.material);
+  lifeMesh.castShadow = lifeMesh.receiveShadow = true;
+  scene.add(lifeMesh);
+  const boat = new THREE.Mesh(buildBoat(), archMesh.material);
+  const boatZ = 2.1;
+  boat.position.set(riverX(boatZ), 0, boatZ);
+  boat.rotation.y = Math.PI / 2 - Math.atan(Math.cos(boatZ * 0.55 + 0.4) * 0.33);
+  boat.scale.setScalar(1.5);
+  boat.castShadow = true;
+  scene.add(boat);
+  const flock = new THREE.Group();
+  const wings: THREE.Mesh[] = [];
+  {
+    const birdMat = new THREE.MeshStandardMaterial({ color: "#f7f5ef", roughness: 0.8, side: THREE.DoubleSide });
+    const wing = new THREE.BufferGeometry();
+    wing.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0.035, 0, 0, -0.03, 0.15, 0, -0.045, 0, 0, 0.035, 0.15, 0, -0.045, 0.1, 0, 0.01], 3));
+    wing.computeVertexNormals();
+    const body = new THREE.SphereGeometry(1, 8, 6);
+    const formation: [number, number, number][] = [[0, 0, 0], [-0.32, 0.05, -0.3], [0.3, -0.04, -0.32], [-0.62, 0.08, -0.62], [0.6, 0.02, -0.6], [-0.9, -0.03, -0.9], [0.95, 0.06, -0.95]];
+    const lead = new THREE.Group();
+    lead.position.set(4.2, 3.3, 0);
+    formation.forEach(([fx, fy, fz], i) => {
+      const bird = new THREE.Group();
+      bird.position.set(fx, fy, fz);
+      const torso = new THREE.Mesh(body, birdMat);
+      torso.scale.set(0.028, 0.024, 0.075);
+      bird.add(torso);
+      for (const side of [1, -1]) {
+        const w = new THREE.Mesh(wing, birdMat);
+        w.scale.x = side;
+        w.userData.phase = i * 0.7 + (side > 0 ? 0 : 0.0);
+        w.userData.side = side;
+        bird.add(w);
+        wings.push(w);
+      }
+      lead.add(bird);
+    });
+    flock.add(lead);
+  }
+  scene.add(flock);
+
+  // Fish: koi circling the embung, small fish in the river, a school swimming the moat around the block.
+  type Fish = { path: "pond" | "river" | "moat"; a: number; speed: number; rad: number; depth: number };
+  const fish: Fish[] = [];
+  for (let i = 0; i < 14; i++) fish.push({ path: "pond", a: r() * Math.PI * 2, speed: (0.25 + r() * 0.35) * (r() < 0.3 ? -1 : 1), rad: POND.r * (0.3 + r() * 0.55), depth: 0.1 + r() * 0.22 });
+  for (let i = 0; i < 7; i++) fish.push({ path: "river", a: r() * Math.PI * 2, speed: 0.12 + r() * 0.12, rad: (r() - 0.5) * 0.25, depth: 0.12 + r() * 0.15 });
+  for (let i = 0; i < 22; i++) fish.push({ path: "moat", a: (i / 22) * Math.PI * 2 + r() * 0.15, speed: 0.035 + r() * 0.02, rad: 0.35 + r() * 0.25, depth: 0.08 + r() * 0.16 });
+  const fishGeo = (() => {
+    const body = new THREE.SphereGeometry(1, 10, 8).scale(0.016, 0.014, 0.05);
+    const tail = new THREE.BufferGeometry();
+    tail.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, -0.04, 0, 0.022, -0.075, 0, -0.022, -0.075], 3));
+    tail.computeVertexNormals();
+    return mergeGeometries([body.toNonIndexed().deleteAttribute("uv") as THREE.BufferGeometry, tail], false);
+  })();
+  const fishMesh = new THREE.InstancedMesh(fishGeo, new THREE.MeshStandardMaterial({ roughness: 0.45, side: THREE.DoubleSide }), fish.length);
+  const koi = ["#e8743b", "#f1ede4", "#e2a93b", "#d9542f", "#f1ede4"];
+  fish.forEach((f, i) => fishMesh.setColorAt(i, new THREE.Color(f.path === "pond" ? koi[i % koi.length] : f.path === "river" ? "#9aa39b" : i % 3 ? "#c4d3d4" : "#e2b55a")));
+  fishMesh.frustumCulled = false;
+  scene.add(fishMesh);
+  const fishM = new THREE.Matrix4(), fishQ = new THREE.Quaternion(), fishS = new THREE.Vector3(), fishP = new THREE.Vector3(), fishE = new THREE.Euler();
+  const moatR = HALF - 0.5;
+  /** Position of a fish at angle a on its path. */
+  const fishAt = (f: Fish, a: number): [number, number] => {
+    if (f.path === "pond") return [POND.x + Math.cos(a) * f.rad, POND.z + Math.sin(a) * f.rad];
+    if (f.path === "river") {
+      const z = -0.4 + (Math.sin(a) * 0.5 + 0.5) * 4.6;
+      return [riverX(z) + f.rad, z];
+    }
+    // Rounded square loop just inside the block walls.
+    const k = (v: number) => Math.sign(v) * Math.pow(Math.abs(v), 0.25);
+    const R = moatR - f.rad + 0.25;
+    return [R * k(Math.cos(a)), R * k(Math.sin(a))];
+  };
+  const placeFish = (t: number) => {
+    fish.forEach((f, i) => {
+      const a = f.a + t * f.speed;
+      const [x, z] = fishAt(f, a);
+      const [nx, nz] = fishAt(f, a + 0.02 * Math.sign(f.speed));
+      const head = Math.atan2(nx - x, nz - z);
+      const bed = sampleLand(x, z).h;
+      const y = Math.max(bed + 0.04, level - f.depth);
+      const visible = y < level - 0.03 && level - bed > 0.08;
+      fishP.set(x, y, z);
+      fishE.set(0, head + Math.sin(t * 9 + i) * 0.18, 0);
+      fishQ.setFromEuler(fishE);
+      fishS.setScalar(visible ? (f.path === "river" ? 1 : 1.5) : 0);
+      fishM.compose(fishP, fishQ, fishS);
+      fishMesh.setMatrixAt(i, fishM);
+    });
+    fishMesh.instanceMatrix.needsUpdate = true;
+  };
   await progress();
 
   // 6. Water
@@ -959,7 +1217,29 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
   scene.add(rain);
   await progress();
 
-  // 7. Light
+  // 7. Light: a soft sky dome for image-based light and reflections, plus sun and fill.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const skyScene = new THREE.Scene();
+  skyScene.add(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(10, 32, 16),
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: /* glsl */ `
+          varying vec3 vD;
+          void main() {
+            vec3 top = vec3(0.42, 0.62, 0.86), hor = vec3(0.98, 0.93, 0.84), gnd = vec3(0.36, 0.31, 0.22);
+            vec3 c = vD.y > 0.0 ? mix(hor, top, pow(vD.y, 0.55)) : mix(hor, gnd, pow(-vD.y, 0.35));
+            gl_FragColor = vec4(c, 1.0);
+          }`,
+      }),
+    ),
+  );
+  const envRT = pmrem.fromScene(skyScene, 0.03);
+  pmrem.dispose();
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 0.5;
   const hemi = new THREE.HemisphereLight("#cfe2f2", "#a48a62", 1.1);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight("#fff4e0", 2.4);
@@ -1029,7 +1309,8 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
     sun.color.set("#fff4e0").lerp(new THREE.Color("#ff9a52"), golden);
     sun.intensity = 0.5 + 2.0 * THREE.MathUtils.smoothstep(Math.sin(t * Math.PI), 0.0, 0.4);
     hemi.color.set("#cfe2f2").lerp(new THREE.Color("#f2b98f"), golden * 0.7);
-    hemi.intensity = 0.45 + 0.5 * Math.sin(t * Math.PI);
+    hemi.intensity = 0.38 + 0.42 * Math.sin(t * Math.PI);
+    scene.environmentIntensity = 0.12 + 0.16 * Math.sin(t * Math.PI);
     const dusk = THREE.MathUtils.smoothstep(h, 16.8, 18.2);
     glowMat.emissiveIntensity = dusk * 2.4;
     lamps.forEach((l) => (l.intensity = dusk * 1.6));
@@ -1121,6 +1402,12 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
       builtLevel = level;
     }
     landU.uLevel.value = level;
+    if (!opts.reducedMotion) {
+      flock.rotation.y = -t * 0.09;
+      for (const w of wings) w.rotation.z = w.userData.side * Math.sin(t * 7 + w.userData.phase) * 0.55;
+    }
+    placeFish(opts.reducedMotion ? 0 : t);
+    boat.position.y = Math.max(level, -0.5) + 0.012 + (opts.reducedMotion ? 0 : Math.sin(t * 1.3) * 0.006);
     landU.uDry.value = dry;
     landU.uWet.value = (1 - dry) * (1 - THREE.MathUtils.smoothstep(stage, 2.6, 3.2));
     landU.uFlood.value = mud;
@@ -1236,6 +1523,7 @@ export async function createDiorama(canvas: HTMLCanvasElement, opts: DioramaOpti
       });
       water.geometry.dispose();
       waterMat.dispose();
+      envRT.dispose();
       rtScene.dispose();
       rtWater.dispose();
       renderer.dispose();
