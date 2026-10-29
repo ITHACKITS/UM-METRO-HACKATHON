@@ -1,7 +1,8 @@
 """Backtest of the water balance against independent soil-moisture estimates.
 
 Ground truth for paddy water levels does not exist for an arbitrary field, so
-drought and flood event skill is reported as not_testable. What can be tested:
+drought and flood event skill cannot be scored directly. Drought is scored by proxy
+(engine/hindcast.py: dry-season stress vs ENSO/IOD indices). What else can be tested:
 does the water balance, driven only by past rain and ET0, track the root-zone
 moisture from Open-Meteo's land-surface model? That is a consistency check
 between two models, and it is labelled as such.
@@ -11,8 +12,22 @@ from datetime import datetime
 
 import numpy as np
 
+from app.engine import hindcast
 from app.engine.waterbalance import FieldParams, InitialState, run
 from app.ingest import weather
+from app.ingest.http import SourceUnavailable
+
+
+def _event_skill(lat: float, lon: float) -> dict:
+    try:
+        h = hindcast.run_hindcast(lat, lon)
+    except SourceUnavailable as e:
+        return {"status": "unavailable", "reason": str(e)}
+    return {
+        "status": "proxy",
+        "reason": "no field-level drought records; scored against independent ENSO/IOD indices instead",
+        **h,
+    }
 
 
 def backtest(lat: float, lon: float) -> dict:
@@ -47,7 +62,7 @@ def backtest(lat: float, lon: float) -> dict:
         "pearson_r": None if r is None else round(r, 3),
         "mae_m3m3": round(float(np.abs(s_arr - o_arr).mean()), 4),
         "series": {"dates": days, "simulated": [round(x, 4) for x in sim_theta], "reference": sm},
-        "drought_event_skill": {"status": "not_testable", "reason": "no field-level record of past drought stress for this location"},
+        "drought_event_skill": _event_skill(lat, lon),
         "flood_event_skill": {
             "status": "not_testable",
             "reason": "no field-level inundation record; Sentinel-1 flood maps not yet integrated",

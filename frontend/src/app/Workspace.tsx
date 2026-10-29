@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { api, API_DOWN, tr, type Txt, type Analysis, type Polygon, type Rec, type Risk, type Scenario, type WaterFeature } from "../lib/api";
 import { LangToggle, useLang } from "../lib/i18n";
 import { Logo } from "../components/Logo";
@@ -8,6 +8,8 @@ import { IslandGlyph } from "../components/Glyphs";
 import { FieldMap } from "./FieldMap";
 import { Chat } from "./Chat";
 import { PrintReport } from "./PrintReport";
+import { AlertButton, SimpleView } from "./Simple";
+import { addField } from "../lib/watchlist";
 import "./app.css";
 
 type Tab = "summary" | "drought" | "flood" | "pest" | "water" | "data";
@@ -27,6 +29,13 @@ const L = {
     finish: "Selesai",
     cancel: "Batal",
     demo: "Pakai lahan contoh",
+    viewSimple: "Petani",
+    watch: "Pantau",
+    watched: "Dipantau",
+    officer: "Dasbor penyuluh",
+    viewExpert: "Ahli",
+    waterIn: "Air di sawah",
+    ksPlain: ["cukup air", "mulai kurang air", "kurang air berat"],
     apiDown: "Server Jagapadi tidak menjawab. Jalankan `npm run dev` (API di port 8000), lalu coba lagi.",
     analyzing: "Membaca data lahan…",
     steps: ["Mencari citra Sentinel-2 bebas awan", "Mengambil 51 skenario hujan ECMWF", "Membaca debit sungai dan ketinggian lahan", "Menjalankan neraca air harian"],
@@ -60,6 +69,8 @@ const L = {
     probSub: "Peluang padi terendam penuh per hari",
     river: "Debit sungai GloFAS · ambang banjir 2-tahunan",
     hand: "Tinggi lahan di atas saluran",
+    radarT: "Radar Sentinel-1 (tembus awan)",
+    radarV: (f: string, r: string, m: string, d: number) => `${f} air di lahan · sekitar ${r} (biasanya ${m}) · ${d} hari lalu`,
     subDays: "Hari terendam penuh (P50 / P95)",
     pestNote: "Kesesuaian cuaca 7 hari lalu dan 7 hari ke depan. Bukan deteksi hama: tetap cek langsung di sawah.",
     scout: "Cara mengecek",
@@ -127,6 +138,13 @@ const L = {
     finish: "Done",
     cancel: "Cancel",
     demo: "Use the sample field",
+    viewSimple: "Farmer",
+    watch: "Watch",
+    watched: "Watching",
+    officer: "Officer dashboard",
+    viewExpert: "Expert",
+    waterIn: "Water in field",
+    ksPlain: ["enough water", "starting to dry", "severely dry"],
     apiDown: "The Jagapadi server is not responding. Run `npm run dev` (API on port 8000), then try again.",
     analyzing: "Reading field data…",
     steps: ["Finding cloud-free Sentinel-2 scenes", "Fetching 51 ECMWF rain scenarios", "Reading river flow and terrain", "Running the daily water balance"],
@@ -160,6 +178,8 @@ const L = {
     probSub: "Daily chance of full submergence",
     river: "GloFAS river flow · 2-year flood threshold",
     hand: "Field height above channel",
+    radarT: "Sentinel-1 radar (sees through cloud)",
+    radarV: (f: string, r: string, m: string, d: number) => `${f} water in field · surroundings ${r} (usually ${m}) · ${d} days ago`,
     subDays: "Days fully submerged (P50 / P95)",
     pestNote: "Weather suitability over the last 7 and next 7 days. Not detection: still scout the field.",
     scout: "How to scout",
@@ -239,6 +259,27 @@ export default function Workspace() {
   const [mapImage, setMapImage] = useState<string | null>(null);
   const [fieldName, setFieldName] = useState<string | null>(null);
   const snapRef = useRef<(() => string | null) | null>(null);
+  // Farmers see one status and one action; the charts stay one tap away.
+  const [view, setViewState] = useState<"simple" | "expert">(() => {
+    try {
+      return localStorage.getItem("jagapadi-view") === "expert" ? "expert" : "simple";
+    } catch {
+      return "simple";
+    }
+  });
+  const setView = (v: "simple" | "expert") => {
+    setViewState(v);
+    try {
+      localStorage.setItem("jagapadi-view", v);
+    } catch {
+      /* storage blocked */
+    }
+  };
+  const [telegram, setTelegram] = useState(false);
+  const [watched, setWatched] = useState(false);
+  useEffect(() => {
+    api.health().then((h) => setTelegram(!!h.telegram), () => setTelegram(false));
+  }, []);
   // Snapshot the live map into the report, then print once the image is in the DOM.
   const printReport = () => {
     setMapImage(snapRef.current?.() ?? null);
@@ -323,8 +364,22 @@ export default function Workspace() {
 
   const setModeAndRun = (m: "real" | "test") => {
     setMode(m);
+    if (m === "test") setView("expert");
     if (m === "real" && field && analysis?.hypothetical) run(field, { dat });
   };
+
+  // A field opened from the officer dashboard arrives as router state.
+  const location = useLocation();
+  useEffect(() => {
+    const st = location.state as { geometry?: Polygon; name?: string; dat?: number | null } | null;
+    if (!st?.geometry) return;
+    setField(st.geometry);
+    setFieldName(st.name ?? null);
+    setDat(st.dat ?? null);
+    run(st.geometry, { dat: st.dat ?? null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+  useEffect(() => setWatched(false), [field]);
 
   // Day player for the simulation timeline.
   const n = analysis?.waterbalance.dates.length ?? 0;
@@ -353,15 +408,38 @@ export default function Workspace() {
         <Link to="/" className="ws-logo" aria-label="Jagapadi, kembali ke beranda">
           <Logo size={28} />
         </Link>
-        <div className="seg" role="group" aria-label="Mode">
-          <button type="button" aria-pressed={mode === "real"} onClick={() => setModeAndRun("real")}>
-            {s.real}
+        <div className="seg" role="group" aria-label={`${s.viewSimple} / ${s.viewExpert}`}>
+          <button type="button" aria-pressed={view === "simple"} onClick={() => (setView("simple"), setModeAndRun("real"))}>
+            {s.viewSimple}
           </button>
-          <button type="button" aria-pressed={mode === "test"} onClick={() => setModeAndRun("test")}>
-            {s.test}
+          <button type="button" aria-pressed={view === "expert"} onClick={() => setView("expert")}>
+            {s.viewExpert}
           </button>
         </div>
+        {view === "expert" && (
+          <div className="seg" role="group" aria-label="Mode">
+            <button type="button" aria-pressed={mode === "real"} onClick={() => setModeAndRun("real")}>
+              {s.real}
+            </button>
+            <button type="button" aria-pressed={mode === "test"} onClick={() => setModeAndRun("test")}>
+              {s.test}
+            </button>
+          </div>
+        )}
         <div className="ws-top-right">
+          {field && analysis?.status === "ok" && (
+            <button
+              type="button"
+              className="btn btn-ghost small"
+              aria-pressed={watched}
+              onClick={() => (addField({ name: fieldName ?? s.myField, geometry: field, dat }), setWatched(true))}
+            >
+              {watched ? `✓ ${s.watched}` : `+ ${s.watch}`}
+            </button>
+          )}
+          <Link to="/ppl" className="btn btn-ghost small">
+            {s.officer}
+          </Link>
           {analysis && (
             <button type="button" className="btn btn-ghost small" onClick={printReport}>
               {s.print}
@@ -470,9 +548,15 @@ export default function Workspace() {
                     </b>{" "}
                     · {wb.dates[day]} {day === 0 ? `· ${s.today}` : ""}
                   </span>
-                  <span className="player-read">
-                    {s.pondNow} <b>{wb.ponding.p50[day]} mm</b> · {s.ksNow} <b>{wb.ks.p50[day]}</b>
-                  </span>
+                  {view === "simple" ? (
+                    <span className="player-read">
+                      {s.waterIn} <b>{Math.round(wb.ponding.p50[day])} mm</b> · <b>{s.ksPlain[wb.ks.p50[day] < 0.6 ? 2 : wb.ks.p50[day] < 0.95 ? 1 : 0]}</b>
+                    </span>
+                  ) : (
+                    <span className="player-read">
+                      {s.pondNow} <b>{wb.ponding.p50[day]} mm</b> · {s.ksNow} <b>{wb.ks.p50[day]}</b>
+                    </span>
+                  )}
                 </div>
                 {/* Daily risk strip: darker cells are days more weather members put the field in trouble. */}
                 <div className="heat" role="presentation" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
@@ -526,7 +610,20 @@ export default function Workspace() {
               <p>Weather data unavailable: {analysis.unavailable.map((u) => `${u.name} (${u.reason})`).join(", ")}</p>
             </div>
           )}
-          {!loading && analysis?.status === "ok" && (
+          {!loading && analysis?.status === "ok" && field && view === "simple" && !analysis.hypothetical && (
+            <>
+              <FieldHeader a={analysis} s={s} name={fieldName ?? s.myField} />
+              <SimpleView
+                a={analysis}
+                field={field}
+                name={fieldName ?? s.myField}
+                dat={dat}
+                telegram={telegram}
+                onDetails={() => (setView("expert"), setTab("summary"))}
+              />
+            </>
+          )}
+          {!loading && analysis?.status === "ok" && (view === "expert" || analysis.hypothetical) && (
             <>
               <FieldHeader a={analysis} s={s} name={fieldName ?? s.myField} />
               <nav className="tabs" role="tablist">
@@ -539,6 +636,7 @@ export default function Workspace() {
               </nav>
               <div className="tab-body" role="tabpanel">
                 {tab === "summary" && <Summary a={analysis} s={s} dat={dat} setDat={(v) => (setDat(v), field && run(field, { dat: v }))} goto={setTab} />}
+                {tab === "summary" && telegram && field && <AlertButton field={field} name={fieldName ?? s.myField} dat={dat} />}
                 {tab === "drought" && <Drought a={analysis} s={s} day={day} />}
                 {tab === "flood" && <Flood a={analysis} s={s} day={day} />}
                 {tab === "pest" && <Pests a={analysis} s={s} />}
@@ -883,6 +981,19 @@ function Flood({ a, s, day }: { a: Analysis; s: S; day: number }) {
         <div>
           <dt>{s.hand}</dt>
           <dd>{a.hand ? `${a.hand.height_above_channel_m} m · ${a.hand.channel} (${a.hand.channel_distance_m} m)` : s.unknown}</dd>
+        </div>
+        <div>
+          <dt>{s.radarT}</dt>
+          <dd>
+            {a.radar?.latest.field.usable
+              ? s.radarV(
+                  pct(a.radar.latest.field.water_fraction ?? 0),
+                  a.radar.ring_water_now === null ? "–" : pct(a.radar.ring_water_now),
+                  a.radar.ring_water_median === null ? "–" : pct(a.radar.ring_water_median),
+                  a.radar.latest_age_days,
+                )
+              : s.unknown}
+          </dd>
         </div>
       </dl>
       {a.river && a.river.forecast_p50.length > 0 && (

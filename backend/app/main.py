@@ -1,6 +1,7 @@
 import hashlib
 import json
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
@@ -10,13 +11,22 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app import services
+from app import alerts, services
 from app.config import BACKEND_DIR, DATA_DIR, settings
 from app.engine import validation
 from app.ingest.http import SourceUnavailable, source_status
 from app.llm import chat
 
-app = FastAPI(title="Jagapadi API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    stop = alerts.start()
+    yield
+    if stop:
+        stop.set()
+
+
+app = FastAPI(title="Jagapadi API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.allowed_origins.split(",") if o.strip()],
@@ -41,6 +51,13 @@ class ChatRequest(BaseModel):
     messages: list[dict] = Field(..., min_length=1, max_length=30)
     lang: str = "id"
     days_after_transplant: int | None = None
+
+
+class AlertRequest(BaseModel):
+    geometry: dict
+    name: str = Field("Sawah", max_length=60)
+    lang: str = "id"
+    days_after_transplant: int | None = Field(None, ge=-30, le=200)
 
 
 class SensorReading(BaseModel):
@@ -78,6 +95,7 @@ def health():
         "offline_replay": settings.offline,
         "llm": bool(settings.llm_provider and settings.llm_api_key),
         "openweather": bool(settings.openweather_key),
+        "telegram": alerts.enabled(),
         "sources": source_status(),
         "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
@@ -88,9 +106,43 @@ def demo_field():
     return json.loads((BACKEND_DIR / "config" / "demo_field.json").read_text(encoding="utf-8"))
 
 
+@app.get("/api/demo-group")
+def demo_group():
+    return json.loads((BACKEND_DIR / "config" / "demo_group.json").read_text(encoding="utf-8"))
+
+
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest):
     return _analysis(req.geometry, _opts(req))
+
+
+@app.post("/api/verdict")
+def verdict_endpoint(req: AnalyzeRequest):
+    """The short form of /api/analyze, for lists of many fields."""
+    a = _analysis(req.geometry, _opts(req))
+    if a.get("status") != "ok":
+        return {"status": a.get("status"), "field": a.get("field"), "unavailable": a.get("unavailable", [])}
+    return {
+        "status": "ok",
+        "field": a["field"],
+        "verdict": a["verdict"],
+        "drought": {k: a["drought"]["risk"][k] for k in ("probability", "level", "first_stress_day")},
+        "flood": {k: a["flood"]["risk"][k] for k in ("probability", "level", "max_submergence_days")},
+        "pest_high": [p["name"] for p in a["pest"] if p["level"] == "high"],
+        "stage": a["crop"]["stage"],
+        "scene_age_days": a["satellite"]["latest_clear_age_days"],
+        "generated_at": a["generated_at"],
+    }
+
+
+@app.post("/api/alerts/subscribe")
+def alerts_subscribe(req: AlertRequest):
+    if not alerts.enabled():
+        return {"enabled": False}
+    try:
+        return alerts.subscribe(req.geometry, req.name, req.lang, req.days_after_transplant)
+    except services.FieldError as e:
+        raise HTTPException(422, str(e)) from e
 
 
 @app.post("/api/validate-field")

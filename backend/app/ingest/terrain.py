@@ -76,6 +76,10 @@ def terrain_profile(geom: dict) -> dict[str, Any]:
     }
 
 
+OVERPASS_BACKOFF_S = 600
+_overpass_down_until = 0.0
+
+
 def water_features(lat: float, lon: float, radius_m: int = 4000) -> dict[str, Any]:
     # Mapped water features change slowly; keep a 30-day disk copy because Overpass is often overloaded.
     cache = OSM_CACHE / f"water-{lat:.3f}-{lon:.3f}-{radius_m}.json"
@@ -93,10 +97,18 @@ def water_features(lat: float, lon: float, radius_m: int = 4000) -> dict[str, An
 );
 out tags geom qt 400;
 """
+    global _overpass_down_until
+    if time.time() < _overpass_down_until:
+        raise SourceUnavailable("osm-overpass", "skipped: Overpass failed a few minutes ago, retrying later")
     try:
-        payload, captured = fetch_json("osm-overpass", OVERPASS, params={"data": q}, ttl=86400, retries=1, timeout=30)
+        try:
+            payload, captured = fetch_json("osm-overpass", OVERPASS, params={"data": q}, ttl=86400, retries=0, timeout=20)
+        except SourceUnavailable:
+            payload, captured = fetch_json("osm-overpass", OVERPASS_MIRROR, params={"data": q}, ttl=86400, retries=0, timeout=20)
     except SourceUnavailable:
-        payload, captured = fetch_json("osm-overpass", OVERPASS_MIRROR, params={"data": q}, ttl=86400, retries=0, timeout=30)
+        # Public Overpass is often overloaded; one failure should not cost every following field a minute.
+        _overpass_down_until = time.time() + OVERPASS_BACKOFF_S
+        raise
     origin = Point(lon, lat)
     feats = []
     for el in payload.get("elements", []):

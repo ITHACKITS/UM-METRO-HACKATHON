@@ -1,12 +1,16 @@
 """Sentinel-2 L2A field statistics from Element84 Earth Search (AWS open data, no key).
 
-Only the window covering the field and a neighbour ring is read from each
-Cloud-Optimized GeoTIFF. Pixels flagged by the scene classification layer (SCL)
+Only a small window around the field and a neighbour ring is read from each
+Cloud-Optimized GeoTIFF. The window is snapped to a ~2 km grid and its pixels are
+cached, so neighbouring fields (a farmer group's plots) reuse one read. Pixels flagged by the scene classification layer (SCL)
 as cloud, shadow, cirrus, saturated or no-data are discarded.
 """
 
 import hashlib
 import json
+import math
+import os
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
@@ -36,6 +40,8 @@ _GDAL_ENV = dict(
     CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
 )
 SCENE_CACHE = DATA_DIR / "scene-cache"
+TILE_CACHE = SCENE_CACHE / "tiles"
+TILE_DEG = 0.02
 
 
 def search_scenes(geom: dict, days: int = 150, max_cloud: float = 85) -> tuple[list[dict], str]:
@@ -86,19 +92,22 @@ def _read(asset: dict, bounds_wgs: tuple, out_shape: tuple[int, int] | None = No
         return arr, scale, offset, ds.crs, transform
 
 
-def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
-    """NDVI, NDWI (Gao, vegetation water) and open-water fraction for field and neighbour ring."""
-    SCENE_CACHE.mkdir(parents=True, exist_ok=True)
-    gkey = hashlib.sha1(json.dumps(geom, sort_keys=True).encode()).hexdigest()[:12]
-    cache_file = SCENE_CACHE / f"{item['id']}-{gkey}.json"
-    if cache_file.exists():
-        return json.loads(cache_file.read_text())
+def _bands(item: dict, need: tuple) -> tuple:
+    """Reflectance arrays for a grid-snapped window that contains `need` (lon/lat bounds)."""
+    bounds = (
+        math.floor(need[0] / TILE_DEG) * TILE_DEG,
+        math.floor(need[1] / TILE_DEG) * TILE_DEG,
+        math.ceil(need[2] / TILE_DEG) * TILE_DEG,
+        math.ceil(need[3] / TILE_DEG) * TILE_DEG,
+    )
+    tile = TILE_CACHE / f"{item['id']}_{'_'.join(f'{v:.2f}' for v in bounds)}.npz"
+    if tile.exists():
+        z = np.load(tile)
+        meta = json.loads(str(z["meta"]))
+        return z["R"], z["N"], z["G"], z["S"], z["scl"], rasterio.crs.CRS.from_wkt(meta["crs"]), rasterio.Affine(*meta["transform"])
     if settings.offline:
         raise SourceUnavailable("sentinel-2", "offline mode and scene not cached")
 
-    field = shape(geom)
-    ring_poly = field.buffer(NEIGHBOUR_RING_DEG)
-    bounds = ring_poly.bounds
     a = item["assets"]
     applied = bool(item["properties"].get("earthsearch:boa_offset_applied", True))
     with rasterio.Env(**_GDAL_ENV):
@@ -108,11 +117,30 @@ def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
         green, gs, go, *_ = _read(a["green"], bounds, shp, applied)
         swir, ss, so, *_ = _read(a["swir16"], bounds, shp, applied)
         scl, *_ = _read(a["scl"], bounds, shp, applied)
+    R = (red * rs + ro).astype(np.float32)
+    N = (nir * ns + no).astype(np.float32)
+    G = (green * gs + go).astype(np.float32)
+    S = (swir * ss + so).astype(np.float32)
+    TILE_CACHE.mkdir(parents=True, exist_ok=True)
+    meta = json.dumps({"crs": crs.to_wkt(), "transform": list(tr)[:6]})
+    tmp = tile.with_name(f"{tile.stem}.{threading.get_ident()}.tmp.npz")
+    np.savez_compressed(tmp, R=R, N=N, G=G, S=S, scl=scl.astype(np.uint8), meta=np.array(meta))
+    os.replace(tmp, tile)  # atomic, so a parallel reader never sees half a file
+    return R, N, G, S, scl, crs, tr
 
-    R = red * rs + ro
-    N = nir * ns + no
-    G = green * gs + go
-    S = swir * ss + so
+
+def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
+    """NDVI, NDWI (Gao, vegetation water) and open-water fraction for field and neighbour ring."""
+    SCENE_CACHE.mkdir(parents=True, exist_ok=True)
+    gkey = hashlib.sha1(json.dumps(geom, sort_keys=True).encode()).hexdigest()[:12]
+    cache_file = SCENE_CACHE / f"{item['id']}-{gkey}.json"
+    if cache_file.exists():
+        return json.loads(cache_file.read_text())
+
+    field = shape(geom)
+    ring_poly = field.buffer(NEIGHBOUR_RING_DEG)
+    R, N, G, S, scl, crs, tr = _bands(item, ring_poly.bounds)
+    shp = R.shape
     valid = np.isin(scl, list(VALID_SCL)) & (R > 0) & (N > 0) & (G > 0) & (S > 0)
 
     field_geom = transform_geom("EPSG:4326", crs, mapping(field))

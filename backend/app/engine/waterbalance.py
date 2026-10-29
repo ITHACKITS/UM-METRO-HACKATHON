@@ -186,7 +186,13 @@ def ensemble_run(rain_members: list[list[float]], et0: list[float], params: Fiel
     }
 
 
-def initial_state(params: FieldParams, soil_theta: float | None, water_fraction: float | None, sat_age_days: int | None) -> InitialState:
+def initial_state(
+    params: FieldParams,
+    soil_theta: float | None,
+    water_fraction: float | None,
+    sat_age_days: int | None,
+    sensor: tuple[str, str] = ("citra Sentinel-2 bersih", "clear Sentinel-2 scene"),
+) -> InitialState:
     basis: list[dict] = []
     dr = 0.0
     if soil_theta is not None:
@@ -202,8 +208,8 @@ def initial_state(params: FieldParams, soil_theta: float | None, water_fraction:
         h = round(50.0 * water_fraction, 1)
         basis.append(
             {
-                "id": f"genangan {h:.0f} mm diasumsikan dari {water_fraction:.0%} piksel air terbuka pada citra Sentinel-2 bersih berumur {sat_age_days} hari",
-                "en": f"ponding {h:.0f} mm assumed from {water_fraction:.0%} open-water pixels in a {sat_age_days}-day-old clear Sentinel-2 scene",
+                "id": f"genangan {h:.0f} mm diasumsikan dari {water_fraction:.0%} piksel air terbuka pada {sensor[0]} berumur {sat_age_days} hari",
+                "en": f"ponding {h:.0f} mm assumed from {water_fraction:.0%} open-water pixels in a {sat_age_days}-day-old {sensor[1]}",
             }
         )
         if h > 0:

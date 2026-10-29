@@ -17,6 +17,8 @@ frontend/dist/
 # runtime data (recorded replay responses and scene stats ARE committed for the offline demo)
 backend/data/sensors/
 backend/data/osm-cache/
+backend/data/alerts/
+backend/data/scene-cache/tiles/
 
 # local scratch
 scratch-*.log

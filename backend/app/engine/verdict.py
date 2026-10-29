@@ -13,6 +13,11 @@ MONTHS_ID = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt
 MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
+def _pct(p: float) -> int:
+    # Half-up, like Math.round in the app, so the same number shows everywhere.
+    return int(p * 100 + 0.5)
+
+
 def _cap(s: str) -> str:
     return s[:1].upper() + s[1:]
 
@@ -37,12 +42,12 @@ def build(a: dict[str, Any]) -> dict[str, Any]:
         rank, threat = 1, "pest"
     status = STATUS[rank]
 
-    pct = round(risk["probability"] * 100)
+    pct = _pct(risk["probability"])
     if status == "aman":
         headline = {"id": "Sawah aman untuk 2 minggu ke depan.", "en": "The field looks safe for the next 2 weeks."}
         why = {
-            "id": f"Peluang kering {round(dr['probability'] * 100)}%, peluang terendam {round(fl['probability'] * 100)}%.",
-            "en": f"Drought chance {round(dr['probability'] * 100)}%, flooding chance {round(fl['probability'] * 100)}%.",
+            "id": f"Peluang kering {_pct(dr['probability'])}%, peluang terendam {_pct(fl['probability'])}%.",
+            "en": f"Drought chance {_pct(dr['probability'])}%, flooding chance {_pct(fl['probability'])}%.",
         }
     elif threat == "drought":
         fs = dr["first_stress_day"]

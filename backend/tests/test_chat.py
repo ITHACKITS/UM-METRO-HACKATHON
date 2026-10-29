@@ -32,3 +32,69 @@ def test_template_says_unavailable_for_missing_water_sources():
 
 def test_tool_payload_water_sources_honest_when_empty():
     assert "no mapped water source" in chat.tool_payload("water_sources", ANALYSIS)
+
+
+def test_gemini_tool_loop_grounds_answer_in_tool_results(monkeypatch):
+    from types import SimpleNamespace
+
+    from google import genai
+
+    sent = []
+
+    class FakeModels:
+        def __init__(self):
+            self.turn = 0
+
+        def generate_content(self, model, contents, config):
+            sent.append(contents[-1])
+            self.turn += 1
+            if self.turn == 1:
+                call = SimpleNamespace(name="pest_outlook", args={})
+                return SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content="model-turn")], text=None)
+            return SimpleNamespace(function_calls=None, candidates=[], text="Risiko kering tinggi (69%).")
+
+    monkeypatch.setattr(genai, "Client", lambda api_key: SimpleNamespace(models=FakeModels()))
+    r = chat._gemini_answer([{"role": "user", "content": "kering?"}], ANALYSIS, None)
+    assert r["engine"] == "llm" and r["tools_used"] == ["pest_outlook"] and "69%" in r["text"]
+    # The second request carried the tool result back to the model.
+    fr = sent[1].parts[0].function_response
+    assert sent[1].role == "user" and fr.name == "pest_outlook" and fr.response["result"]["stage"] == "unknown"
+
+
+def test_gemini_failure_falls_back_to_template(monkeypatch):
+    monkeypatch.setattr(chat, "settings", chat.settings.__class__(llm_provider="gemini", llm_api_key="x"))
+    monkeypatch.setattr(chat, "_gemini_answer", lambda *a: (_ for _ in ()).throw(RuntimeError("quota")))
+    r = chat.answer([{"role": "user", "content": "apakah sawah saya kekeringan?"}], ANALYSIS, None, "id")
+    assert r["engine"] == "template" and "RuntimeError" in r["note"]
+
+
+def test_gemini_switches_model_when_quota_is_used_up(monkeypatch):
+    from types import SimpleNamespace
+
+    from google import genai
+    from google.genai import errors
+
+    tried = []
+
+    class FakeModels:
+        def generate_content(self, model, contents, config):
+            tried.append(model)
+            if model == chat.GEMINI_DEFAULT_MODEL:
+                raise errors.ClientError(429, {"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}})
+            return SimpleNamespace(function_calls=None, candidates=[], text="Halo.")
+
+    monkeypatch.setattr(chat, "_gemini_exhausted", {})
+    monkeypatch.setattr(genai, "Client", lambda api_key: SimpleNamespace(models=FakeModels()))
+    r = chat._gemini_answer([{"role": "user", "content": "halo"}], ANALYSIS, None)
+    assert tried == [chat.GEMINI_DEFAULT_MODEL, chat.GEMINI_CHAIN[0]] and r["model"] == chat.GEMINI_CHAIN[0]
+    # The used-up model is skipped on the next question instead of costing another request.
+    tried.clear()
+    chat._gemini_answer([{"role": "user", "content": "halo"}], ANALYSIS, None)
+    assert tried == [chat.GEMINI_CHAIN[0]]
+
+
+def test_llm_answer_without_sources_gets_them_appended(monkeypatch):
+    monkeypatch.setattr(chat, "settings", chat.settings.__class__(llm_provider="gemini", llm_api_key="x"))
+    monkeypatch.setattr(chat, "_gemini_answer", lambda *a: {"text": "Risiko tinggi 69%.", "tools_used": ["drought_outlook"], "engine": "llm"})
+    r = chat.answer([{"role": "user", "content": "kering?"}], ANALYSIS, None, "id")
+    assert r["text"].endswith("Sumber: Open-Meteo Forecast API")

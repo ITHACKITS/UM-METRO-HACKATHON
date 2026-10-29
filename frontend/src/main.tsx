@@ -8,6 +8,7 @@ import "./styles/global.css";
 
 const Landing = lazy(() => import("./landing/Landing"));
 const Workspace = lazy(() => import("./app/Workspace"));
+const Officer = lazy(() => import("./app/Officer"));
 const Credits = lazy(() => import("./components/Credits"));
 
 function NotFound() {
@@ -37,6 +38,7 @@ createRoot(document.getElementById("root")!).render(
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/app" element={<Workspace />} />
+            <Route path="/ppl" element={<Officer />} />
             <Route path="/credits" element={<Credits />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

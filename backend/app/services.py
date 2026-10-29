@@ -13,7 +13,7 @@ from app.ai import vegetation
 from app.config import settings
 from app.engine import pest, recommend, verdict
 from app.engine.waterbalance import FieldParams, ensemble_run, initial_state, stage_for
-from app.ingest import sentinel2, terrain, weather
+from app.ingest import sentinel1, sentinel2, terrain, weather
 from app.ingest.http import SourceUnavailable
 
 _geod = Geod(ellps="WGS84")
@@ -59,6 +59,7 @@ def gather(geom: dict, lat: float, lon: float) -> dict[str, Any]:
         "ensemble": (weather.precipitation_ensemble, lat, lon),
         "climatology": (weather.climatology, lat, lon),
         "satellite": (sentinel2.field_timeseries, geom),
+        "radar": (sentinel1.field_timeseries, geom),
         "terrain": (terrain.terrain_profile, geom),
         "water": (terrain.water_features, lat, lon),
         "river": (terrain.river_discharge, lat, lon),
@@ -152,7 +153,15 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
     latest_clear = sat["latest_clear"] if sat else None
     sat_age = sat["latest_clear_age_days"] if sat else None
     soil_theta = _soil_now(wx)
-    init = initial_state(params, soil_theta, latest_clear["field"].get("water_fraction") if latest_clear else None, sat_age)
+    radar = src["radar"]["value"] if src["radar"]["ok"] else None
+    if radar:
+        sources.append({"name": radar["source"], "captured_at": radar["captured_at"]})
+    wf = latest_clear["field"].get("water_fraction") if latest_clear else None
+    wf_age, sensor = sat_age, ("citra Sentinel-2 bersih", "clear Sentinel-2 scene")
+    # Radar sees through cloud: use it for the starting water level when the optical scene is stale.
+    if radar and (sat_age is None or sat_age > 12) and radar["latest_age_days"] <= 6 and radar["latest"]["field"]["usable"]:
+        wf, wf_age, sensor = radar["latest"]["field"]["water_fraction"], radar["latest_age_days"], ("citra radar Sentinel-1", "Sentinel-1 radar scene")
+    init = initial_state(params, soil_theta, wf, wf_age, sensor)
     if opts.get("initial_ponding_mm") is not None:
         init.ponding_mm = float(opts["initial_ponding_mm"])
         init.basis.append(
@@ -262,6 +271,9 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
         exposure = 1.0 if h < 1 else 0.6 if h < 3 else 0.2 if h < 6 else 0.0
         p_river = river["exceed_prob"] * exposure
     sig_f = [s for s in anom["signals"] if s["kind"] == "flood"]
+    radar_sig = sentinel1.flood_signal(radar) if radar else None
+    if radar_sig:
+        sig_f.append(radar_sig)
     p_sat_f = 1 - math.prod(1 - s["weight"] for s in sig_f)
     p_flood = 1 - (1 - p_phys_f) * (1 - p_river) * (1 - p_sat_f)
 
@@ -270,7 +282,7 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
 
     conf_points = 0
     conf_points += 1 if src["ensemble"]["ok"] else 0
-    conf_points += 1 if sat_age is not None and sat_age <= 15 else 0
+    conf_points += 1 if (sat_age is not None and sat_age <= 15) or (radar and radar["latest_age_days"] <= 7) else 0
     conf_points += 1 if dat is not None and stage_reliable else 0
     confidence = ["low", "low", "medium", "high"][conf_points]
 
@@ -399,6 +411,16 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
             "scenes_searched": sat["scenes_searched"] if sat else 0,
             "scenes_usable": sat["scenes_usable"] if sat else 0,
             "anomalies": {k: v for k, v in anom.items() if k != "latest"},
+        },
+        "radar": None
+        if not radar
+        else {
+            "latest": radar["latest"],
+            "latest_age_days": radar["latest_age_days"],
+            "ring_water_now": radar["ring_water_now"],
+            "ring_water_median": radar["ring_water_median"],
+            "scenes": len(radar["series"]),
+            "flood_signal": radar_sig is not None,
         },
         "terrain": ter,
         "hand": hand,

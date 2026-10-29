@@ -38,6 +38,9 @@ class Settings:
     # Fields above this size slow the satellite reads and multiply elevation requests.
     max_field_ha: float = float(os.getenv("JAGAPADI_MAX_FIELD_HA", "200"))
     allowed_origins: str = os.getenv("JAGAPADI_CORS", "http://localhost:5173")
+    # Telegram early warnings: bot token from @BotFather; the morning round runs at this hour (WIB).
+    telegram_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    alert_hour: int = int(os.getenv("JAGAPADI_ALERT_HOUR", "6"))
 
 
 settings = Settings()

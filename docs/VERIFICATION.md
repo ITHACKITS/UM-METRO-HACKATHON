@@ -6,13 +6,13 @@ Run on 2026-10-29, Windows 11, Chrome (ANGLE D3D11), Python 3.12, Node 24.
 
 | Check | Command | Result |
 |---|---|---|
-| Backend unit tests | `cd backend && python -m pytest -q` | 15 passed |
+| Backend unit tests | `cd backend && python -m pytest -q` | 25 passed |
 | Lint | `ruff check app tests` | All checks passed |
 | Type check + production build | `cd frontend && npm run build` | built, no type errors |
-| End-to-end | `python scripts/qa.py http://localhost:5173 <dir>` | 47 checks passed, 0 console errors, 0 failed same-origin requests |
-| Production serving | API on :8011 with built `frontend/dist` | `/`, `/app`, `/credits`, `/api/health`, favicon, mascot all HTTP 200 |
+| End-to-end | `python scripts/qa.py http://localhost:5173 <dir>` | 63 checks passed, 0 console errors, 0 failed same-origin requests |
+| Production serving | API on :8010 with built `frontend/dist`, `JAGAPADI_OFFLINE=1` | `/`, `/app`, `/ppl`, `/api/health`, `/api/demo-group` HTTP 200; `/api/verdict` answers from recordings |
 
-The end-to-end suite covers: landing loader and diorama frames; dock water modes, stage, hour; language switch; anchor navigation; stat citation links; credits; 404; no-WebGL fallback; reduced motion; app empty state; a rejected tiny field; demo analysis; all six tabs; Indonesian drivers; day slider and player; basemap switch; water tab honesty when OSM is down; crop-age edit; scenario mode and its hypothetical banner; back to real; chatbot answers with numbers and sources; pest answer; Escape closes chat; return to landing without loader replay or style leaks; 360 px mobile overflow, tabs and tap targets.
+The end-to-end suite covers: landing loader and diorama frames; dock water modes, stage, hour; language switch; anchor navigation; stat citation links; credits; 404; no-WebGL fallback; reduced motion; app empty state; a rejected tiny field; demo analysis; farmer verdict, reason and action; tabs hidden in the farmer view; plain-word player; Telegram button hidden without a bot; watch button; expert view; all six tabs; Indonesian drivers; day slider and player; basemap switch; water tab honesty when OSM is down; crop-age edit; scenario mode and its hypothetical banner; back to real; chatbot answers with numbers and sources; pest answer; Escape closes chat; return to landing without loader replay or style leaks; officer dashboard (watched field listed, empty state, sample group of five, tally, risk order, map, opening a plot); 360 px mobile farmer verdict, overflow, tabs and tap targets.
 
 ## Failure paths checked
 
@@ -47,7 +47,9 @@ No keys are committed: `backend/.env` is ignored and only `.env.example` is trac
 
 ## Not verified
 
-- No deployment URL yet (Dockerfile and compose file provided and the production build was tested locally).
+- No deployment URL yet (Dockerfile, compose file and `render.yaml` provided; production serving tested locally). The Docker image itself was not built here because Docker Desktop was not running.
+- Si Padi verified live on Gemini (free tier): field_summary, drought_outlook, pest_outlook and run_scenario tool calls answered from the field data.
+- No live Telegram bot (no token). The alert flow is covered by unit tests with a fake sender: linking, reuse refused, morning round, one all-clear, stop.
 - No Lighthouse score recorded.
 - Not tested on a physical phone; mobile checked with Chrome device emulation (390×844, 360×780).
 - The anti-slop Delivery Gate was not run (skills not installed, see DECISIONS.md).

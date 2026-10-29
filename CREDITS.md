@@ -16,7 +16,7 @@
 
 ## Libraries
 
-React, React Router, Vite, TypeScript, Three.js, MapLibre GL JS, GSAP (ScrollTrigger), FastAPI, Uvicorn, httpx, pydantic, numpy, rasterio (GDAL), shapely, pyproj, Anthropic Python SDK, Playwright (tests), Pillow and SciPy (asset scripts).
+React, React Router, Vite, TypeScript, Three.js, MapLibre GL JS, GSAP (ScrollTrigger), FastAPI, Uvicorn, httpx, pydantic, numpy, rasterio (GDAL), shapely, pyproj, Anthropic Python SDK, Google Gen AI Python SDK, Playwright (tests), Pillow and SciPy (asset scripts).
 
 ## Methods
 

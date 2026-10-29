@@ -7,6 +7,7 @@ recorded responses are served, so a demo survives without network.
 
 import hashlib
 import json
+import re
 import threading
 import time
 from datetime import datetime, timezone
@@ -40,6 +41,28 @@ def _key(source: str, method: str, url: str, params: Any, body: Any) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _undated(x: Any) -> Any:
+    """The request with every date blanked, so a recording still matches on a later day."""
+    if isinstance(x, str):
+        return _DATE.sub("*", x)
+    if isinstance(x, dict):
+        return {k: _undated(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_undated(v) for v in x]
+    return x
+
+
+def _replay(source: str, key: str, ukey: str) -> dict | None:
+    for name in (f"{source}-{key}.json", f"{source}-u{ukey}.json"):
+        f = REPLAY_DIR / name
+        if f.exists():
+            return json.loads(f.read_text(encoding="utf-8"))
+    return None
+
+
 def _mark(source: str, ok: bool, detail: str = "") -> None:
     _status[source] = {
         "ok": ok,
@@ -71,10 +94,10 @@ def fetch_json(
         if hit and hit[0] > now:
             return hit[1], hit[2]
 
-    replay_file = REPLAY_DIR / f"{source}-{key}.json"
+    ukey = _key(source, method, url, _undated(params), _undated(body))
     if settings.offline:
-        if replay_file.exists():
-            rec = json.loads(replay_file.read_text(encoding="utf-8"))
+        rec = _replay(source, key, ukey)
+        if rec:
             return rec["payload"], rec["captured_at"]
         raise SourceUnavailable(source, "offline mode and no recorded response for this request")
 
@@ -104,17 +127,17 @@ def fetch_json(
             _mark(source, True)
             if settings.record:
                 REPLAY_DIR.mkdir(parents=True, exist_ok=True)
-                replay_file.write_text(
-                    json.dumps({"source": source, "url": url, "captured_at": captured, "payload": payload}),
-                    encoding="utf-8",
-                )
+                rec = json.dumps({"source": source, "url": url, "captured_at": captured, "payload": payload})
+                (REPLAY_DIR / f"{source}-{key}.json").write_text(rec, encoding="utf-8")
+                # Latest recording of the same request on any day.
+                (REPLAY_DIR / f"{source}-u{ukey}.json").write_text(rec, encoding="utf-8")
             return payload, captured
         except (httpx.HTTPError, ValueError) as e:
             last_err = f"{type(e).__name__}: {e}"
             time.sleep(1.0 * (attempt + 1))
 
-    if replay_file.exists():
-        rec = json.loads(replay_file.read_text(encoding="utf-8"))
+    rec = _replay(source, key, ukey)
+    if rec:
         _mark(source, False, f"live failed ({last_err}); served recording")
         return rec["payload"], rec["captured_at"]
     _mark(source, False, last_err)

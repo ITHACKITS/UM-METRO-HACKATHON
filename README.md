@@ -15,7 +15,7 @@ Satellite, weather and terrain data turned into a two-week outlook and a plan fo
   <img alt="backend" src="https://img.shields.io/badge/backend-FastAPI-1b2a23" />
   <img alt="map" src="https://img.shields.io/badge/map-MapLibre%20GL-7fa35b" />
   <img alt="data" src="https://img.shields.io/badge/data-Sentinel--2%20%C2%B7%20ECMWF%20%C2%B7%20GloFAS-e2a93b" />
-  <img alt="tests" src="https://img.shields.io/badge/tests-15%20unit%20%2B%2047%20e2e-4f8a3a" />
+  <img alt="tests" src="https://img.shields.io/badge/tests-25%20unit%20%2B%2063%20e2e-4f8a3a" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgrey" />
 </p>
 
@@ -40,16 +40,17 @@ Satellite, weather and terrain data turned into a two-week outlook and a plan fo
 4. [Screens](#screens)
 5. [Try it in three steps](#try-it-in-three-steps)
 6. [Run locally](#run-locally)
-7. [Architecture](#architecture)
-8. [Scientific method](#scientific-method)
-9. [Validation and limitations](#validation-and-limitations)
-10. [Data sources](#data-sources)
-11. [API](#api)
-12. [Testing](#testing)
-13. [Repository structure](#repository-structure)
-14. [Other documentation](#other-documentation)
-15. [Team](#team)
-16. [License and attribution](#license-and-attribution)
+7. [Deploy](#deploy)
+8. [Architecture](#architecture)
+9. [Scientific method](#scientific-method)
+10. [Validation and limitations](#validation-and-limitations)
+11. [Data sources](#data-sources)
+12. [API](#api)
+13. [Testing](#testing)
+14. [Repository structure](#repository-structure)
+15. [Other documentation](#other-documentation)
+16. [Team](#team)
+17. [License and attribution](#license-and-attribution)
 
 ## Problem
 
@@ -58,16 +59,18 @@ Indonesian rice farmers usually learn a field is short of water when the soil ha
 - Indonesia's 2023 rice harvested area fell to about 10.21 million ha, **down 2.29%** from 2022, as El Niño strengthened in the second half of the year ([BPS via Bisnis.com, 1 Mar 2024](https://ekonomi.bisnis.com/read/20240301/99/1745543/bps-luas-panen-padi-2023-merosot-229-sepanjang-2023)).
 - National rice production in 2023 was 31.10 million tonnes, **about 440,000 tonnes lower** than 2022 ([BPS via Kontan](https://nasional.kontan.co.id/news/produksi-beras-nasional-turun-440000-ton-pada-2023-bps-terdampak-el-nino)).
 - In the 2019 dry season, the Ministry of Agriculture recorded **102,746 ha** of rice affected by drought and **9,358 ha** of total crop failure (puso) ([Kementan via detikFinance](https://finance.detik.com/berita-ekonomi-bisnis/d-4616392/9-300-hektare-sawah-gagal-panen)).
+- An El Niño is building again: NOAA's Oceanic Niño Index reached **+1.80 in July 2026 and +2.16 in August 2026** ([NOAA PSL, ONI](https://psl.noaa.gov/data/correlation/oni.data)).
 
 ## Summary
 
 A farmer or extension officer draws a field on a satellite map. Jagapadi then:
 
-1. reads the field's own **Sentinel-2** history (NDVI greenness, NDWI canopy water, open water) and compares it with the land around it;
+1. reads the field's own **Sentinel-2** history (NDVI greenness, NDWI canopy water, open water) and **Sentinel-1** radar (water through cloud), and compares both with the land around it;
 2. runs an **FAO-56 paddy water balance** across all **51 ECMWF ensemble** rain scenarios, extended to 30 days with a 10-year ERA5 climatology;
 3. checks **river flow** (GloFAS) against the 2-year flood and the field's height above the nearest channel;
 4. combines physics and satellite signals into a drought risk, a flood risk and a pest weather-suitability level, each with the reasons behind it;
-5. gives ranked, feasible actions, the nearest mapped water source, a scenario simulator, a grounded chatbot and a printable A4 report.
+5. says it plainly, **Aman / Waspada / Bahaya** with one action for today, and sends it to the farmer's **Telegram** every morning while the field is at risk;
+6. gives extension officers a **dashboard** of all their plots ranked by risk, plus ranked actions, the nearest mapped water source, a scenario simulator, a grounded chatbot and a printable A4 report.
 
 Every number on screen comes from a live source or a calculation from one, with its capture time. When a source fails, the app says which one and why.
 
@@ -75,16 +78,19 @@ Every number on screen comes from a live source or a calculation from one, with 
 
 | Feature | What it does |
 |---|---|
+| Farmer view (Petani) | The default screen: one status (**Aman / Waspada / Bahaya**), one sentence on why, and one thing to do today. Charts and probabilities move to the **Ahli** (expert) view. |
+| Telegram alerts | One tap links a field to a Telegram chat. Every morning (06:00 WIB) the bot messages while the field is at risk, and once more when it turns safe. `/cek` checks now, `/stop` unsubscribes. |
+| Extension officer dashboard | `/ppl`: every plot an officer advises on one map, coloured and ranked by risk. Import or export plot outlines as GeoJSON, open any plot's full analysis. |
 | Field drawing | Tap the corners of a plot on Esri or Sentinel-2 cloudless imagery; size limits keep analysis fast. |
 | Drought outlook | P5/P50/P95 day when water stress starts, daily stress probability, drivers, ranked actions (AWD, bund repair, pumping, mulch, group water rotation). |
-| Flood outlook | Ponding depth vs plant height, days of full submergence, GloFAS river ensemble vs the 2-year flood, height above the channel. |
+| Flood outlook | Ponding depth vs plant height, days of full submergence, GloFAS river ensemble vs the 2-year flood, height above the channel, and Sentinel-1 radar water (sees through cloud). |
 | Pest suitability | Blast, bacterial leaf blight, brown planthopper and stem borer from published favourable ranges; scouting steps, never pesticide doses. |
 | Water sources | Rivers, canals, ponds, reservoirs and wells from OpenStreetMap with distance and a line on the map. |
 | Scenario simulator | Change rain, delay the rains, add warming, an extreme storm or irrigation; results are stamped **hypothetical**. |
 | Day player | Scrub or play 30 days; the field recolours by stress or water depth; a heat strip shows risky days at a glance. |
-| Si Padi chatbot | Answers only from the field's analysis via tools, cites sources, says when data is missing; works without an LLM key using templates. |
+| Si Padi chatbot | Answers only from the field's analysis via tools, cites sources, says when data is missing. Runs on Claude or Google Gemini (`LLM_PROVIDER`); without a key it answers from templates. |
 | Field report | A4 print layout with map snapshot, gauges, charts, actions, pests, water sources, sources and a signature line for the PPL. |
-| Offline replay | `JAGAPADI_OFFLINE=1` serves recorded real responses (with capture times) when venue Wi-Fi fails. |
+| Offline replay | `JAGAPADI_OFFLINE=1` serves recorded real responses (with capture times) when venue Wi-Fi fails. Recordings still match on later days. |
 | IoT ingest | `POST /api/sensors/{field}` for an ESP32 soil-moisture and water-level device; sample firmware in `scripts/firmware`. |
 | Bilingual | Bahasa Indonesia first, English toggle everywhere, including backend explanations. |
 
@@ -107,16 +113,20 @@ Every number on screen comes from a live source or a calculation from one, with 
 
 <table>
   <tr>
-    <td align="center" width="50%"><img src="docs/screenshots/app-ringkasan.png" alt="Summary with risk gauges" /><br/><sub>Summary with risk gauges</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-petani.png" alt="Farmer view: one status, one reason, one action" /><br/><sub>Farmer view: one status, one reason, one action</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/ppl-dashboard.png" alt="Extension officer dashboard: plots ranked by risk" /><br/><sub>Extension officer dashboard: plots ranked by risk</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-ringkasan.png" alt="Expert view: summary with risk gauges" /><br/><sub>Expert view: summary with risk gauges</sub></td>
     <td align="center" width="50%"><img src="docs/screenshots/app-kering.png" alt="Drought outlook and actions" /><br/><sub>Drought outlook and actions</sub></td>
   </tr>
   <tr>
-    <td align="center" width="50%"><img src="docs/screenshots/app-banjir.png" alt="Flood outlook" /><br/><sub>Flood outlook</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-banjir.png" alt="Flood outlook with radar water" /><br/><sub>Flood outlook with radar water</sub></td>
     <td align="center" width="50%"><img src="docs/screenshots/app-hama.png" alt="Pest risk" /><br/><sub>Pest risk</sub></td>
   </tr>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/app-simulator.png" alt="Scenario simulator" /><br/><sub>Scenario simulator</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/app-chat.png" alt="Si Padi chatbot" /><br/><sub>Si Padi chatbot</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-chat.png" alt="Si Padi answering with Gemini, from the field's data" /><br/><sub>Si Padi answering with Gemini, from the field's data</sub></td>
   </tr>
 </table>
 
@@ -125,7 +135,7 @@ Every number on screen comes from a live source or a calculation from one, with 
 <table>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/mobile-landing.png" alt="Landing" width="260" /><br/><sub>Landing</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/mobile-app.png" alt="Field workspace" width="260" /><br/><sub>Field workspace</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/mobile-app.png" alt="Farmer view" width="260" /><br/><sub>Farmer view</sub></td>
   </tr>
 </table>
 
@@ -135,9 +145,11 @@ A sample printed report: [docs/screenshots/laporan-contoh.pdf](docs/screenshots/
 
 1. Open the app and press **Buka peta** (Open map).
 2. Press **Pakai lahan contoh** (sample field in Metro Utara) or **Gambar lahan** and tap the corners of your field.
-3. Read the Summary, Drought and Flood tabs, play the timeline, then try **Uji skenario** (test scenario) or ask Si Padi.
+3. Read the status card and today's action. Press **Kirim peringatan ke Telegram** to get it every morning, or **Lihat detail lengkap** for the charts, the scenario simulator and Si Padi.
 
-The first analysis of a field takes about a minute because Sentinel-2 scenes are read live; repeat requests are cached.
+For a farmer group, open **Dasbor penyuluh** (`/ppl`) and press **Pakai contoh kelompok tani**: five real plots from OpenStreetMap, ranked by risk.
+
+A new area takes up to a minute because satellite scenes are read live. Neighbouring plots reuse those pixels and take a few seconds.
 
 ## Run locally
 
@@ -167,12 +179,20 @@ docker compose up --build    # http://localhost:8000
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `LLM_PROVIDER` / `LLM_API_KEY` / `LLM_MODEL` | empty / empty / `claude-opus-5-5` | Grounded chatbot through the Anthropic API. Without a key, template answers are used. |
+| `LLM_PROVIDER` / `LLM_API_KEY` / `LLM_MODEL` | `anthropic` / empty / `claude-opus-5-5` | Grounded chatbot. `anthropic` uses Claude; `gemini` uses Google Gemini (free tier from AI Studio; model defaults to `gemini-3.8-flash`). Same tools and rules either way. Without a key, template answers are used. |
 | `OPENWEATHER_API_KEY` | empty | Optional current conditions from OpenWeather. |
 | `JAGAPADI_OFFLINE` | `0` | `1` serves only recorded real responses from `backend/data/replay`. |
 | `JAGAPADI_RECORD` | `0` | `1` records every live response with its capture time. |
+| `TELEGRAM_BOT_TOKEN` | empty | Turns on Telegram alerts. Create a bot with [@BotFather](https://t.me/BotFather) (two minutes) and paste its token. Run a single API worker. |
+| `JAGAPADI_ALERT_HOUR` | `6` | Hour (WIB) of the morning alert round. |
 | `JAGAPADI_MAX_FIELD_HA` | `200` | Largest field accepted. |
 | `JAGAPADI_CORS` | `http://localhost:5173` | Allowed browser origins for the API. |
+
+## Deploy
+
+The repository is a [Render](https://render.com) Blueprint: **New → Blueprint →** pick this repo. `render.yaml` builds the Docker image (web app served by the API) and asks for the optional keys. The free plan sleeps after 15 minutes idle, so the first visit takes about a minute and Telegram alerts only run while it is awake. For a demo with doubtful internet, set `JAGAPADI_OFFLINE=1`: the committed recordings cover the sample field and the sample farmer group.
+
+Any host that runs a Docker image works the same way (`PORT` is read from the environment).
 
 ## Architecture
 
@@ -219,10 +239,12 @@ flowchart LR
 ## Validation and limitations
 
 - **Water-balance consistency check** (`GET /api/validation`): the balance driven only by past rain and ET0 is compared with Open-Meteo's modelled 9-27 cm soil moisture over 60 days. For the demo field on 28 Oct 2026: Pearson r = 0.095, MAE = 0.037 m³/m³. This is model against model, not ground truth, and the weak correlation is reported as measured.
-- **Drought and flood event skill: not testable.** There is no field-level record of past stress or inundation for arbitrary fields. Jagapadi does not claim an accuracy it has not measured.
+- **Drought hindcast, 2005-2025** ([docs/validation/hindcast-metro-utara.json](docs/validation/hindcast-metro-utara.json)): the water balance runs on ERA5 through every dry-season crop (rainfed, transplanted 1 June and 1 July). Stress days are compared with two indices measured independently by NOAA: ONI (El Niño) and DMI (Indian Ocean Dipole). Rank correlation with ONI 0.64, with DMI 0.74; a random El Niño or positive-IOD year scores higher than a random other year 95% of the time (AUC 0.95). The three worst years it finds, 2015, 2009 and 2019, are all El Niño or IOD+ years; the wettest, 2010 and 2022, are La Niña.
+  - What this does **not** show: a plain dry-season rain total scores the same (ONI 0.64, DMI 0.78, AUC 0.95), so at season scale the water balance adds nothing over rainfall. And 2023 ranks only 11th of 21: ERA5 shows 287 mm of June-October rain at this grid point, so the 2023 El Niño is not singled out here.
+- **Field-level event skill: not testable yet.** There is no record of past stress or inundation for individual fields. The next step is 5-10 seasons of records from a farmer group or the Metro agriculture office.
 - Paddy ponding at the start is estimated from the open-water fraction of a recent clear scene; with no clear scene it starts at 0 mm (the cautious choice for drought). Irrigation is assumed to be zero unless the user enters it.
 - The DEM is 90 m: bunds and small levees are not resolved. GloFAS resolves rivers on a ~5 km grid; canals and ditches are not represented.
-- Indonesia is cloudy; usable Sentinel-2 scenes can be weeks apart. Scene age is always shown. Sentinel-1 radar (cloud-proof) is not yet integrated.
+- Indonesia is cloudy; usable Sentinel-2 scenes can be weeks apart. Scene age is always shown. Sentinel-1 radar fills in the starting water level when the optical scene is older than 12 days, and raises a flood signal only when the surroundings, not the paddy itself, are much wetter than their own history (standing water in a paddy is normal). The −18 dB water threshold is a common literature value, not calibrated for Metro.
 - Soil hydraulic values are a clay-loam default, not measured per field (SoilGrids not yet integrated).
 - Pest levels are weather suitability, not detection.
 - OpenStreetMap coverage of small canals varies, and the public Overpass servers were overloaded during development; the app reports this instead of guessing.
@@ -232,6 +254,8 @@ flowchart LR
 | Source | Used for | Update | Access |
 |---|---|---|---|
 | Copernicus Sentinel-2 L2A (Element84 Earth Search, AWS Open Data) | NDVI, NDWI, water fraction | 5-day revisit | No key, COG windows |
+| Copernicus Sentinel-1 RTC (Microsoft Planetary Computer) | Radar open water through cloud | 6-12 days | No key (anonymous token) |
+| NOAA PSL: ONI and DMI | Hindcast check against El Niño and the Indian Ocean Dipole | Monthly | No key |
 | Open-Meteo Forecast | Daily weather, ET0, soil moisture | Hourly | No key |
 | Open-Meteo Ensemble (ECMWF IFS 0.25°) | 51 rain scenarios, 15 days | 6-hourly | No key |
 | Open-Meteo Historical (ERA5) | 10-year climatology | Daily (5-day lag) | No key |
@@ -249,10 +273,13 @@ Details, licences and check dates: [backend/docs/SOURCES.md](backend/docs/SOURCE
 |---|---|---|
 | GET | `/api/health` | Status of each source, offline/LLM flags |
 | GET | `/api/demo-field` | The sample field polygon and its provenance |
+| GET | `/api/demo-group` | Five sample plots for the officer dashboard |
+| POST | `/api/verdict` | Short form of the analysis: status, reason, today's action, risks |
+| POST | `/api/alerts/subscribe` | One-time Telegram link for a field |
 | POST | `/api/validate-field` | Check a polygon (shape, size) before analysis |
 | POST | `/api/analyze` | Full analysis; optional `days_after_transplant`, `irrigation_mm_day`, `initial_ponding_mm`, `scenario` |
 | POST | `/api/chat` | Grounded chatbot over a field's analysis |
-| GET | `/api/validation?lat=&lon=` | Water-balance consistency check |
+| GET | `/api/validation?lat=&lon=` | Water-balance consistency check and the 2005-2025 drought hindcast |
 | POST / GET | `/api/sensors/{field_id}` | IoT readings in / out |
 
 Request and response shapes: [backend/docs/API_CONTRACT.md](backend/docs/API_CONTRACT.md).
@@ -260,11 +287,11 @@ Request and response shapes: [backend/docs/API_CONTRACT.md](backend/docs/API_CON
 ## Testing
 
 ```bash
-npm test                        # 15 backend unit tests + ruff
-npm run qa                      # 47 end-to-end browser checks (servers must be running)
+npm test                        # 25 backend unit tests + ruff
+npm run qa                      # 63 end-to-end browser checks (servers must be running)
 ```
 
-The end-to-end suite drives every feature in Chrome: landing story and dock, language switch, reduced motion, no-WebGL fallback, field drawing (including a rejected tiny field), every tab, timeline, basemap, crop-age edit, scenario mode, chatbot, return-to-landing regressions, and 360 px mobile checks (overflow and tap targets). Results: [docs/VERIFICATION.md](docs/VERIFICATION.md).
+The end-to-end suite drives every feature in Chrome: landing story and dock, farmer view and watch button, officer dashboard (sample group, ranking, opening a plot), language switch, reduced motion, no-WebGL fallback, field drawing (including a rejected tiny field), every tab, timeline, basemap, crop-age edit, scenario mode, chatbot, return-to-landing regressions, and 360 px mobile checks (overflow and tap targets). Results: [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Repository structure
 

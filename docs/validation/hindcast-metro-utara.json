@@ -1,0 +1,267 @@
+{
+ "status": "ok",
+ "check": "dry-season water-stress days (ERA5-driven water balance, rainfed) vs independent ENSO/IOD indices",
+ "is_ground_truth": false,
+ "location": {
+  "lat": -5.0998,
+  "lon": 105.3356
+ },
+ "years": [
+  2005,
+  2025
+ ],
+ "season": "110-day crop transplanted 1 June and 1 July, mean of the two",
+ "water_balance": {
+  "spearman_vs_oni": 0.64,
+  "spearman_vs_dmi": 0.74,
+  "auc_driver_years": 0.95
+ },
+ "rain_only_baseline": {
+  "spearman_vs_oni": 0.64,
+  "spearman_vs_dmi": 0.78,
+  "auc_driver_years": 0.95
+ },
+ "driver_years": [
+  2006,
+  2009,
+  2012,
+  2015,
+  2018,
+  2019,
+  2023
+ ],
+ "top_quarter_by_stress": [
+  2015,
+  2009,
+  2019,
+  2006,
+  2012
+ ],
+ "table": [
+  {
+   "year": 2015,
+   "stress_days": 94.5,
+   "season_rain_mm": 76.5,
+   "oni_jun_oct": 1.73,
+   "dmi_aug_oct": 0.45,
+   "el_nino": true,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2009,
+   "stress_days": 87.5,
+   "season_rain_mm": 181.7,
+   "oni_jun_oct": 0.6,
+   "dmi_aug_oct": -0.07,
+   "el_nino": true,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2019,
+   "stress_days": 87.5,
+   "season_rain_mm": 156.2,
+   "oni_jun_oct": 0.4,
+   "dmi_aug_oct": 0.76,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2006,
+   "stress_days": 84.5,
+   "season_rain_mm": 141.4,
+   "oni_jun_oct": 0.33,
+   "dmi_aug_oct": 0.41,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2012,
+   "stress_days": 82.5,
+   "season_rain_mm": 164.6,
+   "oni_jun_oct": 0.27,
+   "dmi_aug_oct": 0.41,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2011,
+   "stress_days": 82.0,
+   "season_rain_mm": 168.3,
+   "oni_jun_oct": -0.58,
+   "dmi_aug_oct": 0.3,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  },
+  {
+   "year": 2018,
+   "stress_days": 80.0,
+   "season_rain_mm": 261.8,
+   "oni_jun_oct": 0.39,
+   "dmi_aug_oct": 0.47,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2007,
+   "stress_days": 72.5,
+   "season_rain_mm": 249.1,
+   "oni_jun_oct": -0.82,
+   "dmi_aug_oct": 0.18,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  },
+  {
+   "year": 2008,
+   "stress_days": 71.5,
+   "season_rain_mm": 318.4,
+   "oni_jun_oct": -0.34,
+   "dmi_aug_oct": 0.08,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2005,
+   "stress_days": 70.0,
+   "season_rain_mm": 307.9,
+   "oni_jun_oct": -0.09,
+   "dmi_aug_oct": -0.44,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2023,
+   "stress_days": 63.5,
+   "season_rain_mm": 287.0,
+   "oni_jun_oct": 1.24,
+   "dmi_aug_oct": 0.86,
+   "el_nino": true,
+   "la_nina": false,
+   "iod_positive": true
+  },
+  {
+   "year": 2014,
+   "stress_days": 60.5,
+   "season_rain_mm": 289.2,
+   "oni_jun_oct": 0.22,
+   "dmi_aug_oct": -0.13,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2024,
+   "stress_days": 59.0,
+   "season_rain_mm": 430.6,
+   "oni_jun_oct": -0.02,
+   "dmi_aug_oct": 0.06,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2017,
+   "stress_days": 47.0,
+   "season_rain_mm": 446.9,
+   "oni_jun_oct": -0.06,
+   "dmi_aug_oct": 0.13,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2021,
+   "stress_days": 37.5,
+   "season_rain_mm": 507.2,
+   "oni_jun_oct": -0.51,
+   "dmi_aug_oct": -0.08,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  },
+  {
+   "year": 2020,
+   "stress_days": 35.5,
+   "season_rain_mm": 517.2,
+   "oni_jun_oct": -0.53,
+   "dmi_aug_oct": -0.1,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  },
+  {
+   "year": 2016,
+   "stress_days": 33.0,
+   "season_rain_mm": 509.6,
+   "oni_jun_oct": -0.27,
+   "dmi_aug_oct": -0.42,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2013,
+   "stress_days": 30.0,
+   "season_rain_mm": 594.3,
+   "oni_jun_oct": -0.33,
+   "dmi_aug_oct": -0.22,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2025,
+   "stress_days": 12.0,
+   "season_rain_mm": 641.3,
+   "oni_jun_oct": -0.28,
+   "dmi_aug_oct": -0.45,
+   "el_nino": false,
+   "la_nina": false,
+   "iod_positive": false
+  },
+  {
+   "year": 2010,
+   "stress_days": 0.0,
+   "season_rain_mm": 731.8,
+   "oni_jun_oct": -1.17,
+   "dmi_aug_oct": -0.26,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  },
+  {
+   "year": 2022,
+   "stress_days": 0.0,
+   "season_rain_mm": 897.3,
+   "oni_jun_oct": -0.79,
+   "dmi_aug_oct": -0.42,
+   "el_nino": false,
+   "la_nina": true,
+   "iod_positive": false
+  }
+ ],
+ "sources": [
+  {
+   "name": "ERA5 via Open-Meteo archive",
+   "captured_at": "2026-10-28T23:44:18+00:00"
+  },
+  {
+   "name": "ONI, NOAA CPC via PSL",
+   "url": "https://psl.noaa.gov/data/correlation/oni.data"
+  },
+  {
+   "name": "DMI HadISST1.1, NOAA PSL",
+   "url": "https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/dmi.had.long.data"
+  }
+ ],
+ "note": "Indices describe the regional climate, not this field. Agreement shows the model reacts to the climate signals that drive real droughts here; field-level skill still needs farmer or extension-office records."
+}

@@ -42,6 +42,29 @@ export type Pest = {
   action?: { id: string; en: string };
 };
 
+export type Bi = { id: string; en: string };
+export type Status = "aman" | "waspada" | "bahaya";
+export type Verdict = {
+  status: Status;
+  threat: "drought" | "flood" | "pest" | null;
+  probability: number;
+  headline: Bi;
+  why: Bi;
+  today: Bi;
+  confidence: "low" | "medium" | "high";
+};
+export type VerdictSummary = {
+  status: "ok" | "insufficient-data";
+  field: { area_ha: number; lat: number; lon: number };
+  verdict?: Verdict;
+  drought?: Pick<Risk, "probability" | "level" | "first_stress_day">;
+  flood?: Pick<Risk, "probability" | "level" | "max_submergence_days">;
+  pest_high?: Bi[];
+  stage?: string;
+  scene_age_days?: number | null;
+  generated_at?: string;
+};
+
 export type Analysis = {
   status: "ok" | "insufficient-data";
   mode: "real" | "test";
@@ -85,6 +108,14 @@ export type Analysis = {
     share_of_surroundings_lower: number;
     note: string;
   } | null;
+  radar: {
+    latest: { datetime: string; orbit: string; field: { usable: boolean; vv_db_mean?: number; water_fraction?: number } };
+    latest_age_days: number;
+    ring_water_now: number | null;
+    ring_water_median: number | null;
+    scenes: number;
+    flood_signal: boolean;
+  } | null;
   hand: { height_above_channel_m: number; channel: string; channel_distance_m: number; method: string } | null;
   water_sources: WaterFeature[];
   river: {
@@ -124,6 +155,7 @@ export type Analysis = {
   sources: { name: string; captured_at: string }[];
   unavailable: { name: string; source: string; reason: string }[];
   disclaimer: Txt;
+  verdict: Verdict;
 };
 
 export type Scenario = {
@@ -168,6 +200,7 @@ const post = <T,>(path: string, body: unknown, signal?: AbortSignal) =>
 
 export const api = {
   demoField: () => request<{ name: string; geometry: Polygon; source: string }>("/api/demo-field"),
+  demoGroup: () => request<{ name: string; source: string; fields: { id: string; name: string; geometry: Polygon }[] }>("/api/demo-group"),
   validate: (geometry: Polygon) =>
     post<{ valid: boolean; reason?: string; area_ha?: number; lat?: number; lon?: number }>("/api/validate-field", { geometry }),
   analyze: (geometry: Polygon, opts: AnalyzeOptions = {}, signal?: AbortSignal) =>
@@ -179,5 +212,14 @@ export const api = {
       lang,
       days_after_transplant: dat ?? undefined,
     }),
-  health: async () => (await fetch("/api/health")).json(),
+  verdict: (geometry: Polygon, dat?: number | null) =>
+    post<VerdictSummary>("/api/verdict", { geometry, days_after_transplant: dat ?? undefined }),
+  alertSubscribe: (geometry: Polygon, name: string, lang: string, dat?: number | null) =>
+    post<{ enabled: boolean; code?: string; link?: string | null }>("/api/alerts/subscribe", {
+      geometry,
+      name,
+      lang,
+      days_after_transplant: dat ?? undefined,
+    }),
+  health: () => request<{ telegram: boolean; llm: boolean; offline_replay: boolean }>("/api/health"),
 };

@@ -1,12 +1,14 @@
 """Grounded field assistant.
 
-The model only sees numbers that came back from the tools below, all of which read
+Claude (LLM_PROVIDER=anthropic) or Gemini (LLM_PROVIDER=gemini) answers with the same
+tools and rules. The model only sees numbers that came back from the tools below, all of which read
 the cached field analysis. Without an LLM key a deterministic template answers the
 common questions from the same data.
 """
 
 import json
 import re
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -143,6 +145,82 @@ def _llm_answer(messages: list[dict], a: dict, rerun) -> dict:
     return {"text": "Pertanyaan ini butuh terlalu banyak langkah. Coba tanyakan lebih spesifik.", "tools_used": used, "engine": "llm"}
 
 
+GEMINI_DEFAULT_MODEL = "gemini-3.8-flash"
+# The free tier allows only a few dozen requests per model per day, and each answer needs 2-3.
+# Each model has its own quota, so a used-up or busy model hands over to the next one.
+GEMINI_CHAIN = ["gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-flash-lite-latest"]
+_gemini_exhausted: dict[str, float] = {}  # model -> time its daily quota ran out
+
+
+def _gemini_answer(messages: list[dict], a: dict, rerun) -> dict:
+    """Same tools and rules as the Claude path, through Google's google-genai SDK (manual function calling)."""
+    from google import genai
+    from google.genai import errors, types
+
+    client = genai.Client(api_key=settings.llm_api_key)
+    first = settings.llm_model if settings.llm_model.startswith("gemini") else GEMINI_DEFAULT_MODEL
+    chain = [m for m in [first, *GEMINI_CHAIN] if time.time() - _gemini_exhausted.get(m, 0) > 3600]
+    if not chain:
+        raise RuntimeError("every Gemini model is over its free quota")
+    model = chain[0]
+    tool = types.Tool(
+        function_declarations=[
+            types.FunctionDeclaration(name=t["name"], description=t["description"], parameters_json_schema=t["input_schema"]) for t in TOOLS
+        ]
+    )
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM,
+        tools=[tool],
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+    )
+    contents = [
+        types.Content(role="user" if m["role"] == "user" else "model", parts=[types.Part.from_text(text=m["content"])])
+        for m in messages
+        if m["role"] in {"user", "assistant"} and m["content"]
+    ][-12:]
+    used: list[str] = []
+
+    def generate():
+        nonlocal model
+        while True:
+            try:
+                return client.models.generate_content(model=model, contents=contents, config=config)
+            except errors.APIError as e:
+                if e.code == 429:
+                    _gemini_exhausted[model] = time.time()
+                elif not (e.code and e.code >= 500):
+                    raise
+                # Quota used up or model busy: move to the next model in the chain.
+                rest = chain[chain.index(model) + 1 :]
+                if not rest:
+                    raise
+                model = rest[0]
+                time.sleep(0.5)
+
+    for _ in range(6):
+        resp = generate()
+        calls = resp.function_calls or []
+        if not calls:
+            text = (resp.text or "").strip()
+            if not text:
+                return {"text": "Maaf, saya tidak bisa menjawab pertanyaan itu.", "tools_used": used, "engine": "llm", "model": model}
+            return {"text": text, "tools_used": used, "engine": "llm", "model": model}
+        # Keep the model's own turn as returned, so its function-call parts stay intact.
+        contents.append(resp.candidates[0].content)
+        parts = []
+        for c in calls:
+            used.append(c.name)
+            try:
+                raw = json.dumps(tool_payload(c.name, a, rerun, dict(c.args or {})), default=str)
+                # Plain JSON for the SDK; very large payloads go as truncated text, like the Claude path.
+                payload = {"result": json.loads(raw) if len(raw) <= 20000 else raw[:20000]}
+            except Exception as e:
+                payload = {"error": str(e)}
+            parts.append(types.Part.from_function_response(name=c.name, response=payload))
+        contents.append(types.Content(role="user", parts=parts))  # the API rejects role "tool"
+    return {"text": "Pertanyaan ini butuh terlalu banyak langkah. Coba tanyakan lebih spesifik.", "tools_used": used, "engine": "llm", "model": model}
+
+
 def _t(x: Any, lang: str) -> str:
     return x.get(lang, x.get("en", "")) if isinstance(x, dict) else str(x)
 
@@ -154,6 +232,14 @@ INTENTS = [
     ("water", r"sumber air|water source|sungai terdekat|embung|sumur|saluran"),
     ("summary", r"umur|fase|stage|ndvi|ndwi|kondisi|status|summary|ringkas"),
 ]
+
+
+SOURCE_WORDS = ("Open-Meteo", "ECMWF", "Sentinel", "GloFAS", "ERA5", "OpenStreetMap", "Copernicus")
+
+
+def _sources_line(a: dict, lang: str) -> str:
+    src = ", ".join(sorted({x["name"].split(" (")[0].split(",")[0] for x in a["sources"]}))
+    return ("Sumber: " if lang == "id" else "Sources: ") + src
 
 
 def _template_answer(messages: list[dict], a: dict, lang: str) -> dict:
@@ -216,15 +302,19 @@ def _template_answer(messages: list[dict], a: dict, lang: str) -> dict:
             f = s["latest_clear_scene"]["field"]
             lines.append(f"Citra bersih terakhir {s['latest_clear_scene']['date']}: NDVI {f['ndvi_mean']}, NDWI {f['ndwi_mean']}.")
         lines.append(f"Keyakinan analisis: {s['confidence']}." if id_ else f"Analysis confidence: {s['confidence']}.")
-    src = ", ".join(sorted({x["name"].split(" (")[0].split(",")[0] for x in a["sources"]}))
-    lines.append(("Sumber: " if id_ else "Sources: ") + src)
+    lines.append(_sources_line(a, lang))
     return {"text": "\n".join(lines), "tools_used": [intent], "engine": "template"}
 
 
 def answer(messages: list[dict], analysis: dict, rerun=None, lang: str = "id") -> dict:
-    if settings.llm_provider == "anthropic" and settings.llm_api_key:
+    llm = {"anthropic": _llm_answer, "gemini": _gemini_answer}.get(settings.llm_provider)
+    if llm and settings.llm_api_key:
         try:
-            return _llm_answer(messages, analysis, rerun)
+            out = llm(messages, analysis, rerun)
+            # The rules ask the model to name its sources; when it forgets, add them like the template does.
+            if out.get("tools_used") and not any(w in out["text"] for w in SOURCE_WORDS):
+                out["text"] += "\n\n" + _sources_line(analysis, lang)
+            return out
         except Exception as e:
             out = _template_answer(messages, analysis, lang)
             out["note"] = f"LLM unavailable ({type(e).__name__}); answered from the template."

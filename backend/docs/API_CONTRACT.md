@@ -41,6 +41,20 @@ Response (abridged):
 
 If weather itself is unavailable: `{ "status": "insufficient-data", "unavailable": [...] }`. Invalid fields: HTTP 422 with the reason.
 
+`verdict` (also in the response): `{ "status": "aman|waspada|bahaya", "threat": "drought|flood|pest|null", "probability": 0.725, "headline": {...}, "why": {...}, "today": {...}, "confidence": "medium" }`. `radar`: latest Sentinel-1 pass, its age, ring water now vs median, `flood_signal`.
+
+## POST /api/verdict
+
+Same body as `/api/analyze`. Returns `{ status, field, verdict, drought: {probability, level, first_stress_day}, flood: {probability, level, max_submergence_days}, pest_high, stage, scene_age_days, generated_at }`. Shares the analysis cache.
+
+## GET /api/demo-group
+
+`{ "name": "...", "source": "OpenStreetMap farmland ways ...", "fields": [{ "id", "name", "geometry" }] }`.
+
+## POST /api/alerts/subscribe
+
+`{ "geometry": ..., "name": "Sawah Pak Budi", "lang": "id", "days_after_transplant": null }` → `{ "enabled": true, "code": "...", "link": "https://t.me/<bot>?start=<code>" }`, or `{ "enabled": false }` when no bot token is set. The code is single-use; unlinked codes expire after two days.
+
 ## POST /api/validate-field
 
 `{ "geometry": ... }` → `{ "valid": true, "area_ha": 10.46, "lat": ..., "lon": ... }` or `{ "valid": false, "reason": "..." }` (always HTTP 200).
@@ -51,7 +65,7 @@ If weather itself is unavailable: `{ "status": "insufficient-data", "unavailable
 
 ## GET /api/validation?lat=&lon=
 
-Water-balance consistency check: `{ "status": "ok", "pearson_r": 0.095, "mae_m3m3": 0.037, "is_ground_truth": false, "drought_event_skill": {"status": "not_testable", ...}, ... }`.
+Water-balance consistency check: `{ "status": "ok", "pearson_r": 0.095, "mae_m3m3": 0.037, "is_ground_truth": false, "drought_event_skill": {"status": "proxy", "water_balance": {"spearman_vs_oni", "spearman_vs_dmi", "auc_driver_years"}, "rain_only_baseline": {...}, "table": [...]}, ... }`.
 
 ## POST /api/sensors/{field_id}
 
