@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "synthetic-workflow-example-v1",
+  "frozen_at": "2026-10-31T12:00:00+07:00",
+  "claim_status": "pending",
+  "synthetic": true,
+  "models": {
+    "disease": {
+      "id": "prithivMLmods/Rice-Leaf-Disease",
+      "revision": "170d10e070c308e0e5337690d67371825591f35b",
+      "artifact_sha256": null,
+      "preprocessing_version": "hf-auto-image-processor-slow@revision+exif-rgb+tta3-consistency-v2"
+    },
+    "pest": {
+      "id": "underdogquality/yolo11s-pest-detection",
+      "revision": "b64a9302e50ae089e52b770fe0d054ac77c1c3d8",
+      "artifact_sha256": null,
+      "preprocessing_version": "yolo11-letterbox-640-rgb-v1"
+    }
+  },
+  "records": [
+    {
+      "image_id": "SYN-DIS-CAL-001",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "perceptual_hash": "0000000000000000",
+      "perceptual_hash_algorithm": "dhash64-v1",
+      "group_id": "SYN-GROUP-001",
+      "split": "calibration",
+      "mode": "disease",
+      "source": { "kind": "synthetic", "dataset_id": "workflow-only", "source_key": "disease-1" },
+      "original_label": "Blast",
+      "canonical_label": "blast",
+      "label_status": "source_label_only",
+      "supported": true,
+      "rights": { "basis": "synthetic metadata only", "consent_record_held_off_git": false, "redistribution_allowed": false },
+      "capture": { "session_id": "SYN-SESSION-001", "device_family": null, "coarse_location": null, "crop_age": null, "variety": null, "plant_part": "leaf" }
+    },
+    {
+      "image_id": "SYN-DIS-TEST-001",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "perceptual_hash": "ffffffffffffffff",
+      "perceptual_hash_algorithm": "dhash64-v1",
+      "group_id": "SYN-GROUP-002",
+      "split": "test",
+      "mode": "disease",
+      "source": { "kind": "synthetic", "dataset_id": "workflow-only", "source_key": "disease-2" },
+      "original_label": "Healthy",
+      "canonical_label": "healthy",
+      "label_status": "source_label_only",
+      "supported": true,
+      "rights": { "basis": "synthetic metadata only", "consent_record_held_off_git": false, "redistribution_allowed": false },
+      "capture": { "session_id": "SYN-SESSION-002", "device_family": null, "coarse_location": null, "crop_age": null, "variety": null, "plant_part": "leaf" }
+    },
+    {
+      "image_id": "SYN-PEST-CAL-001",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "perceptual_hash": "5555555555555555",
+      "perceptual_hash_algorithm": "dhash64-v1",
+      "group_id": "SYN-GROUP-003",
+      "split": "calibration",
+      "mode": "pest",
+      "source": { "kind": "synthetic", "dataset_id": "workflow-only", "source_key": "pest-1" },
+      "original_label": "rice leaf roller",
+      "canonical_label": "rice_leaf_roller",
+      "label_status": "source_label_only",
+      "supported": true,
+      "rights": { "basis": "synthetic metadata only", "consent_record_held_off_git": false, "redistribution_allowed": false },
+      "capture": { "session_id": "SYN-SESSION-003", "device_family": null, "coarse_location": null, "crop_age": null, "variety": null, "plant_part": "whole plant" },
+      "pest_boxes": [{ "class_name": "rice_leaf_roller", "x_min": 0.2, "y_min": 0.2, "x_max": 0.5, "y_max": 0.6, "expert_reviewed": false }]
+    },
+    {
+      "image_id": "SYN-OOD-001",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "perceptual_hash": "aaaaaaaaaaaaaaaa",
+      "perceptual_hash_algorithm": "dhash64-v1",
+      "group_id": "SYN-GROUP-004",
+      "split": "ood",
+      "mode": "disease",
+      "source": { "kind": "synthetic", "dataset_id": "workflow-only", "source_key": "ood-1" },
+      "original_label": "non-rice leaf",
+      "canonical_label": "unsupported_non_rice",
+      "label_status": "source_label_only",
+      "supported": false,
+      "rights": { "basis": "synthetic metadata only", "consent_record_held_off_git": false, "redistribution_allowed": false },
+      "capture": { "session_id": "SYN-SESSION-004", "device_family": null, "coarse_location": null, "crop_age": null, "variety": null, "plant_part": "leaf" }
+    }
+  ]
+}
+

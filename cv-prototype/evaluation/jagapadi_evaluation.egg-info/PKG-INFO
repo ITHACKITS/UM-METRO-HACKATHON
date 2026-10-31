@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: jagapadi-evaluation
+Version: 0.1.0
+Summary: Reproducible evaluation tools for Jagapadi Cek Daun & Hama
+Requires-Python: >=3.12
+Requires-Dist: Pillow<13,>=11
+Provides-Extra: dev
+Requires-Dist: jsonschema<5,>=4.23; extra == "dev"

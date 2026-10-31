@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import type { GeoJSONSource, Map as MLMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Polygon, WaterFeature } from "../lib/api";
 
@@ -69,7 +70,7 @@ export function FieldMap(p: MapProps) {
       attributionControl: { compact: true },
       cooperativeGestures: false,
       // Needed to copy the map into the printed report.
-      preserveDrawingBuffer: true,
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");

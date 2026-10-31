@@ -8,11 +8,12 @@ const dict = {
     nav_features: "Fitur",
     nav_data: "Data",
     nav_open: "Buka peta",
+    nav_sigap: "Cek daun & hama",
     hero_l1: "Tahu risiko sawah",
     hero_l2: "sebelum",
     hero_l3: "terlambat.",
     hero_sub:
-      "TUAI membaca citra satelit dan foto dari HP, lalu menandai tiap blok sawah hijau, kuning atau merah: kondisi tanaman, genangan, hama dan penyakit, giliran air, sampai perkiraan panen.",
+      "TUAI membaca citra satelit, ramalan cuaca dan tinggi lahan, lalu memberi tahu kapan sawahmu kekurangan air, kapan terancam banjir, dan apa yang bisa dikerjakan minggu ini.",
     hero_cta: "Cek sawah saya",
     hero_cta2: "Lihat cara kerja",
     hero_strip: "Sentinel-2 · Sentinel-1 · BMKG · ECMWF ensemble · AI foto daun dan hama",
@@ -46,11 +47,28 @@ const dict = {
     f_lancar_b: "Kebutuhan air tiap blok dihitung dengan FAO-56 dan dicek dengan TUAI Pantau. Ketua P3A mendapat urutan blok yang perlu dialiri lebih dulu.",
     f_taksir_t: "TUAI Taksir",
     f_taksir_b: "Riwayat kondisi tanaman, cuaca dan catatan serangan menjadi perkiraan panen per blok sebelum panen, dikalibrasi dengan hasil timbang mitra.",
+    how2_t: "Kami baca langit dan tanah",
+    how2_b: "Kehijauan dan kandungan air tanaman dari Sentinel-2, 51 skenario hujan ECMWF, debit sungai GloFAS, ketinggian lahan.",
+    how3_t: "Kerjakan minggu ini",
+    how3_b: "Kapan mulai stres air, kapan bisa tergenang, sumber air terdekat, dan langkah yang diurutkan dari yang paling mudah.",
+    feat_eyebrow: "Fitur prototipe",
+    feat_title_a: "Satu sawah,",
+    feat_title_b: "lima alat bantu.",
+    f_drought_t: "Kering",
+    f_drought_b: "Neraca air harian FAO-56 dijalankan di 51 anggota ensemble cuaca. Hasilnya rentang P5-P50-P95 hari mulai stres, ditambah sumber air terdekat dan rencana pompa.",
+    f_flood_t: "Banjir",
+    f_flood_b: "Hujan lebat, limpasan dari lahan yang lebih tinggi, dan debit sungai dibanding banjir 2-tahunan. Simulator menunjukkan kedalaman dan lama genangan per hari.",
+    f_pest_t: "Risiko cuaca hama",
+    f_pest_b: "Kesesuaian cuaca untuk blas, hawar daun bakteri, wereng cokelat dan penggerek batang. Ini prakiraan lingkungan, bukan deteksi visual.",
+    f_sigap_t: "TUAI Sigap",
+    f_sigap_b: "Foto daun atau serangga yang terlihat untuk indikasi model, lengkap dengan pemeriksaan kualitas dan langkah aman berikutnya. Bukan diagnosis.",
+    f_chat_t: "Tanya Padi",
+    f_chat_b: "Si Padi menjawab dari data lahanmu sendiri, menyebut sumbernya, dan bilang terus terang kalau datanya tidak ada.",
     honest_eyebrow: "Angka nyata",
     honest_title_a: "Tidak ada angka",
     honest_title_b: "karangan.",
     honest_body:
-      "Setiap angka di TUAI berasal dari sumber terbuka atau dihitung dari sumber itu, lengkap dengan waktu pengambilannya. Kalau citra tertutup awan atau server sedang mati, kami tulis begitu.",
+      "Setiap angka di TUAI berasal dari sumber terbuka atau dihitung dari sumber itu, lengkap dengan waktu pengambilannya. Kalau citra tertutup awan, model belum siap, atau server sedang mati, kami tulis begitu.",
     honest_note: "Ini alat perkiraan ilmiah, bukan peringatan resmi. Untuk keputusan, ikuti BMKG, PPL setempat dan BPBD.",
     final_title_a: "Gambar sawahmu.",
     final_title_b: "Lihat risikonya lebih awal.",
@@ -81,11 +99,12 @@ const dict = {
     nav_features: "Features",
     nav_data: "Data",
     nav_open: "Open map",
-    hero_l1: "Know the field's risks",
+    nav_sigap: "Check leaves & pests",
+    hero_l1: "Guard the rice",
     hero_l2: "before",
     hero_l3: "it is too late.",
     hero_sub:
-      "TUAI reads satellite images and phone photos, then marks each rice block green, yellow or red: crop condition, standing water, pests and diseases, water turns and the harvest estimate.",
+      "TUAI reads satellite images, weather forecasts and terrain, then tells you when your field will run short of water, when it may flood, and what to do this week.",
     hero_cta: "Check my field",
     hero_cta2: "See how it works",
     hero_strip: "Sentinel-2 · Sentinel-1 · BMKG · ECMWF ensemble · leaf and pest photo AI",
@@ -102,6 +121,23 @@ const dict = {
     how_title_b: "two minutes.",
     how1_t: "Draw your field",
     how1_b: "Tap the corners of your plot on the satellite map. No surveying tools.",
+    how2_t: "We read the sky and the soil",
+    how2_b: "Greenness and crop water from Sentinel-2, 51 ECMWF rain scenarios, GloFAS river flow, terrain height.",
+    how3_t: "Act this week",
+    how3_b: "When water stress starts, when it may flood, the nearest water source, and steps ranked from easiest first.",
+    feat_eyebrow: "Prototype features",
+    feat_title_a: "One field,",
+    feat_title_b: "five practical tools.",
+    f_drought_t: "Drought",
+    f_drought_b: "An FAO-56 daily water balance run across 51 weather ensemble members. You get a P5-P50-P95 range for the first stress day, plus the nearest water and a pumping plan.",
+    f_flood_t: "Flood",
+    f_flood_b: "Heavy rain, runoff from higher ground and river flow against the 2-year flood. The simulator shows water depth and duration day by day.",
+    f_pest_t: "Weather pest risk",
+    f_pest_b: "Weather suitability for blast, bacterial leaf blight, brown planthopper and stem borer. This is environmental forecasting, not visual detection.",
+    f_sigap_t: "TUAI Sigap",
+    f_sigap_b: "Photograph a leaf or visible insect for a model indication, photo-quality checks, and a safe next step. Not a diagnosis.",
+    f_chat_t: "Ask Padi",
+    f_chat_b: "Padi answers from your own field data, names its sources, and says plainly when data is missing.",
     how2_t: "Satellite and camera, together",
     how2_b: "The satellite watches the whole area: greenness (NDVI), crop moisture (NDMI) and standing water. Phone photos catch what it cannot: disease on the leaf and pests at the stem base.",
     how3_t: "Know what to do",
@@ -123,7 +159,7 @@ const dict = {
     honest_title_a: "No made-up",
     honest_title_b: "numbers.",
     honest_body:
-      "Every number in TUAI comes from an open source or is calculated from one, with its capture time. When a scene is cloudy or a server is down, we say so.",
+      "Every number in TUAI comes from an open source or is calculated from one, with its capture time. When a scene is cloudy, a model is not ready, or a server is down, we say so.",
     honest_note: "A scientific estimation tool, not an official warning. For decisions follow BMKG, your extension officer (PPL) and BPBD.",
     final_title_a: "Draw your field.",
     final_title_b: "See the risks early.",
@@ -159,7 +195,7 @@ const LangContext = createContext<Ctx>({ lang: "id", setLang: () => {}, t: (k) =
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     try {
-      const v = localStorage.getItem("jagapadi-lang");
+      const v = localStorage.getItem("tuai-lang") ?? localStorage.getItem("jagapadi-lang");
       if (v === "id" || v === "en") return v;
     } catch {
       /* storage blocked: default to Indonesian */
@@ -172,7 +208,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
   const setLang = (l: Lang) => {
     setLangState(l);
     try {
-      localStorage.setItem("jagapadi-lang", l);
+      localStorage.setItem("tuai-lang", l);
     } catch {
       /* not persisted */
     }
@@ -187,7 +223,13 @@ export function LangToggle({ className = "" }: { className?: string }) {
   return (
     <div className={`lang-toggle ${className}`} role="group" aria-label="Language / Bahasa">
       {(["id", "en"] as const).map((l) => (
-        <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
+        <button
+          key={l}
+          type="button"
+          aria-label={l === "id" ? "Bahasa Indonesia" : "English"}
+          aria-pressed={lang === l}
+          onClick={() => setLang(l)}
+        >
           {l.toUpperCase()}
         </button>
       ))}

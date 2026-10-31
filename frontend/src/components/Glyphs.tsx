@@ -48,6 +48,14 @@ export function IslandGlyph({ kind }: { kind: string }) {
         <path d="M16 18l-6-4M28 18l6-4M16 26h-7M28 26h7M17 31l-5 4M27 31l5 4M19 14l-2-5M25 14l2-5" stroke="hsl(150 18% 13%)" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     );
+  if (kind === "sigap")
+    return (
+      <svg {...common}>
+        <rect x="6" y="9" width="32" height="25" rx="7" fill="hsl(183 66% 32% / .18)" stroke="hsl(183 66% 32%)" strokeWidth="2" />
+        <circle cx="22" cy="21.5" r="6" stroke="hsl(183 66% 32%)" strokeWidth="2" />
+        <path d="M18 12.5 20 9h6l2 3.5M22 25c3-5 6-7 9-8-1 5-4 8-9 8Z" fill="hsl(95 28% 50%)" />
+      </svg>
+    );
   return (
     <svg {...common}>
       <rect x="6" y="9" width="28" height="20" rx="10" fill="hsl(183 66% 32%)" />

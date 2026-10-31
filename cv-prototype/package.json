@@ -1,0 +1,15 @@
+{
+  "name": "jagapadi-cv-prototype-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "preflight": "../.venv/bin/python scripts/preflight.py",
+    "check:boundary": "python3.12 scripts/check_boundary.py",
+    "test": "../.venv/bin/python scripts/verify.py"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  }
+}
+

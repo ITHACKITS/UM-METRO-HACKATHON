@@ -1,0 +1,324 @@
+/* TUAI Sigap — the approved "Bengkel Foto" working surface. */
+.sigap-shell {
+  --sigap-paper: #f4ead9;
+  --sigap-paper-2: #e8dfd0;
+  --sigap-ink: #1b2a23;
+  --sigap-muted: #46574f;
+  --sigap-line: #8a958f;
+  --sigap-teal: #1c868b;
+  --sigap-teal-dark: #125e62;
+  --sigap-sage: #7fa35b;
+  --sigap-grain: #e2a93b;
+  --sigap-danger: #a94118;
+  --sigap-font: "Manrope", system-ui, sans-serif;
+  min-height: 100vh;
+  overflow: clip;
+  color: var(--sigap-ink);
+  background: var(--sigap-paper);
+  font: 16px/1.55 var(--sigap-font);
+}
+
+.sigap-shell *,
+.sigap-shell *::before,
+.sigap-shell *::after { box-sizing: border-box; }
+.sigap-shell button,
+.sigap-shell input { color: inherit; font: inherit; }
+.sigap-shell img { display: block; max-width: 100%; }
+.sigap-shell ::selection { color: var(--sigap-ink); background: rgb(28 134 139 / 26%); }
+.sigap-shell button:focus-visible,
+.sigap-shell label:focus-visible,
+.sigap-shell label:focus-within,
+.sigap-shell summary:focus-visible,
+.sigap-shell a:focus-visible {
+  outline: 3px solid var(--sigap-teal-dark);
+  outline-offset: 3px;
+}
+
+.sigap-shell .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.sigap-shell > .grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: 80;
+  opacity: .035;
+  pointer-events: none;
+  background-image: url("/textures/grain.svg");
+}
+
+.sigap-shell .site-header {
+  width: min(1100px, calc(100% - 40px));
+  height: 72px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgb(27 42 35 / 24%);
+}
+.sigap-shell .brand { display: flex; align-items: center; gap: 11px; color: inherit; text-decoration: none; }
+.sigap-shell .brand-mark { width: 42px; height: 42px; flex: none; }
+.sigap-shell .brand small { color: var(--sigap-muted); font-size: 12px; font-weight: 750; }
+.sigap-shell .lang-toggle { display: inline-flex; border: 1px solid rgb(27 42 35 / 40%); padding: 3px; }
+.sigap-shell .lang-toggle button { min-width: 42px; min-height: 38px; border: 0; background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.sigap-shell .lang-toggle button[aria-pressed="true"] { color: var(--sigap-paper); background: var(--sigap-ink); }
+
+.sigap-shell .workspace { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: 44px 0 70px; }
+.sigap-shell .workbench-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 360px); gap: 44px; align-items: end; }
+.sigap-shell .workbench-intro h1 { max-width: 650px; margin: 0 0 10px; font-size: 36px; line-height: 1.08; letter-spacing: -.03em; }
+.sigap-shell .workbench-intro > div > p { max-width: 66ch; margin: 0; color: var(--sigap-muted); text-wrap: pretty; }
+.sigap-shell .privacy-note { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px; border: 1px solid rgb(27 42 35 / 26%); background: var(--sigap-paper-2); font-size: 12px; }
+.sigap-shell .privacy-note svg { flex: none; margin-top: 2px; color: var(--sigap-teal-dark); }
+
+.sigap-shell .mode-selector { margin-top: 32px; }
+.sigap-shell .mode-tabs { width: min(100%, 650px); display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--sigap-line); padding: 4px; }
+.sigap-shell .mode-tab { min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 0; background: transparent; font-weight: 800; cursor: pointer; }
+.sigap-shell .mode-tab input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.sigap-shell .mode-tab:hover { background: rgb(27 42 35 / 7%); }
+.sigap-shell .mode-tab.mode-active { color: var(--sigap-paper); background: var(--sigap-teal-dark); }
+.sigap-shell .mode-icon { display: grid; place-items: center; }
+.sigap-shell .mode-icon svg { width: 22px; height: 22px; }
+.sigap-shell .mode-description { min-height: 24px; max-width: 70ch; margin: 11px 0 0; color: var(--sigap-muted); font-size: 13px; text-wrap: pretty; }
+
+.sigap-shell .capture-actions { min-inline-size: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 25px 0 0; padding: 0; border: 0; }
+.sigap-shell .capture-action { min-height: 78px; display: flex; align-items: center; gap: 14px; padding: 14px 17px; border: 1px solid var(--sigap-ink); background: transparent; text-align: left; cursor: pointer; }
+.sigap-shell .capture-action:hover { background: rgb(27 42 35 / 7%); }
+.sigap-shell .capture-action.capture-primary { color: var(--sigap-paper); border-color: var(--sigap-teal-dark); background: var(--sigap-teal-dark); }
+.sigap-shell .capture-action.capture-primary:hover { background: #0e5054; }
+.sigap-shell .capture-action svg { flex: none; }
+.sigap-shell .capture-action span { display: grid; gap: 2px; }
+.sigap-shell .capture-action strong { font-size: 15px; }
+.sigap-shell .capture-action small { color: inherit; font-size: 12px; opacity: .8; }
+
+.sigap-shell .photo-workbench { margin-top: 12px; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, .85fr); border: 1px solid var(--sigap-line); background: rgb(255 255 255 / 18%); }
+.sigap-shell .photo-stage { min-width: 0; min-height: 500px; display: grid; border-right: 1px solid var(--sigap-line); background: #d9dfcf; }
+.sigap-shell .photo-empty { align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 18px; padding: 32px; color: var(--sigap-muted); }
+.sigap-shell .photo-empty > svg { width: 46px; height: 46px; flex: none; color: var(--sigap-teal-dark); }
+.sigap-shell .photo-empty strong { display: block; color: var(--sigap-ink); font-size: 18px; }
+.sigap-shell .photo-empty p { max-width: 38ch; margin: 6px 0; font-size: 13px; text-wrap: pretty; }
+.sigap-shell .photo-empty small { font-size: 12px; }
+.sigap-shell .preview-card { min-width: 0; align-self: stretch; display: grid; grid-template-rows: 1fr auto; }
+.sigap-shell .result-media { min-width: 0; display: flex; align-items: center; justify-content: center; background: #121b16; }
+.sigap-shell .result-image-wrap { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+.sigap-shell .result-image { width: auto; height: auto; max-width: 100%; max-height: 620px; object-fit: contain; }
+.sigap-shell .preview-probe { display: none; }
+.sigap-shell .preview-fallback { min-height: 360px; display: grid; place-items: center; padding: 30px; margin: 0; text-align: center; color: var(--sigap-muted); }
+.sigap-shell .file-row { min-width: 0; min-height: 68px; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--sigap-line); background: var(--sigap-paper); }
+.sigap-shell .file-row div { min-width: 0; display: grid; }
+.sigap-shell .file-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.sigap-shell .file-row span { color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .file-row button { min-height: 40px; flex: none; padding: 8px 12px; border: 1px solid var(--sigap-line); background: transparent; font-weight: 750; cursor: pointer; }
+
+.sigap-shell .quality-panel { min-width: 0; padding: 22px; display: flex; flex-direction: column; }
+.sigap-shell .quality-heading { padding-bottom: 15px; border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .quality-heading h2 { margin: 0 0 6px; font-size: 18px; }
+.sigap-shell .quality-heading p { margin: 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .quality-empty { margin: 0; padding: 24px 0; color: var(--sigap-muted); font-size: 13px; }
+.sigap-shell .quality-list { display: grid; }
+.sigap-shell .quality-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 0; border-bottom: 1px solid rgb(27 42 35 / 20%); }
+.sigap-shell .quality-row strong { font-size: 13px; }
+.sigap-shell .quality-row p { margin: 3px 0 0; color: var(--sigap-muted); font-size: 12px; line-height: 1.45; }
+.sigap-shell .quality-state { min-width: 70px; padding: 4px 8px; border: 1px solid currentColor; text-align: center; font-size: 12px; font-weight: 800; }
+.sigap-shell .quality-good { color: #315f2e; }
+.sigap-shell .quality-warning { color: #7b4a09; }
+.sigap-shell .quality-unavailable { color: var(--sigap-muted); }
+.sigap-shell .quality-metrics { margin: 13px 0 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .capture-guidance { margin-top: 19px; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .capture-guidance summary { padding: 12px 0; color: var(--sigap-teal-dark); font-size: 13px; font-weight: 800; cursor: pointer; }
+.sigap-shell .capture-guidance ul { margin: 0 0 14px; padding-left: 20px; }
+.sigap-shell .capture-guidance li { margin: 6px 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .cloud-fallback-consent,
+.sigap-shell .subject-confirmation { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; margin-top: 14px; padding: 12px; border: 1px solid var(--sigap-line); background: var(--sigap-paper-2); cursor: pointer; }
+.sigap-shell .cloud-fallback-consent input,
+.sigap-shell .subject-confirmation input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--sigap-teal-dark); }
+.sigap-shell .cloud-fallback-consent span,
+.sigap-shell .subject-confirmation span { display: grid; gap: 3px; }
+.sigap-shell .cloud-fallback-consent strong,
+.sigap-shell .subject-confirmation strong { font-size: 12px; }
+.sigap-shell .cloud-fallback-consent small,
+.sigap-shell .subject-confirmation small { color: var(--sigap-muted); font-size: 11px; line-height: 1.45; text-wrap: pretty; }
+.sigap-shell .action-row { display: flex; gap: 9px; margin-top: auto; padding-top: 18px; }
+.sigap-shell .analyze-button,
+.sigap-shell .cancel-button { min-height: 50px; border: 0; font-weight: 800; cursor: pointer; }
+.sigap-shell .analyze-button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; color: var(--sigap-paper); background: var(--sigap-ink); }
+.sigap-shell .analyze-button:hover:not(:disabled) { background: var(--sigap-teal-dark); }
+.sigap-shell .analyze-button:disabled { cursor: not-allowed; opacity: .48; }
+.sigap-shell .cancel-button { padding: 0 17px; border: 1px solid var(--sigap-line); background: transparent; }
+.sigap-shell .native-camera-fallback { align-self: center; margin-top: 10px; color: var(--sigap-teal-dark); font-size: 12px; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.sigap-shell .spinner { width: 18px; height: 18px; border: 2px solid rgb(244 234 217 / 35%); border-top-color: var(--sigap-paper); border-radius: 50%; animation: sigap-spin .8s linear infinite; }
+@keyframes sigap-spin { to { transform: rotate(360deg); } }
+.sigap-shell .error-message { display: flex; align-items: flex-start; gap: 10px; margin-top: 13px; padding: 12px; color: #6f2a0e; background: #f1d2c3; }
+.sigap-shell .error-message > span { flex: none; font-weight: 900; }
+.sigap-shell .error-message p { margin: 0; font-size: 12px; }
+
+.sigap-shell .result-anchor { margin-top: 38px; scroll-margin-top: 20px; }
+.sigap-shell .result-experience { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(0, 1.1fr); border: 1px solid var(--sigap-line); }
+.sigap-shell .result-visual { min-width: 0; min-height: 540px; display: grid; border-right: 1px solid var(--sigap-line); background: #121b16; }
+.sigap-shell .result-visual .result-media { min-height: 100%; }
+.sigap-shell .result-visual .result-image { max-height: 720px; }
+.sigap-shell .result-visual .preview-fallback { color: var(--sigap-paper-2); }
+.sigap-shell .result-card { overflow: hidden; border: 1px solid var(--sigap-line); background: rgb(255 255 255 / 20%); }
+.sigap-shell .result-experience .result-card { border: 0; }
+.sigap-shell .result-heading { padding: 25px 28px; border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .result-heading h2 { margin: 0; font-size: 26px; letter-spacing: -.025em; }
+.sigap-shell .result-heading p { margin: 5px 0 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .candidate-section { padding: 24px 28px; }
+.sigap-shell .candidate-section h3,
+.sigap-shell .result-detail h3 { margin: 0 0 11px; font-size: 14px; }
+.sigap-shell .candidate-list,
+.sigap-shell .detection-list { padding: 0; margin: 0; list-style: none; }
+.sigap-shell .candidate-list li,
+.sigap-shell .detection-list li { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid rgb(27 42 35 / 18%); }
+.sigap-shell .candidate-list li > div { display: flex; align-items: center; gap: 11px; }
+.sigap-shell .candidate-rank { color: var(--sigap-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.sigap-shell .candidate-primary strong { color: var(--sigap-teal-dark); font-size: 17px; }
+.sigap-shell .score-pill { flex: none; padding: 4px 8px; border: 1px solid var(--sigap-teal-dark); color: var(--sigap-teal-dark); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sigap-shell .score-note { margin: 13px 0 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .raw-candidates { border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .raw-candidates summary { padding: 13px 0; color: var(--sigap-teal-dark); font-size: 13px; font-weight: 800; cursor: pointer; }
+.sigap-shell .raw-candidates > p { margin: 0 0 12px; max-width: 70ch; color: var(--sigap-muted); font-size: 12px; text-wrap: pretty; }
+.sigap-shell .raw-candidates ol { margin: 0 0 12px; padding: 0; list-style: none; }
+.sigap-shell .raw-candidates li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 8px 0; border-top: 1px solid rgb(27 42 35 / 12%); font-size: 12px; }
+.sigap-shell .raw-candidates li > span { color: var(--sigap-muted); font-variant-numeric: tabular-nums; }
+.sigap-shell .raw-candidates code { color: var(--sigap-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.sigap-shell .result-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .result-detail { padding: 23px 28px; }
+.sigap-shell .result-grid .result-detail + .result-detail { border-left: 1px solid var(--sigap-line); }
+.sigap-shell .result-detail p,
+.sigap-shell .result-detail li { color: var(--sigap-muted); font-size: 13px; }
+.sigap-shell .result-detail p { margin: 0; }
+.sigap-shell .result-detail ul { margin: 0; padding-left: 18px; }
+.sigap-shell .image-meta { margin-top: 9px !important; font-size: 12px !important; }
+.sigap-shell .limitations-panel { background: var(--sigap-paper-2); }
+.sigap-shell .provenance { padding: 18px 28px 23px; }
+.sigap-shell .provenance summary { color: var(--sigap-teal-dark); cursor: pointer; font-size: 13px; font-weight: 800; }
+.sigap-shell .provenance dl { margin: 16px 0 0; display: grid; gap: 8px; }
+.sigap-shell .provenance dl div { display: grid; grid-template-columns: 130px 1fr; gap: 10px; font-size: 12px; }
+.sigap-shell .provenance dt { color: var(--sigap-muted); }
+.sigap-shell .provenance dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sigap-shell .no-detections { padding: 24px 28px; background: #eee0bd; }
+.sigap-shell .no-detections p { margin: 6px 0 0; font-size: 13px; }
+.sigap-shell .detection-list li { justify-content: flex-start; }
+.sigap-shell .detection-list .score-pill { margin-left: auto; }
+.sigap-shell .detection-dot { width: 10px; height: 10px; flex: none; background: var(--sigap-grain); }
+.sigap-shell .detection-box { position: absolute; border: 2px solid var(--sigap-grain); pointer-events: none; }
+.sigap-shell .detection-box-tentative { border-style: dashed; opacity: .82; }
+.sigap-shell .detection-box span { position: absolute; left: -2px; bottom: 100%; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 7px; color: var(--sigap-paper); background: #744a0c; font-size: 12px; line-height: 1.2; }
+.sigap-shell .result-actions { display: flex; gap: 10px; padding: 14px; border: 1px solid var(--sigap-line); border-top: 0; }
+.sigap-shell .result-link { display: inline-flex; align-items: center; justify-content: center; color: inherit; text-decoration: none; }
+
+.sigap-shell .history-card { margin-top: 42px; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); padding: 25px 0; }
+.sigap-shell .history-heading { display: flex; justify-content: space-between; gap: 20px; }
+.sigap-shell .history-heading h2 { margin: 0; font-size: 21px; }
+.sigap-shell .history-heading p,
+.sigap-shell .history-empty { margin: 6px 0 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .history-heading > span { flex: none; color: var(--sigap-teal-dark); font-size: 12px; font-weight: 800; }
+.sigap-shell .history-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; padding: 9px 0; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .history-tabs button { min-height: 58px; display: grid; align-content: center; gap: 2px; padding: 9px 13px; border: 1px solid var(--sigap-ink); background: transparent; text-align: left; cursor: pointer; }
+.sigap-shell .history-tabs button:hover { background: rgb(27 42 35 / 7%); }
+.sigap-shell .history-tabs button.history-tab-active { color: var(--sigap-paper); border-color: var(--sigap-teal-dark); background: var(--sigap-teal-dark); }
+.sigap-shell .history-tabs strong { font-size: 13px; }
+.sigap-shell .history-tabs span { font-size: 12px; }
+.sigap-shell .history-list { margin: 20px 0 0; padding: 0; list-style: none; }
+.sigap-shell .history-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 0; border-top: 1px solid rgb(27 42 35 / 18%); }
+.sigap-shell .history-list li > div { min-width: 0; display: grid; gap: 3px; }
+.sigap-shell .history-list span,
+.sigap-shell .history-list small { color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .history-list strong { color: var(--sigap-teal-dark); font-size: 15px; }
+.sigap-shell .history-list em { width: max-content; padding: 3px 7px; border: 1px solid #8a5b16; color: #70460b; font-size: 12px; font-style: normal; font-weight: 800; }
+.sigap-shell .history-list button { min-height: 40px; flex: none; padding: 8px 12px; border: 1px solid var(--sigap-danger); color: var(--sigap-danger); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.sigap-shell .disclaimer-card { display: flex; align-items: flex-start; gap: 13px; margin-top: 28px; padding: 18px 0; border-bottom: 1px solid var(--sigap-line); }
+.sigap-shell .disclaimer-card > span { flex: none; color: var(--sigap-teal-dark); }
+.sigap-shell .disclaimer-card h2 { margin: 0 0 5px; font-size: 14px; }
+.sigap-shell .disclaimer-card p { max-width: 78ch; margin: 0; color: var(--sigap-muted); font-size: 12px; }
+
+.sigap-shell .camera-dialog { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgb(10 17 13 / 88%); }
+.sigap-shell .camera-panel { width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px; color: var(--sigap-paper); background: var(--sigap-ink); }
+.sigap-shell .camera-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 14px; }
+.sigap-shell .camera-heading h2 { margin: 0; font-size: 20px; }
+.sigap-shell .camera-heading button { min-height: 42px; padding: 8px 12px; border: 1px solid rgb(244 234 217 / 55%); color: var(--sigap-paper); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.sigap-shell .camera-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 0; border-top: 1px solid rgb(244 234 217 / 35%); }
+.sigap-shell .camera-mode-tabs label { min-height: 46px; display: grid; place-items: center; padding: 9px 12px; border: 1px solid rgb(244 234 217 / 55%); color: var(--sigap-paper); background: transparent; font-size: 13px; font-weight: 800; cursor: pointer; }
+.sigap-shell .camera-mode-tabs label.camera-mode-active { border-color: var(--sigap-teal); background: var(--sigap-teal-dark); }
+.sigap-shell .camera-mode-tabs input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.sigap-shell .camera-viewport { position: relative; min-height: 300px; overflow: hidden; display: grid; place-items: center; background: #050806; }
+.sigap-shell .camera-viewport video { width: 100%; max-height: 68dvh; object-fit: contain; }
+.sigap-shell .camera-guide { position: absolute; border: 2px solid rgb(255 255 255 / 88%); pointer-events: none; }
+.sigap-shell .camera-guide-disease { inset: 9% 22%; }
+.sigap-shell .camera-guide-pest { width: min(36%, 220px); aspect-ratio: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.sigap-shell .camera-guide > span { position: absolute; left: -2px; top: -2px; padding: 6px 9px; color: var(--sigap-ink); background: var(--sigap-paper); font-size: 12px; font-weight: 800; }
+.sigap-shell .camera-viewport p { position: absolute; inset: auto 14px 14px; margin: 0; padding: 10px 13px; color: var(--sigap-paper); background: rgb(27 42 35 / 90%); font-size: 12px; text-align: center; }
+.sigap-shell .camera-viewport .camera-error { background: #852f0e; }
+.sigap-shell .camera-tip { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; padding: 13px 0; border-bottom: 1px solid rgb(244 234 217 / 35%); }
+.sigap-shell .camera-tip strong { font-size: 13px; }
+.sigap-shell .camera-tip span { font-size: 12px; line-height: 1.45; }
+.sigap-shell .camera-tip small { grid-column: 1 / -1; color: rgb(244 234 217 / 72%); font-size: 12px; }
+.sigap-shell .camera-controls { display: flex; gap: 10px; padding-top: 14px; }
+.sigap-shell .camera-controls > * { flex: 1; padding: 0 16px; }
+.sigap-shell .camera-controls .cancel-button { color: var(--sigap-paper); border-color: rgb(244 234 217 / 55%); }
+
+.sigap-shell > footer { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 34px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid rgb(27 42 35 / 24%); color: var(--sigap-muted); font-size: 12px; }
+
+@media (max-width: 780px) {
+  .sigap-shell .site-header { width: calc(100% - 28px); height: 66px; }
+  .sigap-shell .brand small { display: none; }
+  .sigap-shell .workspace { width: calc(100% - 28px); padding-top: 30px; }
+  .sigap-shell .workbench-intro { grid-template-columns: 1fr; gap: 18px; }
+  .sigap-shell .workbench-intro h1 { font-size: 30px; }
+  .sigap-shell .privacy-note { width: 100%; }
+  .sigap-shell .photo-workbench { grid-template-columns: 1fr; }
+  .sigap-shell .photo-stage { min-height: 390px; border-right: 0; border-bottom: 1px solid var(--sigap-line); }
+  .sigap-shell .quality-panel { min-height: 390px; }
+  .sigap-shell .result-grid { grid-template-columns: 1fr; }
+  .sigap-shell .result-experience { grid-template-columns: 1fr; }
+  .sigap-shell .result-visual { min-height: 440px; border-right: 0; border-bottom: 1px solid var(--sigap-line); }
+  .sigap-shell .result-grid .result-detail + .result-detail { border-left: 0; border-top: 1px solid var(--sigap-line); }
+  .sigap-shell .provenance dl div { grid-template-columns: 1fr; gap: 2px; }
+  .sigap-shell .camera-dialog { padding: 0; }
+  .sigap-shell .camera-panel { min-height: 100dvh; max-height: 100dvh; width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .sigap-shell .mode-tab { min-height: 50px; font-size: 13px; }
+  .sigap-shell .capture-action { min-height: 72px; padding: 12px; }
+  .sigap-shell .capture-action small { display: none; }
+  .sigap-shell .photo-stage { min-height: 340px; }
+  .sigap-shell .photo-empty { align-items: flex-start; padding: 28px 20px; }
+  .sigap-shell .quality-panel { padding: 19px; }
+  .sigap-shell .candidate-list li,
+  .sigap-shell .detection-list li { align-items: flex-start; flex-wrap: wrap; }
+  .sigap-shell .result-heading,
+  .sigap-shell .candidate-section,
+  .sigap-shell .result-detail,
+  .sigap-shell .no-detections,
+  .sigap-shell .provenance { padding-left: 19px; padding-right: 19px; }
+  .sigap-shell .result-actions { flex-direction: column; }
+  .sigap-shell .history-list li { align-items: flex-start; flex-direction: column; }
+  .sigap-shell .result-visual { min-height: 360px; }
+  .sigap-shell .camera-panel { padding: 14px; }
+  .sigap-shell .camera-tip { grid-template-columns: 1fr; }
+  .sigap-shell .camera-tip small { grid-column: 1; }
+  .sigap-shell > footer { flex-direction: column; gap: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sigap-shell *,
+  .sigap-shell *::before,
+  .sigap-shell *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+}

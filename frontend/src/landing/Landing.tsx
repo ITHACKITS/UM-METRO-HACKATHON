@@ -12,6 +12,7 @@ const ISLANDS = [
   { key: "flood", t: "f_siaga_t", b: "f_siaga_b", n: "02" },
   { key: "pest", t: "f_sigap_t", b: "f_sigap_b", n: "03" },
   { key: "lancar", t: "f_lancar_t", b: "f_lancar_b", n: "04" },
+  { key: "sigap", t: "f_sigap_t", b: "f_sigap_b", n: "05" },
   { key: "taksir", t: "f_taksir_t", b: "f_taksir_b", n: "05" },
 ] as const;
 
@@ -238,6 +239,7 @@ export default function Landing() {
           <a href="#cara-kerja">{t("nav_how")}</a>
           <a href="#fitur">{t("nav_features")}</a>
           <a href="#data">{t("nav_data")}</a>
+          <Link to="/sigap">{t("nav_sigap")}</Link>
         </nav>
         <div className="nav-right">
           <span className="nav-loc">Metro, Lampung · 5°06′ S · 105°20′ E</span>

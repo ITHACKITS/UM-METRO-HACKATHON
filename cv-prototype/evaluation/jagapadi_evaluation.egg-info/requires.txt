@@ -1,0 +1,4 @@
+Pillow<13,>=11
+
+[dev]
+jsonschema<5,>=4.23

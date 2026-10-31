@@ -1,0 +1,9 @@
+# Preparation-only environment. Do not install Ultralytics in the application runtime.
+huggingface-hub==0.36.0
+numpy==2.2.6
+onnx==1.17.0
+onnxruntime==1.23.2
+Pillow==11.3.0
+pydantic==2.11.7
+ultralytics==8.3.221
+

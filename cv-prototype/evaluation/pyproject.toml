@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jagapadi-evaluation"
+version = "0.1.0"
+description = "Reproducible evaluation tools for Jagapadi Cek Daun & Hama"
+requires-python = ">=3.12"
+dependencies = [
+  "Pillow>=11,<13",
+]
+
+[project.optional-dependencies]
+dev = ["jsonschema>=4.23,<5"]
+
+[project.scripts]
+jagapadi-eval = "jagapadi_eval.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["jagapadi_eval*"]
+

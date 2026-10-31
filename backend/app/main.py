@@ -6,8 +6,10 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -19,23 +21,113 @@ from app.llm import chat
 from app.sigap import advice as sigap_advice
 from app.sigap import models as sigap_models
 from app.sigap import reports as sigap_reports
+from app.sigap import router as sigap
+from app.sigap.constants import MAX_COMPRESSED_BYTES
+from app.sigap.errors import (
+    APIError,
+    api_error_handler,
+)
+from app.sigap.errors import (
+    validation_error_handler as sigap_validation_error_handler,
+)
+
+
+class RequestBodyTooLarge(Exception):
+    """Raised before multipart parsing when a TUAI Sigap request is too large."""
+
+
+class SigapBodyLimitMiddleware:
+    """Bound Sigap multipart bodies even when transfer encoding is chunked."""
+
+    def __init__(self, app):
+        self.app = app
+        self.limit = MAX_COMPRESSED_BYTES + 64 * 1024
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("path") != "/api/sigap/v1/analyze":
+            await self.app(scope, receive, send)
+            return
+
+        headers = {key.lower(): value for key, value in scope.get("headers", [])}
+        raw_length = headers.get(b"content-length")
+        if raw_length:
+            try:
+                if int(raw_length) > self.limit:
+                    await self._reject(scope, receive, send)
+                    return
+            except ValueError:
+                await self._reject(scope, receive, send)
+                return
+
+        received = 0
+
+        async def limited_receive():
+            nonlocal received
+            message = await receive()
+            if message.get("type") == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.limit:
+                    raise RequestBodyTooLarge
+            return message
+
+        try:
+            await self.app(scope, limited_receive, send)
+        except RequestBodyTooLarge:
+            await self._reject(scope, receive, send)
+
+    @staticmethod
+    async def _reject(scope, receive, send):
+        response = JSONResponse(
+            status_code=413,
+            content={
+                "detail": {
+                    "code": "request_too_large",
+                    "message": {
+                        "id": "Ukuran permintaan foto melebihi batas 12 MB.",
+                        "en": "The photo request exceeds the 12 MB limit.",
+                    },
+                }
+            },
+        )
+        await response(scope, receive, send)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     stop = alerts.start()
-    yield
-    if stop:
-        stop.set()
+    await sigap.preload()
+    try:
+        yield
+    finally:
+        if stop:
+            stop.set()
+        sigap.close()
 
 
-app = FastAPI(title="TUAI API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="TUAI API",
+    version="0.2.0",
+    description="Citra satelit, cuaca, dan observasi visual padi dalam satu layanan.",
+    lifespan=lifespan,
+)
+app.add_middleware(SigapBodyLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.allowed_origins.split(",") if o.strip()],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+app.add_exception_handler(APIError, api_error_handler)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    if not request.url.path.startswith("/api/sigap/v1/"):
+        return await request_validation_exception_handler(request, exc)
+    return await sigap_validation_error_handler(request, exc)
+
+
+app.include_router(sigap.router)
 
 _analyses: dict[str, tuple[float, dict]] = {}
 ANALYSIS_TTL = 1800
@@ -156,13 +248,21 @@ def _opts(req: AnalyzeRequest | ChatRequest) -> dict:
 
 @app.get("/api/health")
 def health():
+    sigap_health = sigap.inference_service.health()
     return {
         "status": "ok",
         "offline_replay": settings.offline,
         "llm": bool(settings.llm_provider and settings.llm_api_key),
         "openweather": bool(settings.openweather_key),
         "telegram": alerts.enabled(),
-        "sigap": sigap_models.status(),
+        "sigap": {
+            "status": sigap_health.status,
+            "calibration_status": sigap_health.calibration_status,
+            "models": [
+                {"mode": model.mode, "state": model.state, "ready": model.ready}
+                for model in sigap_health.models
+            ],
+        },
         "sources": source_status(),
         "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }

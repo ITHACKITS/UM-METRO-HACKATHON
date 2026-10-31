@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import type { GeoJSONSource, Map as MLMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { api, API_DOWN, type Polygon, type SigapWarnings, type Status } from "../lib/api";
 import { LangToggle, useLang } from "../lib/i18n";

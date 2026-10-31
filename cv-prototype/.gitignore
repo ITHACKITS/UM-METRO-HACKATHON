@@ -1,0 +1,33 @@
+# Local Python environments and caches
+.model-tools-venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Model artifacts are prepared locally and verified against model-lock.json
+.models/
+*.onnx
+*.pt
+*.pth
+*.safetensors
+
+# Photos and generated evaluation material must never enter Git
+uploads/
+private-data/
+evaluation/private/
+evaluation/manifests/local-*.jsonl
+evaluation/reports/generated/
+reports/generated/
+benchmarks/generated/
+
+# Local configuration and editor/OS noise
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+

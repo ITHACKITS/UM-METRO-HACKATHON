@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-31T00:00:00+07:00",
+  "models": {
+    "disease": {
+      "id": "prithivMLmods/Rice-Leaf-Disease",
+      "source": "https://huggingface.co/prithivMLmods/Rice-Leaf-Disease",
+      "revision": "170d10e070c308e0e5337690d67371825591f35b",
+      "license": "Apache-2.0 (as declared by the model repository)",
+      "runtime": "PyTorch + Transformers",
+      "architecture": "SigLIP2 base patch16 224, image classification",
+    "preprocessing_version": "hf-auto-image-processor-slow@revision+exif-rgb+tta3-consistency-v2",
+      "input_size": [224, 224],
+      "labels": [
+        "Bacterialblight",
+        "Blast",
+        "Brownspot",
+        "Healthy",
+        "Tungro"
+      ],
+      "files": [
+        {
+          "path": "config.json",
+          "sha256": "3a8722efa67fead11914f6f76d3bc5c5fd12e0f1c2a5f82bae9a242b4d79a928"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "sha256": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc"
+        },
+        {
+          "path": "model.safetensors",
+          "size_bytes": 371577220,
+          "sha256": "172e8e76ac71c08fd1ac4b0969b50ed1b710d2c3605dd44a7b99ae1ce5800750"
+        }
+      ],
+      "training_lineage": {
+        "dataset": "sharmin3/Rice-Leaf-Disease",
+        "license_status": "No declared dataset license; provenance only, do not download or redistribute",
+        "risk": "The model can be evaluated as a hackathon baseline, but is not cleared as a final commercial asset"
+      }
+    },
+    "pest": {
+      "id": "underdogquality/yolo11s-pest-detection",
+      "source": "https://huggingface.co/underdogquality/yolo11s-pest-detection",
+      "revision": "b64a9302e50ae089e52b770fe0d054ac77c1c3d8",
+      "repository_license": "MIT (as declared by the model repository)",
+      "framework_license_risk": "Ultralytics currently states that its YOLO code and models are AGPL-3.0 by default and that non-AGPL commercial/proprietary deployment requires an Enterprise licence. The third-party repository's MIT statement does not resolve this conflict; obtain legal/licensor clarification or replace the pest asset before commercialization.",
+      "training_lineage": {
+        "dataset": "IP102",
+        "use_limit": "Academic use; do not redistribute images or claim commercial clearance"
+      },
+      "source_checkpoint": {
+        "path": "best.pt",
+        "size_bytes": 38317890,
+        "sha256": "810f0df179aec54f5d9762a11df4a147ff87ef79ca46649151914eeed260237f",
+        "security": "Pickle-based; load only in a disposable preparation environment, never in the application runtime"
+      },
+      "class_map": {
+        "path": "pests.yaml",
+        "sha256": "b3c494f8edbea66f1b09df0ac636734e4a1ffb01eb30e19f5dacea8ea77d66bb",
+        "supported_indices": {
+          "0": "rice leaf roller",
+          "4": "yellow rice borer",
+          "7": "brown plant hopper"
+        }
+      },
+      "conversion": {
+        "format": "ONNX",
+        "opset": 17,
+        "input_size": [640, 640],
+        "dynamic": false,
+        "simplify": false,
+        "output_path": ".models/pest/model.onnx",
+        "artifact_sha256": null,
+        "artifact_status": "generated locally; hash is written to ignored .models/provenance.json",
+        "validation": "ONNX checker, ONNX Runtime load, source-vs-ONNX fixture comparison, and parity through the TUAI Sigap runtime decoder in the isolated preparation command"
+      },
+      "runtime": "ONNX Runtime only",
+      "preprocessing_version": "yolo11-letterbox-640-rgb-v1"
+    }
+  }
+}
+

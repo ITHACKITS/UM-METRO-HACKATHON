@@ -1,0 +1,2 @@
+[console_scripts]
+jagapadi-eval = jagapadi_eval.cli:main

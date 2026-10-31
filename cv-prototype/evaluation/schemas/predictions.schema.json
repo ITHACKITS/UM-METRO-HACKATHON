@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jagapadi.local/schemas/predictions-v1.json",
+  "title": "TUAI Sigap frozen prediction run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "manifest_sha256",
+    "model",
+    "thresholds_sha256",
+    "predictions"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "thresholds_sha256": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+    },
+    "model": {
+      "type": "object",
+      "required": ["id", "revision", "artifact_sha256", "preprocessing_version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "artifact_sha256": { "$ref": "#/$defs/sha256" },
+        "preprocessing_version": { "type": "string" }
+      }
+    },
+    "predictions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/diseasePrediction" },
+          { "$ref": "#/$defs/pestPrediction" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "diseasePrediction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image_id", "mode", "status", "latency_ms", "predicted_label", "scores", "accepted"],
+      "properties": {
+        "image_id": { "type": "string" },
+        "mode": { "const": "disease" },
+        "status": { "enum": ["ok", "abstain", "retake", "error"] },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "predicted_label": { "type": ["string", "null"] },
+        "scores": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "accepted": { "type": "boolean" }
+      }
+    },
+    "pestPrediction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image_id", "mode", "status", "latency_ms", "detections"],
+      "properties": {
+        "image_id": { "type": "string" },
+        "mode": { "const": "pest" },
+        "status": { "enum": ["ok", "abstain", "retake", "error"] },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "detections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["class_name", "score", "x_min", "y_min", "x_max", "y_max"],
+            "properties": {
+              "class_name": { "type": "string" },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "x_min": { "type": "number" },
+              "y_min": { "type": "number" },
+              "x_max": { "type": "number" },
+              "y_max": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}
+

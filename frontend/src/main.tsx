@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { LangProvider } from "./lib/i18n";
 import { PaddyLoader } from "./components/PaddyLoader";
+import { registerServiceWorker } from "./lib/pwa";
 import "./styles/tokens.css";
 import "./styles/global.css";
 
@@ -11,6 +12,9 @@ const Workspace = lazy(() => import("./app/Workspace"));
 const Officer = lazy(() => import("./app/Officer"));
 const Sigap = lazy(() => import("./app/Sigap"));
 const Credits = lazy(() => import("./components/Credits"));
+const Sigap = lazy(() => import("./sigap/Sigap"));
+
+registerServiceWorker();
 
 function NotFound() {
   return (
@@ -28,7 +32,7 @@ function NotFound() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <LangProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense
           fallback={
             <div className="boot" role="status" aria-label="Memuat">

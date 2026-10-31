@@ -3,6 +3,9 @@ uvicorn[standard]>=0.30
 httpx>=0.27
 pydantic>=2.7
 numpy>=1.26
+Pillow==11.1.0
+pillow-heif==0.21.0
+python-multipart==0.0.20
 rasterio>=1.4
 shapely>=2.0
 pyproj>=3.6
@@ -10,3 +13,9 @@ anthropic>=0.70
 google-genai>=2.8
 pillow>=10.4
 scikit-learn>=1.5
+# TUAI Sigap model runtimes. Model artifacts remain local and are never baked
+# into Git; scripts/preflight verifies immutable revisions and hashes.
+onnxruntime==1.21.0
+safetensors==0.5.3
+torch==2.6.0
+transformers==4.49.0

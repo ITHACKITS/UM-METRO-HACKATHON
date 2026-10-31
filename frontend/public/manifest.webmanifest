@@ -1,0 +1,42 @@
+{
+  "id": "/",
+  "name": "TUAI — Sistem Pertanian Cerdas",
+  "short_name": "TUAI",
+  "description": "Pemantauan sawah, peringatan risiko, dan skrining visual daun serta hama padi.",
+  "lang": "id",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4ead9",
+  "theme_color": "#1c868b",
+  "categories": ["agriculture", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/logo/jagapadi-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo/jagapadi-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pantau sawah",
+      "short_name": "Pantau",
+      "url": "/app",
+      "icons": [{ "src": "/logo/jagapadi-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cek daun dan hama",
+      "short_name": "TUAI Sigap",
+      "url": "/sigap",
+      "icons": [{ "src": "/logo/jagapadi-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jagapadi.local/schemas/evaluation-manifest-v1.json",
+  "title": "TUAI Sigap immutable evaluation manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "frozen_at",
+    "claim_status",
+    "synthetic",
+    "models",
+    "records"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "manifest_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,80}$" },
+    "frozen_at": { "type": "string", "format": "date-time" },
+    "claim_status": {
+      "enum": ["pending", "not_testable", "experimental", "tested"]
+    },
+    "synthetic": { "type": "boolean" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disease", "pest"],
+      "properties": {
+        "disease": { "$ref": "#/$defs/model" },
+        "pest": { "$ref": "#/$defs/model" }
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "revision", "artifact_sha256", "preprocessing_version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 3 },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "artifact_sha256": {
+          "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        },
+        "preprocessing_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_id",
+        "sha256",
+        "perceptual_hash",
+        "perceptual_hash_algorithm",
+        "group_id",
+        "split",
+        "mode",
+        "source",
+        "original_label",
+        "canonical_label",
+        "label_status",
+        "supported",
+        "rights",
+        "capture"
+      ],
+      "properties": {
+        "image_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{3,100}$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "perceptual_hash": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "perceptual_hash_algorithm": { "const": "dhash64-v1" },
+        "group_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{3,100}$" },
+        "split": { "enum": ["calibration", "test", "regression", "ood"] },
+        "mode": { "enum": ["disease", "pest"] },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "dataset_id", "source_key"],
+          "properties": {
+            "kind": { "enum": ["local", "external", "synthetic"] },
+            "dataset_id": { "type": "string", "minLength": 2 },
+            "source_key": { "type": "string", "minLength": 1 }
+          }
+        },
+        "original_label": { "type": "string", "minLength": 1 },
+        "canonical_label": { "type": "string", "minLength": 1 },
+        "label_status": {
+          "enum": ["expert_reviewed", "source_label_only", "unlabelled_negative"]
+        },
+        "supported": { "type": "boolean" },
+        "rights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basis", "consent_record_held_off_git", "redistribution_allowed"],
+          "properties": {
+            "basis": { "type": "string", "minLength": 2 },
+            "consent_record_held_off_git": { "type": "boolean" },
+            "redistribution_allowed": { "type": "boolean" }
+          }
+        },
+        "capture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["session_id", "device_family", "coarse_location", "crop_age", "variety", "plant_part"],
+          "properties": {
+            "session_id": { "type": "string", "minLength": 2 },
+            "device_family": { "type": ["string", "null"] },
+            "coarse_location": { "type": ["string", "null"] },
+            "crop_age": { "type": ["string", "null"] },
+            "variety": { "type": ["string", "null"] },
+            "plant_part": { "type": ["string", "null"] }
+          }
+        },
+        "pest_boxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["class_name", "x_min", "y_min", "x_max", "y_max", "expert_reviewed"],
+            "properties": {
+              "class_name": { "type": "string" },
+              "x_min": { "type": "number", "minimum": 0, "maximum": 1 },
+              "y_min": { "type": "number", "minimum": 0, "maximum": 1 },
+              "x_max": { "type": "number", "minimum": 0, "maximum": 1 },
+              "y_max": { "type": "number", "minimum": 0, "maximum": 1 },
+              "expert_reviewed": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
