@@ -7,7 +7,7 @@
   size: A4;
   margin: 14mm 14mm 16mm;
   @bottom-right {
-    content: "Jagapadi · " counter(page) " / " counter(pages);
+    content: "TUAI · " counter(page) " / " counter(pages);
     font: 8pt "Manrope", sans-serif;
     color: #6b6b6b;
   }

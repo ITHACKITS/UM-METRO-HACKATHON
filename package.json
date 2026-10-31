@@ -1,8 +1,8 @@
 {
-  "name": "jagapadi",
+  "name": "tuai",
   "private": true,
   "version": "0.1.0",
-  "description": "Rice field drought, flood and pest monitoring from real satellite and weather data.",
+  "description": "TUAI: rice block monitoring, disease and pest detection, irrigation turns and harvest prediction from satellite imagery and computer vision.",
   "scripts": {
     "setup": "pip install -r backend/requirements-dev.txt && npm --prefix frontend install",
     "dev": "node scripts/dev.mjs",

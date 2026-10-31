@@ -38,7 +38,12 @@ def build(a: dict[str, Any]) -> dict[str, Any]:
     threat = "drought" if dr["probability"] >= fl["probability"] else "flood"
     risk = dr if threat == "drought" else fl
     rank = RANK[risk["level"]]
-    if pests_high and rank == 0:
+    # TUAI Siaga: an official BMKG heavy-rain warning or a long radar-seen flood lifts a safe field to watch.
+    siaga_high = [w for w in (a.get("siaga") or {}).get("warnings", []) if w["level"] == "high"]
+    siaga_note = None
+    if siaga_high and rank == 0:
+        rank, threat, siaga_note = 1, "flood", siaga_high[0]
+    elif pests_high and rank == 0:
         rank, threat = 1, "pest"
     status = STATUS[rank]
 
@@ -54,6 +59,9 @@ def build(a: dict[str, Any]) -> dict[str, Any]:
         when = _when(fs["p50"], start) if fs.get("p50") is not None else {"id": "dalam 2 minggu", "en": "within 2 weeks"}
         headline = {"id": f"Sawah bisa kekurangan air {when['id']}.", "en": f"The field may run short of water {when['en']}."}
         why = {"id": f"{pct}% kemungkinan kering. {_cap(dr['drivers'][0]['id'])}.", "en": f"{pct}% chance of drought. {_cap(dr['drivers'][0]['en'])}."}
+    elif siaga_note:
+        headline = {"id": "Ada peringatan TUAI Siaga untuk sawah ini.", "en": "TUAI Siaga has a warning for this field."}
+        why = siaga_note["text"]
     elif threat == "flood":
         sub = fl["max_submergence_days"]
         headline = {"id": "Sawah bisa tergenang dalam 2 minggu.", "en": "The field may flood within 2 weeks."}
@@ -68,12 +76,14 @@ def build(a: dict[str, Any]) -> dict[str, Any]:
 
     recs = a["drought" if threat == "drought" else "flood"]["recommendations"] if threat != "pest" else []
     if status == "aman":
-        today = {"id": "Cek pematang dan saluran seperti biasa. Buka lagi Jagapadi minggu depan.", "en": "Check bunds and channels as usual. Open Jagapadi again next week."}
+        today = {"id": "Cek pematang dan saluran seperti biasa. Buka lagi TUAI minggu depan.", "en": "Check bunds and channels as usual. Open TUAI again next week."}
     elif threat == "pest":
         act = pests_high[0].get("action")
         today = act or {"id": "Cek daun dan batang padi di beberapa titik sawah.", "en": "Check leaves and stems at several spots in the field."}
     elif recs:
         today = recs[0]["text"]
+    elif siaga_note:
+        today = {"id": "Buka saluran pembuangan dan pantau tinggi genangan tiap pagi.", "en": "Open the drains and check the water depth every morning."}
     else:
         today = {"id": "Tanyakan ke penyuluh (PPL) setempat.", "en": "Ask your local extension officer (PPL)."}
 

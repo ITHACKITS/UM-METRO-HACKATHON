@@ -575,7 +575,7 @@ main {
 
 .island-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
 }
 .island-card {
@@ -780,5 +780,12 @@ main {
     grid-template-columns: 1fr;
     gap: 4px;
     padding: 12px 0;
+  }
+}
+
+/* Five feature cards in a two-column grid: the last one spans the row. */
+@media (max-width: 1080px) {
+  .island-grid > .island-card:last-child:nth-child(odd) {
+    grid-column: span 2;
   }
 }

@@ -34,13 +34,15 @@ class Settings:
     llm_provider: str = os.getenv("LLM_PROVIDER", "").lower()
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_model: str = os.getenv("LLM_MODEL", "claude-opus-5-5")
-    user_agent: str = os.getenv("JAGAPADI_USER_AGENT", "Jagapadi/0.1 (rice field monitoring research prototype)")
+    user_agent: str = os.getenv("JAGAPADI_USER_AGENT", "TUAI/0.2 (rice field monitoring research prototype)")
     # Fields above this size slow the satellite reads and multiply elevation requests.
     max_field_ha: float = float(os.getenv("JAGAPADI_MAX_FIELD_HA", "200"))
     allowed_origins: str = os.getenv("JAGAPADI_CORS", "http://localhost:5173")
     # Telegram early warnings: bot token from @BotFather; the morning round runs at this hour (WIB).
     telegram_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     alert_hour: int = int(os.getenv("JAGAPADI_ALERT_HOUR", "6"))
+    # TUAI Sigap: when set, the PPL must enter this PIN to verify or reject a report.
+    ppl_pin: str = os.getenv("SIGAP_PPL_PIN", "")
 
 
 settings = Settings()

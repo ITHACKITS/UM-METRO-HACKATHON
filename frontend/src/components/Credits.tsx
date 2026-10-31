@@ -7,13 +7,13 @@ const ITEMS = [
   ["OpenStreetMap", "© OpenStreetMap contributors, ODbL, via the Overpass API"],
   ["Esri World Imagery", "Esri, Maxar, Earthstar Geographics, and the GIS User Community"],
   ["Libraries", "React, Three.js, MapLibre GL JS, GSAP, Lenis, FastAPI, rasterio, shapely, numpy"],
-  ["Mascot", "Si Padi, needle-felt mascot artwork supplied by the Jagapadi team"],
+  ["Mascot", "Si Padi, needle-felt mascot artwork supplied by the TUAI team (Tim Infinits)"],
 ];
 
 export default function Credits() {
   return (
     <main className="credits">
-      <Link to="/" aria-label="Jagapadi">
+      <Link to="/" aria-label="TUAI">
         <Logo />
       </Link>
       <h1>Credits and data attribution</h1>

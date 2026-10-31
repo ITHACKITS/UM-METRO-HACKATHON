@@ -1158,7 +1158,45 @@
     inset: 8px;
     width: auto;
   }
-  .chat-fab span {
+  /* Hide the label only: the mascot is a span too. */
+  .chat-fab > span:not(.mascot-pop) {
     display: none;
   }
+  .chat-fab {
+    padding: 6px;
+  }
+  .chat-fab .fab-pop {
+    margin-right: 0;
+  }
+}
+
+/* TUAI Siaga card: BMKG warnings and forecast, radar standing water. */
+.siaga {
+  display: grid;
+  gap: 8px;
+}
+.siaga p {
+  margin: 0;
+}
+.siaga-warn {
+  margin: 0;
+  padding-left: 18px;
+}
+.bmkg-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 6px;
+}
+.bmkg-days li {
+  display: grid;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: hsl(var(--flood) / 0.08);
+  font-size: 13.5px;
+}
+.bmkg-days li.heavy {
+  background: hsl(var(--flood) / 0.22);
 }

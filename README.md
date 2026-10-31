@@ -1,14 +1,13 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo/jagapadi-lockup-dark.svg" />
-    <img src="frontend/public/logo/jagapadi-lockup.svg" alt="Jagapadi" width="300" />
-  </picture>
+  <img src="frontend/public/logo/jagapadi-icon.svg" alt="" width="72" />
 </p>
+<h1 align="center">TUAI</h1>
 
-<p align="center"><b>Guard the rice before drought or flood.</b><br/>
-Satellite, weather and terrain data turned into a two-week outlook and a plan for one rice field.</p>
+<p align="center"><b>Smart rice farming from satellite imagery and computer vision.</b><br/>
+Crop monitoring, disease and pest detection, irrigation turns and harvest prediction, on one map per rice block.<br/>
+<i>"Tuai" means to harvest rice.</i></p>
 
-<p align="center">Built for <b>UM Metro Hackathon 2026</b> · Metro, Lampung, Indonesia</p>
+<p align="center">Team Infinits · <b>UM Metro Hackathon 2026</b>, sub-theme A · Metro, Lampung, Indonesia</p>
 
 <p align="center">
   <img alt="frontend" src="https://img.shields.io/badge/frontend-React%2018%20%2B%20Three.js-1c868b" />
@@ -27,10 +26,10 @@ Satellite, weather and terrain data turned into a two-week outlook and a plan fo
   <a href="README.id.md">Bahasa Indonesia</a>
 </p>
 
-![Jagapadi landing page: a rice landscape diorama in a block of water, with farmers, egrets, buffalo and fish](docs/screenshots/landing-hero.png)
+![TUAI landing page: a rice landscape diorama in a block of water, with farmers, egrets, buffalo and fish](docs/screenshots/landing-hero.png)
 
 > [!WARNING]
-> Jagapadi is a scientific estimation tool, **not an official warning system**. For decisions, follow BMKG, your agricultural extension officer (PPL) and BPBD.
+> TUAI is a scientific estimation tool, **not an official warning system**. For decisions, follow BMKG, your agricultural extension officer (PPL) and BPBD.
 
 ## Contents
 
@@ -48,36 +47,48 @@ Satellite, weather and terrain data turned into a two-week outlook and a plan fo
 12. [API](#api)
 13. [Testing](#testing)
 14. [Repository structure](#repository-structure)
-15. [Other documentation](#other-documentation)
-16. [Team](#team)
-17. [License and attribution](#license-and-attribution)
+15. [Concept alignment](#concept-alignment)
+16. [Other documentation](#other-documentation)
+17. [Team](#team)
+18. [License and attribution](#license-and-attribution)
 
 ## Problem
 
-Indonesian rice farmers usually learn a field is short of water when the soil has already cracked, and learn about a flood when the plots are under water. The signals were visible earlier in satellite images, weather ensembles and river forecasts, but that data does not reach the bund.
+Farmers and water-user groups (P3A) do not know early when, and in which block, their rice is at risk, so action comes too late.
 
-- Indonesia's 2023 rice harvested area fell to about 10.21 million ha, **down 2.29%** from 2022, as El Niño strengthened in the second half of the year ([BPS via Bisnis.com, 1 Mar 2024](https://ekonomi.bisnis.com/read/20240301/99/1745543/bps-luas-panen-padi-2023-merosot-229-sepanjang-2023)).
-- National rice production in 2023 was 31.10 million tonnes, **about 440,000 tonnes lower** than 2022 ([BPS via Kontan](https://nasional.kontan.co.id/news/produksi-beras-nasional-turun-440000-ton-pada-2023-bps-terdampak-el-nino)).
-- In the 2019 dry season, the Ministry of Agriculture recorded **102,746 ha** of rice affected by drought and **9,358 ha** of total crop failure (puso) ([Kementan via detikFinance](https://finance.detik.com/berita-ekonomi-bisnis/d-4616392/9-300-hektare-sawah-gagal-panen)).
-- An El Niño is building again: NOAA's Oceanic Niño Index reached **+1.80 in July 2026 and +2.16 in August 2026** ([NOAA PSL, ONI](https://psl.noaa.gov/data/correlation/oni.data)).
+| Focus | Why it is late or hard |
+|---|---|
+| Drought | Water shortage shows only when the leaves roll. Water turns are shared without data on each block's need. |
+| Flooding | Ordinary rice is damaged after about 5 days fully under water. There is no map of which block is flooded and for how long. |
+| Disease | Blast, bacterial leaf blight (kresek) and tungro look alike to the untrained eye. |
+| Pests | Brown planthoppers are small and live at the stem base; stem borers show only as deadhearts or whiteheads. Pests and diseases get confused, so the wrong product is sprayed. |
+| Harvest | The yield is known only at harvest, too late to plan sales, storage or next season's capital. |
+
+National rice data 2024 (Pusdatin Kementan, *Statistik Iklim, OPT dan DPI 2024*, to 11 Oct 2024): flooding hit 172,093 ha (50,142 ha lost), drought 134,440 ha (22,674 ha), stem borer 61,711 ha, blast/blight/tungro 46,826 ha, rats 46,023 ha (1,205 ha lost), brown planthopper 27,058 ha. In Lampung, planthopper attacks rose almost 6× and stem borer almost 2× between 2022 and 2024. Rising pest attacks are the strongest factor in lower paddy yields, odds 9.43 ([Prasetyo & Kadir 2023](https://mpra.ub.uni-muenchen.de/119446/), 50,619 crop-cut plots).
+
+Partner interview (a rice farmer since the 1980s, 3 ha, irrigated): crop failures from rats, planthoppers and drought; *"Gagal panen gaada tanda-tandanya"* (crop failure comes without warning); a normal 6 t/ha harvest fell to 0.3 t/ha in a failed season; no news from government or BMKG.
 
 ## Summary
 
-A farmer or extension officer draws a field on a satellite map. Jagapadi then:
+TUAI puts every signal on **one map per rice block, coloured green, yellow or red, with the action to take**. Two sources complement each other: the **satellite** watches the whole area without a field visit (greenness, crop moisture, standing water), and **phone photos** catch what it cannot (disease on the leaf, pests at the stem base).
 
-1. reads the field's own **Sentinel-2** history (NDVI greenness, NDWI canopy water, open water) and **Sentinel-1** radar (water through cloud), and compares both with the land around it;
-2. runs an **FAO-56 paddy water balance** across all **51 ECMWF ensemble** rain scenarios, extended to 30 days with a 10-year ERA5 climatology;
-3. checks **river flow** (GloFAS) against the 2-year flood and the field's height above the nearest channel;
-4. combines physics and satellite signals into a drought risk, a flood risk and a pest weather-suitability level, each with the reasons behind it;
-5. says it plainly, **Aman / Waspada / Bahaya** with one action for today, and sends it to the farmer's **Telegram** every morning while the field is at risk;
-6. gives extension officers a **dashboard** of all their plots ranked by risk, plus ranked actions, the nearest mapped water source, a scenario simulator, a grounded chatbot and a printable A4 report.
-
-Every number on screen comes from a live source or a calculation from one, with its capture time. When a source fails, the app says which one and why.
+| Feature | Challenge focus | What it does | Where |
+|---|---|---|---|
+| **TUAI Pantau** | Crop monitoring | NDVI and NDMI per block from Sentinel-2 against the land around it, growth stage from the planting date | Field page, every block |
+| **TUAI Siaga** | Crop monitoring | BMKG rain forecast and Sentinel-1 radar flood mapping (UN-SPIDER change detection): heavy-rain warnings, flooded blocks, days under water | Field page, flood tab |
+| **TUAI Sigap** | Disease and pest detection | Photo → AI: 5 leaf classes (blight, blast, brown spot, tungro, healthy), YOLO planthopper count, pest-symptom model; rat quick reports; PPL check; village pest map and warnings for nearby blocks | `/sigap` |
+| **TUAI Lancar** | Recommendations for farmers | FAO-56 water need per block, checked against Pantau: red/yellow/green and the order of irrigation for the P3A chair, flowering blocks first; decision log per season | `/ppl` → Water turns |
+| **TUAI Taksir** | Harvest prediction | Season one: below/around/above the block average from NDVI/NDMI at flowering to grain filling and recorded events; after two seasons of weighed harvests, linear regression in t/ha with a range | `/ppl` → Harvest estimate |
 
 ## Features
 
 | Feature | What it does |
 |---|---|
+| TUAI Sigap photo check | `/sigap`: photograph a leaf, the base of a hill or another symptom. The leaf model names kresek, blas, bercak coklat, tungro or healthy; the YOLO detector boxes and counts planthoppers; the pest-symptom model names stem borer, hispa or leaf folder. Below 70% confidence, or when models disagree, the result is marked *perlu dicek* for the PPL. First advice is scouting and cultural steps only, marked as a draft until the PPL checks it. |
+| TUAI Sigap reports and village map | Photo results and rat quick reports (location, damage level) go to a PPL queue (verify, relabel or reject, optional PIN). Verified reports become points on the village map; two verified planthopper or rat reports within 500 m in a week put a warning on nearby blocks (both numbers configurable, to be tuned in the pilot). |
+| TUAI Lancar water turns | `/ppl` → Water turns: the P3A chair fills in each block's transplanting date, variety and soil (or SoilGrids fills the soil). Each block gets its 7-day FAO-56 water need in mm and m³; red when the water count and Pantau are both bad, yellow when only one is (check the field), flowering red blocks first. Decisions and outcomes are logged per season. |
+| TUAI Taksir harvest estimate | `/ppl` → Harvest estimate: class against the block average in season one; tonnes per hectare with a range once 8 weighed harvests over 2 seasons are recorded. |
+| TUAI Siaga | BMKG's official 3-day forecast for the nearest village with heavy-rain warnings (≥ 50 mm/day), radar flood detection with days under water, and the water-balance submergence forecast. A high Siaga warning lifts a safe verdict to *Waspada*. |
 | Farmer view (Petani) | The default screen: one status (**Aman / Waspada / Bahaya**), one sentence on why, and one thing to do today. Charts and probabilities move to the **Ahli** (expert) view. |
 | Telegram alerts | One tap links a field to a Telegram chat. Every morning (06:00 WIB) the bot messages while the field is at risk, and once more when it turns safe. `/cek` checks now, `/stop` unsubscribes. |
 | Extension officer dashboard | `/ppl`: every plot an officer advises on one map, coloured and ranked by risk. Import or export plot outlines as GeoJSON, open any plot's full analysis. |
@@ -147,7 +158,9 @@ A sample printed report: [docs/screenshots/laporan-contoh.pdf](docs/screenshots/
 2. Press **Pakai lahan contoh** (sample field in Metro Utara) or **Gambar lahan** and tap the corners of your field.
 3. Read the status card and today's action. Press **Kirim peringatan ke Telegram** to get it every morning, or **Lihat detail lengkap** for the charts, the scenario simulator and Si Padi.
 
-For a farmer group, open **Dasbor penyuluh** (`/ppl`) and press **Pakai contoh kelompok tani**: five real plots from OpenStreetMap, ranked by risk.
+For a farmer group, open **Dasbor P3A & PPL** (`/ppl`) and press **Pakai contoh kelompok tani**: five real plots from OpenStreetMap, ranked by risk. Open **Data blok** on a plot to enter its transplanting date, variety and soil, then use the **Giliran air** (Lancar) and **Taksir panen** tabs.
+
+For pests and diseases, open **TUAI Sigap** (`/sigap`), take a photo, pick the plot, send the report; the PPL checks it under **Cek PPL**.
 
 A new area takes up to a minute because satellite scenes are read live. Neighbouring plots reuse those pixels and take a few seconds.
 
@@ -175,6 +188,14 @@ cd frontend && npm install && npm run dev
 docker compose up --build    # http://localhost:8000
 ```
 
+**Sigap image models** (optional, about 2 GB with PyTorch):
+
+```bash
+pip install -r backend/requirements-ml.txt   # torch, transformers, ultralytics
+```
+
+The leaf model downloads from Hugging Face on the first photo. Without these packages the rest of the app runs and Sigap reports each model as unavailable.
+
 **Configuration** (`backend/.env`, copy from `backend/.env.example`; everything is optional)
 
 | Variable | Default | Purpose |
@@ -187,6 +208,10 @@ docker compose up --build    # http://localhost:8000
 | `JAGAPADI_ALERT_HOUR` | `6` | Hour (WIB) of the morning alert round. |
 | `JAGAPADI_MAX_FIELD_HA` | `200` | Largest field accepted. |
 | `JAGAPADI_CORS` | `http://localhost:5173` | Allowed browser origins for the API. |
+| `SIGAP_PPL_PIN` | empty | When set, the PPL must enter it to verify or reject Sigap reports. |
+| `SIGAP_REVIEW_BELOW` | `0.70` | Model confidence below which a photo result is marked *perlu dicek*. |
+| `SIGAP_WARN_RADIUS_M` / `SIGAP_WARN_MIN_REPORTS` / `SIGAP_WARN_DAYS` | `500` / `2` / `7` | Nearby-block warning rule. |
+| `ROBOFLOW_API_KEY` / `ROBOFLOW_WERENG_MODEL` | empty | Use the Roboflow hosted planthopper model (`<project>/<version>`) when no local `backend/models/wereng.pt` exists. |
 
 ## Deploy
 
@@ -232,9 +257,14 @@ flowchart LR
 | Runoff from higher ground | SCS curve number (CN 85) scaled by the share of surrounding land higher than the field (DEM) | USDA NRCS TR-55 |
 | River flood | GloFAS v4 ensemble discharge vs the 2-year return level (Gumbel fit to 20 years of annual maxima); exposure from field height above the nearest channel (HAND approximation) | Alfieri et al. 2013; Rennó et al. 2008 |
 | Submergence | Ponding depth vs stage-dependent plant height; days of full submergence; most varieties tolerate about 4-7 days | IRRI Rice Knowledge Bank |
-| Vegetation | Sentinel-2 L2A, SCL cloud mask, NDVI, NDWI (Gao 1996), open water (McFeeters 1996); transplanting date from the last flooded/low-NDVI scene before a sustained rise; anomalies vs neighbours and vs a generic rice NDVI curve | Gao 1996; McFeeters 1996 |
+| Vegetation (TUAI Pantau) | Sentinel-2 L2A, SCL cloud mask, NDVI, NDMI (B8/B11, the same index as Gao 1996 NDWI), open water (McFeeters 1996); transplanting date from the last flooded/low-NDVI scene before a sustained rise; anomalies vs neighbours and vs a generic rice NDVI curve | Gao 1996; McFeeters 1996 |
 | Fusion | P = 1 − (1 − P_physics)(1 − P_satellite), with satellite signals weighted ≤ 0.3 and listed as drivers | Documented rule, not a trained model |
-| Pests | Weather-suitability counts over the last and next 7 days from published favourable ranges | IRRI Rice Knowledge Bank pages per pest |
+| Pests (weather) | Weather-suitability counts over the last and next 7 days from published favourable ranges | IRRI Rice Knowledge Bank pages per pest |
+| Flood mapping (TUAI Siaga) | Field-mean VV dB of each pass divided by the median of same-direction passes at least 30 days earlier; > 1.25 is flooded; slopes > 5% ignored; consecutive flooded passes give days under water | UN-SPIDER Recommended Practice (rewritten) |
+| Heavy rain (TUAI Siaga) | BMKG 3-hourly `tp` summed per day; BMKG categories: light 0.5-20, moderate 20-50, heavy 50-100, very heavy 100-150, extreme > 150 mm | BMKG |
+| Disease and pest photos (TUAI Sigap) | SigLIP2 leaf classifier (5 classes); YOLO planthopper detector; YOLO pest-symptom classifier; *perlu dicek* below 70% confidence or on model disagreement | Wu et al. 2019 (IP102); Petchiammal et al. 2023; Teixeira et al. 2023 |
+| Water turns (TUAI Lancar) | 7-day need = Σ ET0·Kc + percolation − median rain − ponding; bad when P(stress within 7 days) ≥ 0.5; flowering window = variety duration − 30 − 21 ± 10 days after transplanting | FAO-56 ch. 6 |
+| Harvest (TUAI Taksir) | Season one: z-scores of NDVI and NDMI at flowering to grain filling, minus 0.75 per recorded event relative to the group; then `LinearRegression` on NDVI, NDMI, events with a ±1.28·RMSE band | Jarro-Espinal et al. 2025; Tribuana et al. 2026 |
 
 ## Validation and limitations
 
@@ -245,15 +275,23 @@ flowchart LR
 - Paddy ponding at the start is estimated from the open-water fraction of a recent clear scene; with no clear scene it starts at 0 mm (the cautious choice for drought). Irrigation is assumed to be zero unless the user enters it.
 - The DEM is 90 m: bunds and small levees are not resolved. GloFAS resolves rivers on a ~5 km grid; canals and ditches are not represented.
 - Indonesia is cloudy; usable Sentinel-2 scenes can be weeks apart. Scene age is always shown. Sentinel-1 radar fills in the starting water level when the optical scene is older than 12 days, and raises a flood signal only when the surroundings, not the paddy itself, are much wetter than their own history (standing water in a paddy is normal). The −18 dB water threshold is a common literature value, not calibrated for Metro.
-- Soil hydraulic values are a clay-loam default, not measured per field (SoilGrids not yet integrated).
-- Pest levels are weather suitability, not detection.
+- Soil values come from the P3A entry, else SoilGrids (250 m), else a clay-loam default; percolation per texture is an assumption. SoilGrids answered HTTP 503 during development; the app says so and falls back.
+- Pest levels on the field page are weather suitability, not detection. Detection is TUAI Sigap, from photos.
+- **Sigap leaf model:** two openly licensed Wikimedia Commons photos were read correctly (blast 83%, brown spot 93%), but a plain green square was called brown spot at 99.999%. The model is overconfident on photos that are not rice leaves, so the confidence threshold alone does not catch them. It must be retested on field photos (`scripts/sigap/eval_disease.py`; target F1 ≥ 0.80 per class) before the pilot.
+- **Sigap planthopper and pest-symptom models are not trained yet.** The API reports them as unavailable until `backend/models/wereng.pt` and `gejala_hama.pt` exist (`scripts/sigap/train_wereng.py`, `train_gejala.py`) or a Roboflow key is set.
+- First advice in Sigap is a draft from IRRI guidance, to be replaced by Kementan guidelines and checked by the PPL.
+- Taksir has no harvest data yet, so it gives classes, not tonnes. The Lancar and Taksir thresholds are starting assumptions for the pilot.
 - OpenStreetMap coverage of small canals varies, and the public Overpass servers were overloaded during development; the app reports this instead of guessing.
 
 ## Data sources
 
 | Source | Used for | Update | Access |
 |---|---|---|---|
-| Copernicus Sentinel-2 L2A (Element84 Earth Search, AWS Open Data) | NDVI, NDWI, water fraction | 5-day revisit | No key, COG windows |
+| BMKG Prakiraan Cuaca Terbuka (`api.bmkg.go.id`) | Official 3-day forecast, heavy-rain warnings (TUAI Siaga) | 3-hourly | No key; cite "Sumber: BMKG" |
+| ISRIC SoilGrids 2.0 | Soil texture per block when the P3A leaves it blank (TUAI Lancar) | Static | No key, CC BY 4.0 |
+| Hugging Face `prithivMLmods/Rice-Leaf-Disease` | Leaf disease classes (TUAI Sigap) | Pinned revision | Apache-2.0 |
+| Roboflow identification-planthopper, IP102, Paddy Doctor | Training data for the planthopper detector and pest-symptom model (scripts/sigap) | Static | CC BY 4.0; IP102 academic only; Paddy Doctor ask the authors |
+| Copernicus Sentinel-2 L2A (Element84 Earth Search, AWS Open Data) | NDVI, NDMI, water fraction | 5-day revisit | No key, COG windows |
 | Copernicus Sentinel-1 RTC (Microsoft Planetary Computer) | Radar open water through cloud | 6-12 days | No key (anonymous token) |
 | NOAA PSL: ONI and DMI | Hindcast check against El Niño and the Indian Ocean Dipole | Monthly | No key |
 | Open-Meteo Forecast | Daily weather, ET0, soil moisture | Hourly | No key |
@@ -281,13 +319,23 @@ Details, licences and check dates: [backend/docs/SOURCES.md](backend/docs/SOURCE
 | POST | `/api/chat` | Grounded chatbot over a field's analysis |
 | GET | `/api/validation?lat=&lon=` | Water-balance consistency check and the 2005-2025 drought hindcast |
 | POST / GET | `/api/sensors/{field_id}` | IoT readings in / out |
+| GET | `/api/sigap/status` | Which Sigap models are available, class names and first advice |
+| POST | `/api/sigap/analyze` | Photo (data URL) + part (`daun`, `pangkal`, `gejala`) → finding, confidence, *perlu dicek* flag, planthopper boxes, advice |
+| POST / GET | `/api/sigap/reports` | Create a photo or rat report / list reports |
+| GET | `/api/sigap/reports/{id}/photo` | The stored photo |
+| POST | `/api/sigap/reports/{id}/review` | PPL verifies, relabels or rejects (PIN when `SIGAP_PPL_PIN` is set) |
+| POST | `/api/sigap/warnings` | Warnings for blocks from nearby verified planthopper or rat reports |
+| POST | `/api/lancar/rank` | Water-turn order for a list of blocks |
+| POST / GET | `/api/lancar/decisions` | P3A decision log |
+| POST | `/api/taksir` | Harvest class or estimate per block |
+| POST / GET | `/api/taksir/harvest` | Record / list weighed harvests (training data) |
 
 Request and response shapes: [backend/docs/API_CONTRACT.md](backend/docs/API_CONTRACT.md).
 
 ## Testing
 
 ```bash
-npm test                        # 25 backend unit tests + ruff
+npm test                        # 40 backend unit tests + ruff
 npm run qa                      # 63 end-to-end browser checks (servers must be running)
 ```
 
@@ -300,17 +348,34 @@ The end-to-end suite drives every feature in Chrome: landing story and dock, far
 ├── Dockerfile · docker-compose.yml · package.json
 ├── assets/mascot-source/        original mascot photos
 ├── backend/
-│   ├── app/{api,ingest,engine,ai,llm}  main.py services.py config.py
-│   ├── config/                  demo field, sensor token example
+│   ├── app/{api,ingest,engine,ai,llm,sigap}  main.py services.py blocks.py config.py
+│   ├── models/                  trained Sigap weights (not committed)
+│   ├── config/                  demo field and group, BMKG village codes, sensor token example
 │   ├── data/replay/             recorded real responses for offline demos
 │   ├── docs/                    SOURCES, API_CONTRACT
 │   └── tests/
 ├── frontend/
 │   ├── public/{mascot,logo,textures}
 │   └── src/{landing,app,components,lib,styles}
-├── scripts/                     dev runner, QA, screenshots, logo set (brand_assets.py), mascot cut-out, ESP32 firmware
+├── scripts/                     dev runner, QA, screenshots, Sigap training (sigap/), logo set (brand_assets.py), mascot cut-out, ESP32 firmware
 └── docs/                        decisions, brand, analyses, verification, pitch, demo script, screenshots
 ```
+
+## Concept alignment
+
+What the concept paper (*Konsep TUAI Tim Infinits*) specifies, and where the prototype differs on purpose.
+
+| Layer | Concept | Prototype | Why |
+|---|---|---|---|
+| Satellite processing | Google Earth Engine (Python API) | Sentinel-2 L2A COGs from Earth Search and Sentinel-1 RTC from Planetary Computer, read directly | No account or licence, works offline from recordings; GEE needs a paid licence for commercial use |
+| Cloud mask | Cloud Score+ | Sentinel-2 SCL classes | Cloud Score+ is a GEE collection |
+| Permanent water, slope masks | JRC Global Surface Water, HydroSHEDS | Neighbour-ring comparison, slope from Copernicus DEM GLO-90 (UN-SPIDER 5% rule) | Same purpose without GEE; JRC still to add |
+| Weather | BMKG + Open-Meteo | BMKG 3-day forecast (nearest village code) + Open-Meteo / ECMWF ensemble | As planned |
+| Leaf disease | Hugging Face Transformers | `prithivMLmods/Rice-Leaf-Disease`, pinned revision | As planned; must be retested on field photos |
+| Pest detection | PyTorch + Ultralytics YOLO | Local `backend/models/wereng.pt` or the Roboflow hosted model | Weights are trained with `scripts/sigap/train_wereng.py`; not shipped |
+| Harvest model | scikit-learn | scikit-learn `LinearRegression` | As planned |
+| Block database | PostgreSQL + PostGIS | JSON files under `backend/data/{sigap,lancar,taksir}` and blocks in the browser (GeoJSON import/export) | Enough for a pilot of two partners; PostGIS when blocks are shared across devices |
+| Web | React PWA + Leaflet | React + MapLibre GL | MapLibre was already in place; not yet installable as a PWA |
 
 ## Other documentation
 
@@ -318,7 +383,14 @@ The end-to-end suite drives every feature in Chrome: landing story and dock, far
 
 ## Team
 
-Hikari Reiziq · Ziddan Habibi · Aryarefman. Supervising lecturer: to be added.
+Team Infinits, Information Technology, Institut Teknologi Sepuluh Nopember:
+
+- M. Hikari Reiziq Rakhmadinta: team lead, business and downstreaming
+- Ahmad Wildan Fawwaz: operations, regulation and proposal
+- Muhammad Rakha Hananditya Rauf: AI (Sigap, Pantau, Siaga, Taksir models)
+- Arya Bisma Putra Refman: website, backend, block map, water count (Lancar), weather APIs
+- Muhammad Ziddan Habibi: user validation and partner liaison
+- Supervising lecturer: Prof. Dr. Dedin Finatsiyatull Rosida, STP, MKes
 
 ## License and attribution
 

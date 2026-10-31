@@ -8,17 +8,19 @@ import { PaddyLoader } from "../components/PaddyLoader";
 import "./landing.css";
 
 const ISLANDS = [
-  { key: "drought", t: "f_drought_t", b: "f_drought_b", n: "01" },
-  { key: "flood", t: "f_flood_t", b: "f_flood_b", n: "02" },
-  { key: "pest", t: "f_pest_t", b: "f_pest_b", n: "03" },
-  { key: "chat", t: "f_chat_t", b: "f_chat_b", n: "04" },
+  { key: "pantau", t: "f_pantau_t", b: "f_pantau_b", n: "01" },
+  { key: "flood", t: "f_siaga_t", b: "f_siaga_b", n: "02" },
+  { key: "pest", t: "f_sigap_t", b: "f_sigap_b", n: "03" },
+  { key: "lancar", t: "f_lancar_t", b: "f_lancar_b", n: "04" },
+  { key: "taksir", t: "f_taksir_t", b: "f_taksir_b", n: "05" },
 ] as const;
 
-const STATS = [
-  { v: "2,29%", vEn: "2.29%", k: "stat1", src: "https://ekonomi.bisnis.com/read/20240301/99/1745543/bps-luas-panen-padi-2023-merosot-229-sepanjang-2023", by: "BPS via Bisnis.com, 1 Mar 2024" },
-  { v: "440 ribu", vEn: "440,000", k: "stat2", src: "https://nasional.kontan.co.id/news/produksi-beras-nasional-turun-440000-ton-pada-2023-bps-terdampak-el-nino", by: "BPS via Kontan, 2024" },
-  { v: "102.746", vEn: "102,746", k: "stat3", src: "https://finance.detik.com/berita-ekonomi-bisnis/d-4616392/9-300-hektare-sawah-gagal-panen", by: "Kementan via detikFinance, 2019" },
-] as const;
+// From the team concept paper; Kementan's 2024 statistics book is a PDF without a stable public link.
+const STATS: { v: string; vEn: string; k: Key; src?: string; by: string }[] = [
+  { v: "172.093", vEn: "172,093", k: "stat1", by: "Pusdatin Kementan, Statistik Iklim, OPT dan DPI 2024" },
+  { v: "≈6×", vEn: "≈6×", k: "stat2", by: "Pusdatin Kementan 2024: 222 ha (2022) ke 1.322 ha (2024)" },
+  { v: "9,43×", vEn: "9.43×", k: "stat3", src: "https://mpra.ub.uni-muenchen.de/119446/", by: "Prasetyo & Kadir, MPRA 119446, 2023" },
+];
 
 const STAGES: Key[] = ["stage_0", "stage_1", "stage_2", "stage_3"];
 const fmtHour = (h: number) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
@@ -228,7 +230,7 @@ export default function Landing() {
       <div className="grain" aria-hidden="true" />
 
       <header className="nav">
-        <Link to="/" className="nav-logo" aria-label="Jagapadi">
+        <Link to="/" className="nav-logo" aria-label="TUAI">
           <Logo />
         </Link>
         <nav className="nav-links" aria-label="Utama">
@@ -358,9 +360,13 @@ export default function Landing() {
                   <dt>{lang === "id" ? s.v : s.vEn}</dt>
                   <dd>
                     {t(s.k)}
-                    <a href={s.src} target="_blank" rel="noreferrer" className="cite">
-                      {s.by}
-                    </a>
+                    {s.src ? (
+                      <a href={s.src} target="_blank" rel="noreferrer" className="cite">
+                        {s.by}
+                      </a>
+                    ) : (
+                      <span className="cite">{s.by}</span>
+                    )}
                   </dd>
                 </div>
               ))}
@@ -427,7 +433,7 @@ export default function Landing() {
             <p className="chapter-body">{t("honest_body")}</p>
             <ul className="source-list">
               <li>
-                <b>Sentinel-2 L2A</b> NDVI, NDWI · Copernicus / Element84 Earth Search
+                <b>Sentinel-2 L2A</b> NDVI, NDMI · Copernicus / Element84 Earth Search
               </li>
               <li>
                 <b>ECMWF IFS ensemble</b> 51 {lang === "id" ? "skenario hujan" : "rain scenarios"} · Open-Meteo

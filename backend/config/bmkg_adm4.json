@@ -1,0 +1,181 @@
+{
+ "note": "BMKG adm4 (Kemendagri) codes with the point BMKG returns for each, read from api.bmkg.go.id/publik/prakiraan-cuaca on 2026-10-31. Add rows for partner villages outside Kota Metro.",
+ "areas": [
+  {
+   "adm4": "18.72.01.1001",
+   "kecamatan": "Metro Pusat",
+   "desa": "Metro",
+   "kotkab": "Kota Metro",
+   "lat": -5.12165,
+   "lon": 105.30447
+  },
+  {
+   "adm4": "18.72.01.1002",
+   "kecamatan": "Metro Pusat",
+   "desa": "Hadimulyo Timur",
+   "kotkab": "Kota Metro",
+   "lat": -5.09682,
+   "lon": 105.31036
+  },
+  {
+   "adm4": "18.72.01.1003",
+   "kecamatan": "Metro Pusat",
+   "desa": "Imopuro",
+   "kotkab": "Kota Metro",
+   "lat": -5.11159,
+   "lon": 105.30564
+  },
+  {
+   "adm4": "18.72.01.1004",
+   "kecamatan": "Metro Pusat",
+   "desa": "Hadimulyo Barat",
+   "kotkab": "Kota Metro",
+   "lat": -5.10611,
+   "lon": 105.29829
+  },
+  {
+   "adm4": "18.72.01.1005",
+   "kecamatan": "Metro Pusat",
+   "desa": "Yosomulyo",
+   "kotkab": "Kota Metro",
+   "lat": -5.09906,
+   "lon": 105.3258
+  },
+  {
+   "adm4": "18.72.02.1001",
+   "kecamatan": "Metro Utara",
+   "desa": "Banjarsari",
+   "kotkab": "Kota Metro",
+   "lat": -5.09129,
+   "lon": 105.28638
+  },
+  {
+   "adm4": "18.72.02.1002",
+   "kecamatan": "Metro Utara",
+   "desa": "Purwosari",
+   "kotkab": "Kota Metro",
+   "lat": -5.08591,
+   "lon": 105.29807
+  },
+  {
+   "adm4": "18.72.02.1003",
+   "kecamatan": "Metro Utara",
+   "desa": "Karangrejo",
+   "kotkab": "Kota Metro",
+   "lat": -5.07882,
+   "lon": 105.3352
+  },
+  {
+   "adm4": "18.72.02.1004",
+   "kecamatan": "Metro Utara",
+   "desa": "Purwoasri",
+   "kotkab": "Kota Metro",
+   "lat": -5.07087,
+   "lon": 105.30899
+  },
+  {
+   "adm4": "18.72.03.1001",
+   "kecamatan": "Metro Barat",
+   "desa": "Mulyojati",
+   "kotkab": "Kota Metro",
+   "lat": -5.13711,
+   "lon": 105.29737
+  },
+  {
+   "adm4": "18.72.03.1002",
+   "kecamatan": "Metro Barat",
+   "desa": "Ganjar Agung",
+   "kotkab": "Kota Metro",
+   "lat": -5.1334,
+   "lon": 105.28201
+  },
+  {
+   "adm4": "18.72.03.1003",
+   "kecamatan": "Metro Barat",
+   "desa": "Mulyosari",
+   "kotkab": "Kota Metro",
+   "lat": -5.15151,
+   "lon": 105.27614
+  },
+  {
+   "adm4": "18.72.03.1004",
+   "kecamatan": "Metro Barat",
+   "desa": "Ganjar Asri",
+   "kotkab": "Kota Metro",
+   "lat": -5.12165,
+   "lon": 105.2931
+  },
+  {
+   "adm4": "18.72.04.1001",
+   "kecamatan": "Metro Timur",
+   "desa": "Yosodadi",
+   "kotkab": "Kota Metro",
+   "lat": -5.10815,
+   "lon": 105.33503
+  },
+  {
+   "adm4": "18.72.04.1002",
+   "kecamatan": "Metro Timur",
+   "desa": "Tejosari",
+   "kotkab": "Kota Metro",
+   "lat": -5.14559,
+   "lon": 105.32417
+  },
+  {
+   "adm4": "18.72.04.1003",
+   "kecamatan": "Metro Timur",
+   "desa": "Iring Mulyo",
+   "kotkab": "Kota Metro",
+   "lat": -5.12284,
+   "lon": 105.31848
+  },
+  {
+   "adm4": "18.72.04.1004",
+   "kecamatan": "Metro Timur",
+   "desa": "Yosorejo",
+   "kotkab": "Kota Metro",
+   "lat": -5.11266,
+   "lon": 105.3169
+  },
+  {
+   "adm4": "18.72.04.1005",
+   "kecamatan": "Metro Timur",
+   "desa": "Tejo Agung",
+   "kotkab": "Kota Metro",
+   "lat": -5.13422,
+   "lon": 105.3189
+  },
+  {
+   "adm4": "18.72.05.1001",
+   "kecamatan": "Metro Selatan",
+   "desa": "Rejomulyo",
+   "kotkab": "Kota Metro",
+   "lat": -5.16131,
+   "lon": 105.31332
+  },
+  {
+   "adm4": "18.72.05.1002",
+   "kecamatan": "Metro Selatan",
+   "desa": "Margorejo",
+   "kotkab": "Kota Metro",
+   "lat": -5.14584,
+   "lon": 105.29712
+  },
+  {
+   "adm4": "18.72.05.1003",
+   "kecamatan": "Metro Selatan",
+   "desa": "Sumbersari Bantul",
+   "kotkab": "Kota Metro",
+   "lat": -5.16551,
+   "lon": 105.29072
+  },
+  {
+   "adm4": "18.72.05.1004",
+   "kecamatan": "Metro Selatan",
+   "desa": "Margodadi",
+   "kotkab": "Kota Metro",
+   "lat": -5.15123,
+   "lon": 105.30389
+  }
+ ]
+}

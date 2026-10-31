@@ -7,7 +7,7 @@ export function Logo({ size = 30 }: { size?: number }) {
   return (
     <span className="logo">
       <LogoMark size={size} />
-      <span className="logo-word">jagapadi</span>
+      <span className="logo-word">tuai</span>
     </span>
   );
 }

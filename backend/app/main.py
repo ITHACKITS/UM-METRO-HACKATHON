@@ -3,7 +3,7 @@ import json
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,11 +11,14 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app import alerts, services
+from app import alerts, blocks, services
 from app.config import BACKEND_DIR, DATA_DIR, settings
 from app.engine import validation
 from app.ingest.http import SourceUnavailable, source_status
 from app.llm import chat
+from app.sigap import advice as sigap_advice
+from app.sigap import models as sigap_models
+from app.sigap import reports as sigap_reports
 
 
 @asynccontextmanager
@@ -26,7 +29,7 @@ async def lifespan(_: FastAPI):
         stop.set()
 
 
-app = FastAPI(title="Jagapadi API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="TUAI API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.allowed_origins.split(",") if o.strip()],
@@ -58,6 +61,69 @@ class AlertRequest(BaseModel):
     name: str = Field("Sawah", max_length=60)
     lang: str = "id"
     days_after_transplant: int | None = Field(None, ge=-30, le=200)
+
+
+class Block(BaseModel):
+    id: str = Field(..., max_length=64)
+    name: str | None = Field(None, max_length=60)
+    geometry: dict
+    planting_date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    variety: str | None = Field(None, max_length=40)
+    soil: str | None = Field(None, max_length=20)
+
+
+class BlocksRequest(BaseModel):
+    blocks: list[Block] = Field(..., min_length=1, max_length=40)
+
+
+class SigapAnalyzeRequest(BaseModel):
+    image: str = Field(..., max_length=15_000_000)
+    part: Literal["daun", "pangkal", "gejala"] = "daun"
+
+
+class SigapReport(BaseModel):
+    lat: float = Field(..., ge=-90, le=90)
+    lon: float = Field(..., ge=-180, le=180)
+    label: str = Field(..., max_length=30)
+    source: Literal["foto", "laporan_cepat"] = "foto"
+    confidence: float | None = Field(None, ge=0, le=1)
+    count: int | None = Field(None, ge=0, le=10000)
+    severity: Literal["ringan", "sedang", "berat"] | None = None
+    needs_review: bool = True
+    block_id: str | None = Field(None, max_length=64)
+    block_name: str | None = Field(None, max_length=60)
+    reporter: str | None = Field(None, max_length=60)
+    note: str | None = Field(None, max_length=400)
+    image: str | None = Field(None, max_length=15_000_000)
+
+
+class SigapReview(BaseModel):
+    status: Literal["verified", "rejected"]
+    label: str | None = Field(None, max_length=30)
+    reviewer: str = Field("PPL", max_length=60)
+    note: str = Field("", max_length=400)
+    pin: str | None = None
+
+
+class SigapWarningsRequest(BaseModel):
+    blocks: list[dict] = Field(..., max_length=200)
+
+
+class Decision(BaseModel):
+    season: str = Field(..., max_length=30)
+    block_id: str = Field(..., max_length=64)
+    block_name: str | None = Field(None, max_length=60)
+    date: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$")
+    decision: str = Field(..., max_length=300)
+    outcome: str = Field("", max_length=300)
+    followed_recommendation: bool | None = None
+    by: str = Field("Ketua P3A", max_length=60)
+
+
+class Harvest(BaseModel):
+    block: Block
+    season: str = Field(..., max_length=30)
+    yield_t_ha: float = Field(..., ge=0, le=20)
 
 
 class SensorReading(BaseModel):
@@ -96,6 +162,7 @@ def health():
         "llm": bool(settings.llm_provider and settings.llm_api_key),
         "openweather": bool(settings.openweather_key),
         "telegram": alerts.enabled(),
+        "sigap": sigap_models.status(),
         "sources": source_status(),
         "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
@@ -174,6 +241,119 @@ def chat_endpoint(req: ChatRequest):
 
     msgs = [{"role": m.get("role"), "content": str(m.get("content", ""))[:2000]} for m in req.messages]
     return chat.answer(msgs, base, rerun, req.lang)
+
+
+# TUAI Sigap: photo -> disease and pest models -> PPL check -> village map.
+
+
+@app.get("/api/sigap/status")
+def sigap_status():
+    return {**sigap_models.status(), "classes": {k: sigap_advice.for_class(k) for k in sigap_advice.NAMES}}
+
+
+@app.post("/api/sigap/analyze")
+def sigap_analyze(req: SigapAnalyzeRequest):
+    try:
+        r = sigap_models.analyze(req.image, req.part)
+    except sigap_models.ImageError as e:
+        raise HTTPException(422, str(e)) from e
+    r.pop("_jpeg", None)
+    r["advice"] = sigap_advice.for_class(r["finding"]["key"]) if r["finding"] else None
+    return r
+
+
+@app.post("/api/sigap/reports")
+def sigap_create(req: SigapReport):
+    if req.label not in sigap_advice.NAMES:
+        raise HTTPException(422, f"unknown label {req.label}")
+    jpeg = None
+    if req.image:
+        try:
+            _, jpeg = sigap_models.decode(req.image)
+        except sigap_models.ImageError as e:
+            raise HTTPException(422, str(e)) from e
+    rec = req.model_dump(exclude={"image"})
+    rec["kind"] = sigap_advice.KIND.get(req.label, "hama")
+    return sigap_reports.create(rec, jpeg)
+
+
+@app.get("/api/sigap/reports")
+def sigap_list(days: int = 60):
+    return {"reports": sigap_reports.listing(max(1, min(days, 365)))}
+
+
+@app.get("/api/sigap/reports/{rid}/photo")
+def sigap_photo(rid: str):
+    p = sigap_reports.photo_path(rid)
+    if not p:
+        raise HTTPException(404, "no photo")
+    return FileResponse(p, media_type="image/jpeg")
+
+
+@app.post("/api/sigap/reports/{rid}/review")
+def sigap_review(rid: str, req: SigapReview):
+    if settings.ppl_pin and req.pin != settings.ppl_pin:
+        raise HTTPException(403, "wrong PPL PIN")
+    if req.label and req.label not in sigap_advice.NAMES:
+        raise HTTPException(422, f"unknown label {req.label}")
+    r = sigap_reports.review(rid, req.status, req.label, req.reviewer, req.note)
+    if not r:
+        raise HTTPException(404, "no such report")
+    return r
+
+
+@app.post("/api/sigap/warnings")
+def sigap_warnings(req: SigapWarningsRequest):
+    bl = [b for b in req.blocks if {"id", "lat", "lon"} <= b.keys()]
+    return sigap_reports.warnings(bl)
+
+
+# TUAI Lancar and TUAI Taksir work on the P3A chair's blocks.
+
+
+def _blocks(req: BlocksRequest) -> list[dict]:
+    out = []
+    for b in req.blocks:
+        try:
+            services.validate_field(b.geometry)
+        except services.FieldError as e:
+            raise HTTPException(422, f"{b.name or b.id}: {e}") from e
+        out.append(b.model_dump())
+    return out
+
+
+@app.post("/api/lancar/rank")
+def lancar_rank(req: BlocksRequest):
+    return blocks.water_turns(_blocks(req), _analysis)
+
+
+@app.post("/api/lancar/decisions")
+def lancar_decide(req: Decision):
+    return blocks.record_decision(req.model_dump())
+
+
+@app.get("/api/lancar/decisions")
+def lancar_decisions(season: str | None = None):
+    return {"decisions": blocks.decisions(season)}
+
+
+@app.post("/api/taksir")
+def taksir_estimate(req: BlocksRequest):
+    return blocks.harvest_estimate(_blocks(req), _analysis)
+
+
+@app.post("/api/taksir/harvest")
+def taksir_harvest(req: Harvest):
+    try:
+        services.validate_field(req.block.geometry)
+    except services.FieldError as e:
+        raise HTTPException(422, str(e)) from e
+    return blocks.record_harvest(req.block.model_dump(), req.season, req.yield_t_ha, _analysis)
+
+
+@app.get("/api/taksir/harvest")
+def taksir_harvests():
+    return {"harvests": blocks.harvests()}
 
 
 SENSOR_DIR = DATA_DIR / "sensors"

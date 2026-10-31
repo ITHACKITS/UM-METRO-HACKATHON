@@ -29,7 +29,7 @@ Ground rules:
 TOOLS = [
     {
         "name": "field_summary",
-        "description": "Field size, location, growth stage estimate, latest satellite NDVI/NDWI, soil moisture, data freshness, overall confidence and which sources were unavailable.",
+        "description": "Field size, location, growth stage estimate, latest satellite NDVI/NDMI, soil moisture, data freshness, overall confidence and which sources were unavailable.",
         "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
@@ -230,7 +230,7 @@ INTENTS = [
     ("flood", r"banjir|flood|tergenang|terendam|genangan|sungai|river"),
     ("pest", r"hama|wereng|blas|blast|penggerek|hawar|pest|disease|penyakit"),
     ("water", r"sumber air|water source|sungai terdekat|embung|sumur|saluran"),
-    ("summary", r"umur|fase|stage|ndvi|ndwi|kondisi|status|summary|ringkas"),
+    ("summary", r"umur|fase|stage|ndvi|ndmi|ndwi|kondisi|status|summary|ringkas"),
 ]
 
 
@@ -300,7 +300,7 @@ def _template_answer(messages: list[dict], a: dict, lang: str) -> dict:
         )
         if s["latest_clear_scene"]:
             f = s["latest_clear_scene"]["field"]
-            lines.append(f"Citra bersih terakhir {s['latest_clear_scene']['date']}: NDVI {f['ndvi_mean']}, NDWI {f['ndwi_mean']}.")
+            lines.append(f"Citra bersih terakhir {s['latest_clear_scene']['date']}: NDVI {f['ndvi_mean']}, NDMI {f['ndmi_mean']}.")
         lines.append(f"Keyakinan analisis: {s['confidence']}." if id_ else f"Analysis confidence: {s['confidence']}.")
     lines.append(_sources_line(a, lang))
     return {"text": "\n".join(lines), "tools_used": [intent], "engine": "template"}

@@ -1,0 +1,221 @@
+/* TUAI Sigap: photo check, quick rat report, PPL review, village report map. */
+.sg-tabs,
+.sg-part {
+  margin-left: 0;
+  justify-self: start;
+  flex-wrap: wrap;
+}
+.seg button[aria-selected="true"],
+.seg button[aria-checked="true"] {
+  background: hsl(var(--ink));
+  color: hsl(var(--paper));
+}
+.sg-where {
+  display: grid;
+  gap: 6px;
+}
+.sg-where p {
+  margin: 0;
+}
+.sg-where-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+}
+.sigap select,
+.sigap input:not([type="file"]),
+.officer .blk-form select,
+.officer .blk-form input {
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--ink) / 0.2);
+  background: white;
+  font: inherit;
+  font-size: 14px;
+  max-width: 100%;
+}
+.sg-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.sg-photo {
+  position: relative;
+  margin: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: hsl(var(--ink) / 0.06);
+}
+.sg-photo img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+.sg-box {
+  position: absolute;
+  border: 2px solid #ffd23f;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px hsl(var(--ink) / 0.6);
+}
+.sg-result {
+  display: grid;
+  gap: 8px;
+}
+.sg-result h3,
+.sg-result h4,
+.sg-result p {
+  margin: 0;
+}
+.sg-result h4 {
+  font-size: 14px;
+}
+.sg-result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.sg-result-top h3 {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.sg-flag {
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.warn-flag {
+  background: hsl(36 80% 50% / 0.16);
+  color: hsl(30 70% 28%);
+}
+.ok-flag {
+  background: hsl(var(--ok) / 0.14);
+  color: hsl(var(--ok));
+}
+.sg-result details ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+.sg-h {
+  margin: 4px 0 0;
+  font-size: 15px;
+}
+.sg-rep {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 12px;
+}
+.sg-rep:not(:has(img)) {
+  grid-template-columns: 1fr;
+}
+.sg-rep img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.sg-rep .off-actions {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sg-done {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.sg-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2.5px solid #c4571e;
+  vertical-align: -1px;
+}
+.sg-dot.verified {
+  background: #c4571e;
+}
+.sg-dot.rejected {
+  border-color: hsl(var(--ink) / 0.35);
+}
+.sg-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 28px;
+  display: flex;
+  gap: 14px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  border-radius: var(--r-pill);
+}
+.sg-warn h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+.sg-warn ul {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 13.5px;
+}
+.sg-warn p {
+  margin: 0;
+}
+
+/* P3A dashboard: block details form, water-turn and harvest panels. */
+.blk-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin-top: 8px;
+}
+.blk-form label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.blk-form label.wide {
+  flex: 1 1 100%;
+}
+.blk-form label.wide input {
+  width: 100%;
+}
+.blk-form label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.officer .blk-form input[type="checkbox"] {
+  min-height: 0;
+}
+.blk-warn {
+  margin-left: 6px;
+  background: hsl(var(--drought) / 0.16);
+  color: hsl(var(--drought));
+}
+.lc-rank {
+  font-size: 22px;
+  font-weight: 800;
+  min-width: 22px;
+}
+.lc-why {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.lc-why li {
+  margin: 2px 0;
+}
+.lc-log h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.lc-log p {
+  margin: 6px 0 0;
+}

@@ -2,18 +2,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { api, API_DOWN, type Polygon, type Status } from "../lib/api";
+import { api, API_DOWN, type Polygon, type SigapWarnings, type Status } from "../lib/api";
 import { LangToggle, useLang } from "../lib/i18n";
 import { Logo } from "../components/Logo";
 import { STYLE } from "./FieldMap";
-import { addField, fromGeoJSON, loadFields, loadResults, saveFields, saveResults, toGeoJSON, type Checked, type WatchField } from "../lib/watchlist";
+import { addField, centerOf, fromGeoJSON, loadFields, loadResults, saveFields, saveResults, toGeoJSON, updateField, type Checked, type WatchField } from "../lib/watchlist";
+import { BlockForm, LancarPanel, SOILS, TaksirPanel } from "./Blocks";
 import "./app.css";
 import "./officer.css";
+import "./sigap.css";
 
 const T = {
   id: {
-    title: "Dasbor penyuluh",
-    sub: "Semua petak binaan dalam satu peta, diurutkan dari yang paling berisiko.",
+    title: "Dasbor P3A & PPL",
+    sub: "Semua blok sawah dalam satu peta: status risiko, urutan giliran air (TUAI Lancar) dan taksiran panen (TUAI Taksir).",
+    tabs: { status: "Status", lancar: "Giliran air", taksir: "Taksir panen" },
+    blockData: "Data blok",
+    noDate: "tanggal tanam belum diisi",
+    plantedOn: "tanam",
+    sigap: "TUAI Sigap",
+    warn: "peringatan hama sekitar",
     fields: "petak",
     checkAll: "Periksa semua",
     checking: "Memeriksa",
@@ -31,14 +39,20 @@ const T = {
     emptyT: "Belum ada petak",
     emptyB: "Tambahkan petak dari halaman analisis (tombol Pantau), impor GeoJSON batas petak kelompok tani, atau coba dengan contoh.",
     importErr: "Berkas tidak bisa dibaca sebagai GeoJSON poligon.",
-    apiDown: "Server Jagapadi tidak menjawab.",
+    apiDown: "Server TUAI tidak menjawab.",
     noData: "data cuaca tidak tersedia",
     note: "Hasil sama dengan halaman analisis dan peringatan Telegram. Perkiraan ilmiah, bukan peringatan resmi.",
     firstRun: "Petak baru butuh sekitar satu menit; petak di hamparan yang sama memakai ulang citra satelit, jadi lebih cepat.",
   },
   en: {
-    title: "Extension officer dashboard",
-    sub: "Every field you advise on one map, ranked from most at risk.",
+    title: "P3A & PPL dashboard",
+    sub: "Every rice block on one map: risk status, irrigation turns (TUAI Lancar) and harvest estimate (TUAI Taksir).",
+    tabs: { status: "Status", lancar: "Water turns", taksir: "Harvest estimate" },
+    blockData: "Block details",
+    noDate: "no transplanting date yet",
+    plantedOn: "planted",
+    sigap: "TUAI Sigap",
+    warn: "pest warning nearby",
     fields: "fields",
     checkAll: "Check all",
     checking: "Checking",
@@ -56,7 +70,7 @@ const T = {
     emptyT: "No fields yet",
     emptyB: "Add fields from the analysis page (Watch button), import your farmer group's plot outlines as GeoJSON, or try the sample.",
     importErr: "The file could not be read as GeoJSON polygons.",
-    apiDown: "The Jagapadi server is not responding.",
+    apiDown: "The TUAI server is not responding.",
     noData: "weather data unavailable",
     note: "Same results as the analysis page and the Telegram alerts. Scientific estimate, not an official warning.",
     firstRun: "A new field takes about a minute; fields in the same area reuse the satellite scenes, so they are faster.",
@@ -79,7 +93,21 @@ export default function Officer() {
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
+  const [tab, setTab] = useState<"status" | "lancar" | "taksir">("status");
+  const [paint, setPaint] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const [warns, setWarns] = useState<SigapWarnings | null>(null);
   const file = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!fields.length) return;
+    api
+      .sigapWarnings(fields.map((f) => ({ id: f.id, ...centerOf(f) })))
+      .then(setWarns)
+      .catch(() => setWarns(null));
+  }, [fields]);
+  // Each tab paints the map with its own result; Status uses the risk colours.
+  const colors = tab === "status" ? null : paint;
 
   useEffect(() => saveFields(fields), [fields]);
   useEffect(() => saveResults(results), [results]);
@@ -160,7 +188,7 @@ export default function Officer() {
     const blob = new Blob([JSON.stringify(toGeoJSON(fields), null, 1)], { type: "application/geo+json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "jagapadi-petak.geojson";
+    a.download = "tuai-blok.geojson";
     a.click();
     URL.revokeObjectURL(a.href);
   };
@@ -182,10 +210,13 @@ export default function Officer() {
   return (
     <div className="ws officer">
       <header className="ws-top">
-        <Link to="/" className="ws-logo" aria-label="Jagapadi">
+        <Link to="/" className="ws-logo" aria-label="TUAI">
           <Logo size={28} />
         </Link>
         <div className="ws-top-right">
+          <Link to="/sigap" className="btn btn-ghost small">
+            {s.sigap}
+          </Link>
           <Link to="/app" className="btn btn-ghost small">
             {s.add}
           </Link>
@@ -194,7 +225,7 @@ export default function Officer() {
       </header>
       <div className="ws-body">
         <div className="ws-map">
-          <GroupMap fields={fields} results={results} sel={sel} onSelect={setSel} />
+          <GroupMap fields={fields} results={results} sel={sel} onSelect={setSel} colors={colors} />
         </div>
         <aside className="drawer" aria-label={s.title}>
           <header className="off-head">
@@ -205,6 +236,17 @@ export default function Officer() {
             </p>
           </header>
           {fields.length > 0 && (
+            <nav className="seg sg-tabs" role="tablist">
+              {(["status", "lancar", "taksir"] as const).map((k) => (
+                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => (setTab(k), setPaint({}))}>
+                  {s.tabs[k]}
+                </button>
+              ))}
+            </nav>
+          )}
+          {tab === "lancar" && <LancarPanel fields={fields} onColors={setPaint} />}
+          {tab === "taksir" && <TaksirPanel fields={fields} onColors={setPaint} />}
+          {tab === "status" && fields.length > 0 && (
             <div className="tally">
               {(["bahaya", "waspada", "aman"] as Status[]).map((k) => (
                 <p key={k} className={`st-${k}`}>
@@ -214,6 +256,7 @@ export default function Officer() {
               ))}
             </div>
           )}
+          {tab === "status" && (
           <div className="off-tools">
             {fields.length > 0 && (
               <button type="button" className="btn btn-primary small" onClick={() => check(fields)} disabled={busy.size > 0}>
@@ -230,6 +273,7 @@ export default function Officer() {
             )}
             <input ref={file} type="file" accept=".geojson,.json,application/geo+json" hidden onChange={onImport} />
           </div>
+          )}
           {error && <p className="error felt">{error}</p>}
           {busy.size > 0 && <p className="muted small">{s.firstRun}</p>}
           {fields.length === 0 ? (
@@ -243,7 +287,7 @@ export default function Officer() {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : tab === "status" && (
             <ol className="off-list">
               {ranked.map((f) => {
                 const c = results[f.id];
@@ -261,6 +305,12 @@ export default function Officer() {
                       <h3>{f.name}</h3>
                       {c?.result.field && <span className="muted tiny tabular">{c.result.field.area_ha} ha</span>}
                     </div>
+                    <p className="tiny muted tabular">
+                      {f.planting_date ? `${s.plantedOn} ${f.planting_date}` : s.noDate}
+                      {f.variety ? ` · ${f.variety}` : ""}
+                      {f.soil ? ` · ${SOILS[f.soil]?.[lang] ?? f.soil}` : ""}
+                      {warns?.blocks[f.id]?.warning && <span className="chip-s blk-warn">{s.warn}</span>}
+                    </p>
                     {v ? (
                       <>
                         <p className="off-head-line">{v.headline[lang]}</p>
@@ -273,13 +323,25 @@ export default function Officer() {
                       c && <p className="small muted">{s.noData}</p>
                     )}
                     <div className="off-actions">
-                      <button type="button" className="link" onClick={() => nav("/app", { state: { geometry: f.geometry, name: f.name, dat: f.dat ?? null } })}>
+                      <button type="button" className="link" onClick={() => nav("/app", { state: { geometry: f.geometry, name: f.name, dat: f.planting_date ? Math.round((Date.now() - new Date(f.planting_date).getTime()) / 86_400_000) : f.dat ?? null } })}>
                         {s.open}
+                      </button>
+                      <button type="button" className="link" onClick={() => setEditing(editing === f.id ? null : f.id)}>
+                        {s.blockData}
                       </button>
                       <button type="button" className="link muted" onClick={() => remove(f.id)}>
                         {s.remove}
                       </button>
                     </div>
+                    {editing === f.id && (
+                      <BlockForm
+                        f={f}
+                        onSave={(p) => {
+                          setFields(updateField(f.id, p));
+                          setEditing(null);
+                        }}
+                      />
+                    )}
                   </li>
                 );
               })}
@@ -297,11 +359,13 @@ function GroupMap({
   results,
   sel,
   onSelect,
+  colors,
 }: {
   fields: WatchField[];
   results: Record<string, Checked>;
   sel: string | null;
   onSelect: (id: string) => void;
+  colors: Record<string, string> | null;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
@@ -346,7 +410,7 @@ function GroupMap({
     if (!m || !ready) return;
     const features = fields.map((f) => ({
       type: "Feature" as const,
-      properties: { id: f.id, name: f.name, color: COLOR[statusOf(results[f.id]) ?? "none"], sel: f.id === sel },
+      properties: { id: f.id, name: f.name, color: colors ? colors[f.id] ?? COLOR.none : COLOR[statusOf(results[f.id]) ?? "none"], sel: f.id === sel },
       geometry: f.geometry as Polygon,
     }));
     (m.getSource("fields") as GeoJSONSource).setData({ type: "FeatureCollection", features });
@@ -357,7 +421,7 @@ function GroupMap({
       fields.forEach((f) => f.geometry.coordinates[0].forEach((c) => b.extend(c as [number, number])));
       m.fitBounds(b, { padding: 60, maxZoom: 17, duration: 600 });
     }
-  }, [fields, results, sel, ready]);
+  }, [fields, results, sel, ready, colors]);
 
   return <div ref={el} className="field-map" role="application" aria-label="Peta petak / fields map" />;
 }

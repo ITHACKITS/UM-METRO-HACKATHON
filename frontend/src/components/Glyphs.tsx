@@ -15,6 +15,32 @@ export function IslandGlyph({ kind }: { kind: string }) {
         <path d="M6 36c4-3 6 3 10 0s6 3 10 0 6 3 12 0" stroke="hsl(205 70% 40%)" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
     );
+  if (kind === "pantau")
+    return (
+      <svg {...common}>
+        <path d="M22 38V18M22 26c-6 0-10-4-10-10 6 0 10 4 10 10ZM22 22c5 0 9-3 9-8-5 0-9 3-9 8Z" fill="hsl(95 28% 50%)" stroke="hsl(100 30% 32%)" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M30 6a9 9 0 0 1 8 8M30 11a4 4 0 0 1 3 3" stroke="hsl(183 66% 32%)" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    );
+  if (kind === "lancar")
+    return (
+      <svg {...common}>
+        <rect x="6" y="8" width="13" height="12" rx="2" fill="hsl(205 70% 40% / 0.35)" stroke="hsl(205 70% 40%)" strokeWidth="1.8" />
+        <rect x="25" y="8" width="13" height="12" rx="2" fill="hsl(205 70% 40% / 0.12)" stroke="hsl(205 70% 40%)" strokeWidth="1.8" />
+        <rect x="6" y="26" width="13" height="12" rx="2" fill="hsl(205 70% 40% / 0.12)" stroke="hsl(205 70% 40%)" strokeWidth="1.8" />
+        <path d="M30 26v8M27 31l3 3 3-3" stroke="hsl(28 80% 46%)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  if (kind === "taksir")
+    return (
+      <svg {...common}>
+        <path d="M12 38c2-12 6-20 14-28" stroke="hsl(100 30% 32%)" strokeWidth="2" strokeLinecap="round" />
+        {[0, 1, 2, 3, 4].map((i) => (
+          <ellipse key={i} cx={15 + i * 2.6} cy={30 - i * 4.4} rx="2.6" ry="1.7" transform={`rotate(-50 ${15 + i * 2.6} ${30 - i * 4.4})`} fill="hsl(39 74% 56%)" />
+        ))}
+        <path d="M28 38h10M33 33v5" stroke="hsl(150 18% 13%)" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
   if (kind === "pest")
     return (
       <svg {...common}>

@@ -56,9 +56,9 @@ with sync_playwright() as p:
     pg.get_by_role("button", name="Atur ulang tampilan").click()
     check("landing h1 visible", pg.locator("h1").is_visible())
     pg.get_by_role("button", name="EN").first.click()
-    check("language toggle to EN", "Guard the rice" in pg.locator("h1").inner_text())
+    check("language toggle to EN", "Know the field" in pg.locator("h1").inner_text())
     pg.get_by_role("button", name="ID").first.click()
-    check("language toggle back to ID", "Jaga sawah" in pg.locator("h1").inner_text())
+    check("language toggle back to ID", "Tahu risiko sawah" in pg.locator("h1").inner_text())
     pg.locator('a[href="#cara-kerja"]').first.click()
     time.sleep(2)
     check("anchor scroll to Cara kerja", pg.evaluate("scrollY") > 500)
@@ -195,14 +195,14 @@ with sync_playwright() as p:
     check("chat closes on Escape", pg.locator(".chat-panel").count() == 0)
     # Regression: coming back to the landing after the app must not replay the loader,
     # and app styles (the fixed chat panel) must not leak onto landing cards.
-    pg.get_by_role("link", name="Jagapadi, kembali ke beranda").click()
+    pg.get_by_role("link", name="TUAI, kembali ke beranda").click()
     time.sleep(9)  # first landing visit in this tab builds the diorama
     pg.get_by_role("link", name="Buka peta").click()
     time.sleep(2)
-    pg.get_by_role("link", name="Jagapadi, kembali ke beranda").click()
+    pg.get_by_role("link", name="TUAI, kembali ke beranda").click()
     time.sleep(1.5)
     check("loader not replayed on return", pg.evaluate("getComputedStyle(document.querySelector('.loader')).visibility") == "hidden")
-    check("feature card not hijacked by app styles", pg.evaluate("getComputedStyle(document.querySelector('.isle-chat')).position") == "relative")
+    check("feature card not hijacked by app styles", pg.evaluate("getComputedStyle(document.querySelector('.isle-taksir')).position") == "relative")
     time.sleep(2)
     check("diorama renders after return", "fps" in pg.locator(".hero-foot span").first.inner_text())
 
@@ -223,9 +223,61 @@ with sync_playwright() as p:
     check("dashboard ranked by risk", [order.get(b, 3) for b in badges] == sorted(order.get(b, 3) for b in badges), str(badges))
     check("dashboard map draws plots", pg.evaluate("() => !!document.querySelector('.field-map canvas')"))
     pg.screenshot(path=str(out / "qa-officer.png"))
+
+    # TUAI block data, Lancar and Taksir.
+    pg.get_by_role("button", name="Data blok").first.click()
+    pg.locator(".blk-form input[type=date]").first.fill("2026-09-01")
+    pg.get_by_role("button", name="Simpan").click()
+    check("block planting date saved", "tanam 2026-09-01" in pg.locator(".off-list").inner_text())
+    pg.get_by_role("tab", name="Giliran air").click()
+    pg.get_by_role("button", name="Hitung urutan giliran air").click()
+    pg.wait_for_selector(".lc-rank", timeout=300000)
+    check("lancar ranks five blocks", pg.locator(".lc-rank").count() == 5)
+    ranks = [int(x) for x in pg.locator(".lc-rank").all_inner_texts()]
+    check("lancar order is 1..5", ranks == [1, 2, 3, 4, 5], str(ranks))
+    pg.screenshot(path=str(out / "qa-lancar.png"))
+    pg.get_by_role("tab", name="Taksir panen").click()
+    pg.get_by_role("button", name="Taksir panen").click()
+    pg.wait_for_selector(".off-list .off-badge", timeout=300000)
+    check("taksir rates five blocks", pg.locator(".off-list .off-badge").count() == 5)
+    pg.screenshot(path=str(out / "qa-taksir.png"))
+    pg.get_by_role("tab", name="Status").click()
     pg.get_by_role("button", name="Buka analisis").first.click()
     pg.wait_for_selector(".field-head", timeout=300000)
     check("dashboard opens the plot", "Petak" in pg.locator(".field-head h2").inner_text())
+    pg.close()
+
+    # ---------- TUAI Sigap ----------
+    import io
+
+    from PIL import Image, ImageDraw
+
+    leaf = Image.new("RGB", (480, 360), (210, 200, 170))
+    ImageDraw.Draw(leaf).ellipse((40, 140, 440, 220), fill=(70, 140, 50))
+    buf = io.BytesIO()
+    leaf.save(buf, "JPEG")
+    pg = browser.new_page(viewport={"width": 1440, "height": 900})
+    watch(pg)
+    pg.goto(base + "/sigap", wait_until="networkidle")
+    check("sigap page loads", "TUAI Sigap" in pg.locator("h1").inner_text())
+    pg.locator("input[type=file]").set_input_files(files=[{"name": "daun.jpg", "mimeType": "image/jpeg", "buffer": buf.getvalue()}])
+    pg.wait_for_selector(".sg-result", timeout=300000)
+    check("sigap names a class", pg.locator(".sg-result-top h3").count() == 1)
+    check("sigap shows review state", pg.locator(".sg-flag").count() >= 1)
+    pg.locator(".field-map canvas").click(position={"x": 500, "y": 400})
+    pg.get_by_role("button", name="Kirim laporan").click()
+    pg.wait_for_selector("text=Terkirim", timeout=30000)
+    check("sigap report sent", pg.locator("text=Terkirim").count() == 1)
+    pg.screenshot(path=str(out / "qa-sigap.png"))
+    pg.get_by_role("tab", name="Lapor tikus").click()
+    check("rat quick report form", pg.get_by_role("radio", name="Berat").count() == 1)
+    pg.get_by_role("tab", name="Cek PPL").click()
+    n_before = pg.locator(".sg-rep").count()
+    check("ppl sees pending report", n_before >= 1)
+    # Reject the QA photo so it never counts toward a real warning.
+    pg.locator(".sg-rep").first.get_by_role("button", name="Tolak").click()
+    pg.wait_for_function(f"document.querySelectorAll('.sg-rep').length < {n_before}", timeout=30000)
+    check("ppl review removes it from the queue", pg.locator(".sg-rep").count() == n_before - 1)
     pg.close()
 
     # ---------- Mobile app ----------

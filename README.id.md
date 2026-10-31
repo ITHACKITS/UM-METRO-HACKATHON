@@ -1,44 +1,59 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo/jagapadi-lockup-dark.svg" />
-    <img src="frontend/public/logo/jagapadi-lockup.svg" alt="Jagapadi" width="300" />
-  </picture>
+  <img src="frontend/public/logo/jagapadi-icon.svg" alt="" width="72" />
 </p>
+<h1 align="center">TUAI</h1>
 
-<p align="center"><b>Jaga sawah sebelum kering atau banjir.</b><br/>
-Citra satelit, cuaca dan ketinggian lahan diolah menjadi prakiraan dua minggu dan rencana kerja untuk satu petak sawah.</p>
+<p align="center"><b>Sistem pertanian cerdas berbasis citra satelit dan computer vision.</b><br/>
+Monitoring kondisi padi, deteksi penyakit dan hama, giliran air, dan prediksi hasil panen dalam satu peta per blok sawah.<br/>
+<i>"Tuai" berarti memanen padi.</i></p>
 
-<p align="center">Dibuat untuk <b>UM Metro Hackathon 2026</b> · Metro, Lampung · <a href="README.md">English</a></p>
+<p align="center">Tim Infinits · <b>UM Metro Hackathon 2026</b>, sub tema A · Metro, Lampung · <a href="README.md">English</a></p>
 
-![Halaman depan Jagapadi: diorama lanskap sawah di dalam balok air, dengan petani, kuntul, kerbau dan ikan](docs/screenshots/landing-hero.png)
+![Halaman depan TUAI: diorama lanskap sawah di dalam balok air, dengan petani, kuntul, kerbau dan ikan](docs/screenshots/landing-hero.png)
 
 > [!WARNING]
-> Jagapadi adalah alat perkiraan ilmiah, **bukan sistem peringatan resmi**. Untuk keputusan, ikuti BMKG, penyuluh pertanian (PPL) dan BPBD.
+> TUAI adalah alat perkiraan ilmiah, **bukan sistem peringatan resmi**. Untuk keputusan, ikuti BMKG, penyuluh pertanian (PPL) dan BPBD.
 
 ## Masalah
 
-Petani biasanya baru tahu sawahnya kekurangan air saat tanah sudah retak, dan baru tahu banjir saat petak sudah tergenang. Tandanya sudah terlihat lebih dulu di citra satelit, ensemble cuaca dan prakiraan debit sungai, tetapi data itu tidak sampai ke pematang.
+Petani dan P3A tidak tahu sejak awal kapan dan di blok mana sawahnya berisiko, sehingga tindakan datang terlambat.
 
-- Luas panen padi 2023 sekitar 10,21 juta ha, **turun 2,29%** dari 2022 saat El Niño menguat ([BPS via Bisnis.com](https://ekonomi.bisnis.com/read/20240301/99/1745543/bps-luas-panen-padi-2023-merosot-229-sepanjang-2023)).
-- Produksi beras 2023 31,10 juta ton, **turun sekitar 440 ribu ton** ([BPS via Kontan](https://nasional.kontan.co.id/news/produksi-beras-nasional-turun-440000-ton-pada-2023-bps-terdampak-el-nino)).
-- Kemarau 2019: **102.746 ha** sawah terdampak kekeringan, **9.358 ha** puso ([Kementan via detikFinance](https://finance.detik.com/berita-ekonomi-bisnis/d-4616392/9-300-hektare-sawah-gagal-panen)).
-- El Niño menguat lagi: indeks ONI NOAA mencapai **+1,80 pada Juli 2026 dan +2,16 pada Agustus 2026** ([NOAA PSL](https://psl.noaa.gov/data/correlation/oni.data)).
+| Fokus | Kenapa terlambat atau sulit |
+|---|---|
+| Kekeringan | Kurang air baru terlihat saat daun menggulung. Giliran air dibagi tanpa data kebutuhan tiap blok. |
+| Genangan | Padi biasa rusak jika terendam penuh sekitar 5 hari. Tidak ada peta blok mana yang tergenang dan sudah berapa lama. |
+| Penyakit | Gejala blas, kresek dan tungro mirip bagi mata awam. |
+| Hama | Wereng coklat kecil dan hidup di pangkal batang; penggerek batang baru ketahuan dari sundep atau beluk. Hama dan penyakit tertukar, obat yang disemprot bisa salah. |
+| Hasil panen | Hasil baru diketahui saat panen, sehingga sulit merencanakan penjualan, simpanan atau modal musim berikutnya. |
+
+Data nasional padi 2024 (Pusdatin Kementan, *Statistik Iklim, OPT dan DPI 2024*, s.d. 11 Okt 2024): banjir 172.093 ha (puso 50.142 ha), kekeringan 134.440 ha (22.674 ha), penggerek batang 61.711 ha, blas/kresek/tungro 46.826 ha, tikus 46.023 ha (puso 1.205 ha), WBC 27.058 ha. Di Lampung, serangan WBC naik hampir 6 kali dan penggerek batang hampir 2 kali dalam dua tahun. Kenaikan serangan hama adalah faktor terkuat penurunan hasil padi sawah, peluang 9,43 kali ([Prasetyo & Kadir 2023](https://mpra.ub.uni-muenchen.de/119446/), 50.619 petak ubinan).
+
+Wawancara mitra (petani sejak 1980-an, 3 ha, irigasi): gagal panen karena tikus, wereng dan kekeringan; *"Gagal panen gaada tanda-tandanya"*; panen normal 6 ton/ha, saat gagal hanya 3 kuintal/ha; tidak ada kabar dari pemerintah atau BMKG.
 
 ## Ringkasan
 
-Petani atau PPL menggambar petak di peta satelit. Jagapadi lalu membaca riwayat Sentinel-2 petak itu (NDVI, NDWI, air terbuka) dan radar Sentinel-1 (air, tembus awan), membandingkannya dengan lahan sekitar, menjalankan neraca air sawah FAO-56 pada **51 skenario hujan ECMWF**, memeriksa debit sungai GloFAS terhadap banjir 2-tahunan, lalu memberi risiko kekeringan, banjir dan kesesuaian cuaca untuk hama, lengkap dengan alasan, langkah yang diurutkan dari paling mudah, sumber air terdekat, simulator skenario, chatbot Si Padi dan laporan A4.
+TUAI menampilkan semua informasi dalam **satu peta per blok sawah dengan warna hijau, kuning atau merah, lengkap dengan saran tindakan**. Dua sumber data saling melengkapi: **satelit** memantau seluruh hamparan tanpa datang ke sawah (kehijauan, kadar air tanaman, genangan), dan **foto dari kamera HP** menangkap yang tidak terlihat satelit (penyakit di daun, hama di pangkal batang).
 
-Untuk petani, semuanya diringkas jadi satu status (**Aman / Waspada / Bahaya**), satu kalimat alasan dan satu hal yang dikerjakan hari ini, lalu dikirim ke **Telegram** setiap pagi selama sawah berisiko. Untuk PPL ada **dasbor** semua petak binaan, diurutkan dari yang paling berisiko.
-
-Setiap angka berasal dari sumber terbuka atau dihitung darinya, dengan waktu pengambilannya. Kalau sumber gagal, aplikasi menyebut sumber mana dan alasannya.
+| Fitur | Fokus challenge | Yang dikerjakan | Di mana |
+|---|---|---|---|
+| **TUAI Pantau** | Monitoring kondisi tanaman | NDVI dan NDMI per blok dari Sentinel-2 dibanding lahan sekitar, fase tumbuh dari tanggal tanam | Halaman lahan, setiap blok |
+| **TUAI Siaga** | Monitoring kondisi tanaman | Prakiraan hujan BMKG dan peta genangan radar Sentinel-1 (deteksi perubahan ala UN-SPIDER): peringatan hujan lebat, blok tergenang, lama terendam | Halaman lahan, tab banjir |
+| **TUAI Sigap** | Deteksi penyakit dan hama | Foto → AI: 5 kelas daun (kresek, blas, bercak coklat, tungro, sehat), hitung wereng YOLO, model gejala hama; laporan cepat tikus; cek PPL; peta sebaran desa dan peringatan blok sekitar | `/sigap` |
+| **TUAI Lancar** | Rekomendasi untuk petani | Kebutuhan air FAO-56 tiap blok dicek dengan Pantau: merah/kuning/hijau dan urutan giliran air untuk ketua P3A, blok berbunga lebih dulu; catatan keputusan per musim | `/ppl` → Giliran air |
+| **TUAI Taksir** | Prediksi hasil panen | Musim pertama: di bawah/sekitar/di atas rata-rata blok dari NDVI/NDMI fase berbunga–pengisian bulir dan catatan kejadian; setelah dua musim hasil timbang, regresi linear dalam t/ha beserta rentang | `/ppl` → Taksir panen |
 
 ## Fitur
 
 | Fitur | Isi |
 |---|---|
+| TUAI Sigap: cek foto | `/sigap`: foto daun, pangkal rumpun atau gejala lain. Model daun mengenali kresek, blas, bercak coklat, tungro atau sehat; detektor YOLO memberi kotak dan menghitung wereng; model gejala mengenali penggerek batang, hispa atau pelipat daun. Di bawah keyakinan 70% atau bila model berbeda pendapat, hasil ditandai *perlu dicek* dan diteruskan ke PPL. Saran awal hanya pengamatan dan cara budidaya, ditandai draf sampai dicek PPL. |
+| TUAI Sigap: laporan dan peta desa | Hasil foto dan laporan cepat tikus (lokasi, tingkat kerusakan) masuk antrean PPL (benar, ganti label, tolak; PIN opsional). Laporan terverifikasi jadi titik di peta desa; dua laporan wereng atau tikus terverifikasi dalam 500 m selama seminggu memberi peringatan ke blok sekitar (angka bisa diatur, diuji saat pilot). |
+| TUAI Lancar: giliran air | `/ppl` → Giliran air: ketua P3A mengisi tanggal tanam, varietas dan jenis tanah tiap blok (atau SoilGrids mengisi tanah). Tiap blok mendapat kebutuhan air FAO-56 7 hari dalam mm dan m³; merah bila hitungan air dan Pantau sama-sama buruk, kuning bila hanya satu (cek ke sawah), blok merah yang berbunga lebih dulu. Keputusan dan hasilnya dicatat per musim. |
+| TUAI Taksir: perkiraan panen | `/ppl` → Taksir panen: kelas dibanding rata-rata blok di musim pertama; ton/ha beserta rentang setelah 8 hasil timbang dari 2 musim tercatat. |
+| TUAI Siaga | Prakiraan resmi BMKG 3 hari untuk desa terdekat dengan peringatan hujan lebat (≥ 50 mm/hari), deteksi genangan radar dengan lama terendam, dan prakiraan terendam dari neraca air. Peringatan Siaga tinggi menaikkan status aman menjadi *Waspada*. |
 | Tampilan Petani | Layar utama: status **Aman / Waspada / Bahaya**, alasannya dalam satu kalimat, dan satu hal yang dikerjakan hari ini. Grafik ada di tampilan **Ahli**. |
 | Peringatan Telegram | Sekali tekan, sawah terhubung ke Telegram. Tiap pagi (06.00 WIB) bot mengirim pesan selama sawah berisiko, dan sekali lagi saat kembali aman. `/cek` dan `/stop`. |
-| Dasbor penyuluh | `/ppl`: semua petak binaan di satu peta, diwarnai dan diurutkan menurut risiko. Impor/ekspor batas petak GeoJSON. |
+| Dasbor P3A & PPL | `/ppl`: semua petak binaan di satu peta, diwarnai dan diurutkan menurut risiko. Impor/ekspor batas petak GeoJSON. |
 | Gambar lahan | Ketuk sudut petak di citra Esri atau Sentinel-2 cloudless. |
 | Kering | Hari mulai stres air (P5/P50/P95), peluang harian, alasan, langkah (AWD, tambal pematang, pompa, mulsa, giliran air P3A). |
 | Banjir | Tinggi genangan vs tinggi tanaman, hari terendam penuh, ensemble debit GloFAS, tinggi lahan di atas saluran, air dari radar Sentinel-1. |
@@ -66,7 +81,11 @@ Tangkapan layar lain ada di [README bahasa Inggris](README.md#screens).
 2. Tekan **Pakai lahan contoh** atau **Gambar lahan**.
 3. Baca status dan langkah hari ini. Tekan **Kirim peringatan ke Telegram**, atau **Lihat detail lengkap** untuk grafik, uji skenario dan Si Padi.
 
-Untuk kelompok tani: buka **Dasbor penyuluh** (`/ppl`) lalu **Pakai contoh kelompok tani**.
+Untuk kelompok tani: buka **Dasbor P3A & PPL** (`/ppl`) lalu **Pakai contoh kelompok tani**. Buka **Data blok** untuk mengisi tanggal tanam, varietas dan tanah, lalu pakai tab **Giliran air** (Lancar) dan **Taksir panen**.
+
+Untuk hama dan penyakit: buka **TUAI Sigap** (`/sigap`), foto tanaman, pilih petak, kirim laporan; PPL memeriksanya di **Cek PPL**.
+
+Model foto Sigap (opsional, sekitar 2 GB dengan PyTorch): `pip install -r backend/requirements-ml.txt`.
 
 ## Menjalankan secara lokal
 
@@ -85,9 +104,32 @@ Deploy: repo ini adalah Blueprint [Render](https://render.com) (`render.yaml`). 
 
 Lihat bagian [Scientific method](README.md#scientific-method) dan [Validation and limitations](README.md#validation-and-limitations). Singkatnya: neraca air FAO-56 per anggota ensemble, SCS-CN untuk limpasan, Gumbel untuk banjir 2-tahunan, pembacaan Sentinel-2 tanpa model terlatih. Uji konsistensi neraca air vs kelembapan tanah model Open-Meteo: r = 0,095, MAE = 0,037 m³/m³ (model vs model, bukan data lapangan). Uji mundur kemarau 2005-2025: hari stres air sejalan dengan El Niño (korelasi peringkat ONI 0.64) dan IOD positif (DMI 0.74), AUC 0.95. Tetapi total hujan kemarau saja memberi skor yang sama, dan tahun 2023 tidak menonjol di titik ini. Akurasi per petak **belum dapat diuji** karena tidak ada catatan lapangan.
 
+## Kesesuaian dengan konsep
+
+Yang ditulis di *Konsep TUAI Tim Infinits*, dan di mana prototipe sengaja berbeda.
+
+| Lapisan | Konsep | Prototipe | Alasan |
+|---|---|---|---|
+| Olah citra satelit | Google Earth Engine (Python API) | COG Sentinel-2 L2A dari Earth Search dan Sentinel-1 RTC dari Planetary Computer, dibaca langsung | Tanpa akun atau lisensi, bisa luring dari rekaman; GEE perlu lisensi berbayar untuk komersial |
+| Masker awan | Cloud Score+ | Kelas SCL Sentinel-2 | Cloud Score+ adalah koleksi GEE |
+| Masker air permanen, lereng | JRC Global Surface Water, HydroSHEDS | Perbandingan cincin lahan sekitar, lereng dari Copernicus DEM GLO-90 (aturan 5% UN-SPIDER) | Tujuan sama tanpa GEE; JRC masih perlu ditambah |
+| Cuaca | BMKG + Open-Meteo | Prakiraan 3 hari BMKG (kode desa terdekat) + Open-Meteo / ensemble ECMWF | Sesuai rencana |
+| Penyakit daun | Hugging Face Transformers | `prithivMLmods/Rice-Leaf-Disease`, revisi dikunci | Sesuai rencana; wajib diuji ulang dengan foto lapangan |
+| Deteksi hama | PyTorch + Ultralytics YOLO | `backend/models/wereng.pt` lokal atau model Roboflow | Bobot dilatih dengan `scripts/sigap/train_wereng.py`; tidak ikut repo |
+| Prediksi panen | scikit-learn | scikit-learn `LinearRegression` | Sesuai rencana |
+| Basis data blok | PostgreSQL + PostGIS | Berkas JSON di `backend/data/{sigap,lancar,taksir}` dan blok di peramban (impor/ekspor GeoJSON) | Cukup untuk pilot dua mitra; PostGIS saat blok dipakai bersama banyak perangkat |
+| Tampilan | Website PWA (React) + Leaflet | React + MapLibre GL | MapLibre sudah terpasang; belum bisa dipasang sebagai PWA |
+
 ## Tim
 
-Hikari Reiziq · Ziddan Habibi · Aryarefman. Dosen pembimbing: menyusul.
+Tim Infinits, Program Studi Teknologi Informasi, Institut Teknologi Sepuluh Nopember:
+
+- M. Hikari Reiziq Rakhmadinta: ketua tim, bisnis dan hilirisasi
+- Ahmad Wildan Fawwaz: operasional, regulasi dan penyusun proposal
+- Muhammad Rakha Hananditya Rauf: kecerdasan buatan (model Sigap, Pantau, Siaga, Taksir)
+- Arya Bisma Putra Refman: website, backend, peta blok, hitungan air (Lancar), API cuaca
+- Muhammad Ziddan Habibi: validasi pengguna dan penghubung mitra
+- Dosen pendamping: Prof. Dr. Dedin Finatsiyatull Rosida, STP, MKes
 
 ## Lisensi
 

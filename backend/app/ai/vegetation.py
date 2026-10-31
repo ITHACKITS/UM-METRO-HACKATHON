@@ -3,7 +3,7 @@
 No model is trained here, so nothing claims a learned accuracy. Three signals:
 1. Transplanting date: the latest flooded, low-NDVI scene before a sustained NDVI rise.
 2. Self anomaly: field NDVI against a generic transplanted-rice NDVI curve for its age.
-3. Neighbour anomaly: field NDVI/NDWI against the ring of land around it in the same scene,
+3. Neighbour anomaly: field NDVI/NDMI against the ring of land around it in the same scene,
    which cancels most atmosphere and season effects.
 """
 
@@ -85,16 +85,16 @@ def anomalies(series: list[dict], dat: int | None, stage_reliable: bool = True) 
 
     if n.get("usable"):
         dv = f["ndvi_mean"] - n["ndvi_mean"]
-        dw = f["ndwi_mean"] - n["ndwi_mean"]
-        out["vs_neighbours"] = {"ndvi_diff": round(dv, 3), "ndwi_diff": round(dw, 3)}
+        dw = f["ndmi_mean"] - n["ndmi_mean"]
+        out["vs_neighbours"] = {"ndvi_diff": round(dv, 3), "ndmi_diff": round(dw, 3)}
         if dw <= -0.05:
             signals.append(
                 {
                     "kind": "drought",
                     "weight": min(0.3, -dw * 3),
                     "text": {
-                        "id": f"air tajuk (NDWI) {abs(dw):.2f} di bawah lahan sekitar",
-                        "en": f"canopy water (NDWI) {abs(dw):.2f} below surrounding land",
+                        "id": f"kadar air tanaman (NDMI) {abs(dw):.2f} di bawah lahan sekitar",
+                        "en": f"crop moisture (NDMI) {abs(dw):.2f} below surrounding land",
                     },
                 }
             )

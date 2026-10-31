@@ -19,7 +19,7 @@ export type SceneStat = {
   usable: boolean;
   valid_fraction: number;
   ndvi_mean?: number;
-  ndwi_mean?: number;
+  ndmi_mean?: number;
   water_fraction?: number;
 };
 export type Scene = { scene_id: string; datetime: string; field: SceneStat; neighbours: SceneStat };
@@ -65,6 +65,25 @@ export type VerdictSummary = {
   generated_at?: string;
 };
 
+export type BmkgDay = { date: string; rain_mm: number; max_3h_mm: number; weather: string[]; category: Bi | null };
+export type SiagaWarning = { kind: "heavy_rain" | "flooded" | "submergence_forecast"; level: "medium" | "high"; date: string | null; text: Bi };
+export type Siaga = {
+  level: "low" | "medium" | "high";
+  warnings: SiagaWarning[];
+  bmkg: { area: { adm4: string; desa: string; kecamatan: string; kotkab: string; distance_km: number }; days: BmkgDay[]; captured_at: string; source: string } | null;
+  radar_flood: {
+    flooded_now: boolean;
+    since: string | null;
+    days_observed: number;
+    passes: number;
+    puddling_stage: boolean;
+    slope_masked: boolean;
+    history: { date: string; orbit: string; vv_db: number; reference_db: number; ratio: number; flooded: boolean }[];
+    method: Bi;
+  } | null;
+  damage_threshold_days: number;
+};
+
 export type Analysis = {
   status: "ok" | "insufficient-data";
   mode: "real" | "test";
@@ -96,7 +115,7 @@ export type Analysis = {
     scenes_usable: number;
     anomalies: {
       signals: { kind: string; weight: number; text: Txt }[];
-      vs_neighbours?: { ndvi_diff: number; ndwi_diff: number };
+      vs_neighbours?: { ndvi_diff: number; ndmi_diff: number };
       vs_expected?: { expected: number; observed: number; diff: number };
     };
   };
@@ -151,6 +170,7 @@ export type Analysis = {
   drought: { risk: Risk; recommendations: Rec[] };
   flood: { risk: Risk; recommendations: Rec[] };
   pest: Pest[];
+  siaga?: Siaga;
   confidence: "low" | "medium" | "high";
   sources: { name: string; captured_at: string }[];
   unavailable: { name: string; source: string; reason: string }[];
@@ -170,6 +190,119 @@ export type AnalyzeOptions = {
   irrigation_mm_day?: number | null;
   initial_ponding_mm?: number | null;
   scenario?: Scenario | null;
+};
+
+// TUAI blocks: a field the P3A chair has described.
+export type Block = {
+  id: string;
+  name?: string;
+  geometry: Polygon;
+  planting_date?: string | null;
+  variety?: string | null;
+  soil?: string | null;
+};
+
+export type LancarRow = {
+  id: string;
+  name: string | null;
+  rank: number;
+  color: "merah" | "kuning" | "hijau";
+  flowering: boolean;
+  days_after_transplant: number | null;
+  stage: string;
+  need_mm_7d: number;
+  need_m3_7d: number;
+  area_ha: number;
+  prob_stress_7d: number;
+  first_stress_p50: number | null;
+  calc_bad: boolean;
+  pantau_bad: boolean;
+  pantau_known: boolean;
+  soil: { class: string; name: Bi; basis: Bi } | null;
+  reasons: Bi[];
+  check_field: boolean;
+};
+export type LancarResult = { generated_at: string; order: LancarRow[]; skipped: { id: string; name: string | null; reason: string }[]; rule: Bi };
+export type Decision = {
+  season: string;
+  block_id: string;
+  block_name?: string | null;
+  date: string;
+  decision: string;
+  outcome: string;
+  followed_recommendation?: boolean | null;
+  by: string;
+  recorded_at?: string;
+};
+
+export type TaksirRow = {
+  id: string;
+  name: string | null;
+  area_ha: number;
+  features: { ndvi: number | null; ndmi: number | null; events: number; event_text: Bi[]; scenes: number; window: string };
+  class: "di_bawah" | "sekitar" | "di_atas" | null;
+  class_reason: Bi;
+  score?: number;
+  estimate?: { t_ha: number; low: number; high: number } | null;
+};
+export type TaksirResult = {
+  generated_at: string;
+  mode: "class" | "regression";
+  model: { n: number; seasons: string[]; rmse_t_ha: number; r2_in_sample: number; coef: Record<string, number> } | null;
+  blocks: TaksirRow[];
+  skipped: { id: string; name: string | null; reason: string }[];
+  harvest_records: number;
+  needs: { records: number; seasons: number };
+  note: Bi;
+};
+
+export type SigapPart = "daun" | "pangkal" | "gejala";
+export type SigapClass = { key: string; name: Bi; kind: string; advice: Bi; checked_by_ppl: boolean; source: string };
+export type SigapBox = { x: number; y: number; w: number; h: number; confidence: number; class: string };
+type ModelOut = { status: "ok" | "unavailable"; reason?: string; model?: string };
+export type SigapResult = {
+  part: SigapPart;
+  finding: { key: string; label: string; confidence: number; count?: number } | null;
+  needs_review: boolean;
+  review_reasons: Bi[];
+  models: {
+    disease?: ModelOut & { ranked?: { key: string; confidence: number }[] };
+    symptoms?: ModelOut & { ranked?: { key: string; confidence: number }[] };
+    planthopper?: ModelOut & { boxes?: SigapBox[]; count?: number; note?: Bi };
+  };
+  advice: SigapClass | null;
+};
+export type SigapReport = {
+  id: string;
+  created_at: string;
+  status: "pending" | "verified" | "rejected";
+  lat: number;
+  lon: number;
+  label: string;
+  kind: string;
+  source: "foto" | "laporan_cepat";
+  confidence?: number | null;
+  count?: number | null;
+  severity?: "ringan" | "sedang" | "berat" | null;
+  needs_review: boolean;
+  block_id?: string | null;
+  block_name?: string | null;
+  reporter?: string | null;
+  note?: string | null;
+  photo: boolean;
+  review: { by: string; at: string; note: string; original_label: string } | null;
+};
+export type SigapStatus = {
+  disease: { model: string; state: string };
+  planthopper: { state: string };
+  symptoms: { state: string };
+  review_below: number;
+  classes: Record<string, SigapClass>;
+};
+export type SigapWarnings = {
+  blocks: Record<string, { warning: boolean; counts: Record<string, number>; triggered: string[] }>;
+  rule: { radius_m: number; min_reports: number; days: number; labels: string[] };
+  note: Bi;
 };
 
 // Thrown when the backend cannot be reached (network failure, or the dev proxy's bare 5xx).
@@ -221,5 +354,17 @@ export const api = {
       lang,
       days_after_transplant: dat ?? undefined,
     }),
+  lancar: (blocks: Block[]) => post<LancarResult>("/api/lancar/rank", { blocks }),
+  decide: (d: Decision) => post<Decision>("/api/lancar/decisions", d),
+  decisions: (season?: string) => request<{ decisions: Decision[] }>(`/api/lancar/decisions${season ? `?season=${encodeURIComponent(season)}` : ""}`),
+  taksir: (blocks: Block[]) => post<TaksirResult>("/api/taksir", { blocks }),
+  harvest: (block: Block, season: string, yield_t_ha: number) => post<unknown>("/api/taksir/harvest", { block, season, yield_t_ha }),
+  sigapStatus: () => request<SigapStatus>("/api/sigap/status"),
+  sigapAnalyze: (image: string, part: SigapPart) => post<SigapResult>("/api/sigap/analyze", { image, part }),
+  sigapReport: (r: Partial<SigapReport> & { lat: number; lon: number; label: string; image?: string | null }) => post<SigapReport>("/api/sigap/reports", r),
+  sigapReports: (days = 60) => request<{ reports: SigapReport[] }>(`/api/sigap/reports?days=${days}`),
+  sigapReview: (id: string, body: { status: "verified" | "rejected"; label?: string; reviewer: string; note?: string; pin?: string }) =>
+    post<SigapReport>(`/api/sigap/reports/${id}/review`, body),
+  sigapWarnings: (blocks: { id: string; lat: number; lon: number }[]) => post<SigapWarnings>("/api/sigap/warnings", { blocks }),
   health: () => request<{ telegram: boolean; llm: boolean; offline_replay: boolean }>("/api/health"),
 };

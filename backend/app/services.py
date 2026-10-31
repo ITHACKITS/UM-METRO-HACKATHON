@@ -11,9 +11,9 @@ from shapely.geometry import shape
 
 from app.ai import vegetation
 from app.config import settings
-from app.engine import pest, recommend, verdict
+from app.engine import pest, recommend, siaga, verdict
 from app.engine.waterbalance import FieldParams, ensemble_run, initial_state, stage_for
-from app.ingest import sentinel1, sentinel2, terrain, weather
+from app.ingest import bmkg, sentinel1, sentinel2, soil, terrain, weather
 from app.ingest.http import SourceUnavailable
 
 _geod = Geod(ellps="WGS84")
@@ -64,6 +64,7 @@ def gather(geom: dict, lat: float, lon: float) -> dict[str, Any]:
         "water": (terrain.water_features, lat, lon),
         "river": (terrain.river_discharge, lat, lon),
         "openweather": (weather.openweather_current, lat, lon),
+        "bmkg": (bmkg.forecast, lat, lon),
     }
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
         futs = {k: pool.submit(_safe, *v) for k, v in jobs.items()}
@@ -140,6 +141,9 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
     stage = stage_for(dat)
 
     params = FieldParams(days_after_transplant=dat)
+    if opts.get("soil") in soil.SOILS:
+        for k in ("theta_fc", "theta_wp", "percolation_mm"):
+            setattr(params, k, soil.SOILS[opts["soil"]][k])
     for k in ("irrigation_mm_day", "percolation_mm", "outlet_mm", "bund_mm", "drainage_mm_day", "theta_fc", "theta_wp"):
         if opts.get(k) is not None:
             setattr(params, k, float(opts[k]))
@@ -362,6 +366,11 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
         "drivers": flood_drivers,
     }
 
+    bm = src["bmkg"]["value"] if src["bmkg"]["ok"] else None
+    if bm:
+        sources.append({"name": f"{bm['source']} ({bm['area']['desa']}, {bm['area']['kecamatan']})", "captured_at": bm["captured_at"]})
+    siaga_block = siaga.build(bm, radar["series"] if radar else None, ter["mean_slope_deg"] if ter else None, dat, wb["max_submergence_days"])
+
     # Pest: last 7 observed days and next 7 forecast days.
     def day_rec(i):
         return {
@@ -436,6 +445,7 @@ def analyze(geom: dict, opts: dict | None = None) -> dict[str, Any]:
             "recommendations": recommend.flood(flood_risk, stage, dat, wb["max_submergence_days"], river),
         },
         "pest": pests,
+        "siaga": siaga_block,
         "confidence": confidence,
         "sources": sources,
         "unavailable": unavailable,

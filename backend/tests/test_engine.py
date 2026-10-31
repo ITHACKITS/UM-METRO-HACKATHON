@@ -80,7 +80,7 @@ def test_transplanting_needs_three_clear_scenes():
 
 def test_transplanting_detects_flooded_start():
     def s(day, ndvi, water):
-        return {"datetime": f"2026-0{day}T03:00:00Z", "field": {"usable": True, "ndvi_mean": ndvi, "ndwi_mean": 0, "water_fraction": water}}
+        return {"datetime": f"2026-0{day}T03:00:00Z", "field": {"usable": True, "ndvi_mean": ndvi, "ndmi_mean": 0, "water_fraction": water}}
 
     series = [s("7-01", 0.6, 0.0), s("7-20", 0.15, 0.6), s("8-10", 0.4, 0.1), s("9-01", 0.7, 0.0)]
     r = vegetation.estimate_transplanting(series)

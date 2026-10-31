@@ -19,6 +19,12 @@ backend/data/sensors/
 backend/data/osm-cache/
 backend/data/alerts/
 backend/data/scene-cache/tiles/
+# TUAI field data: photos, reports, decisions and harvests belong to the partners (written consent only)
+backend/data/sigap/
+backend/data/lancar/
+backend/data/taksir/
+# trained Sigap weights are large; see scripts/sigap
+backend/models/
 
 # local scratch
 scratch-*.log

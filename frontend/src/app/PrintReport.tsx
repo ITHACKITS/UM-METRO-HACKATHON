@@ -132,7 +132,7 @@ export function PrintReport({ a, mapImage }: { a: Analysis; mapImage: string | n
         <div className="pr-brand">
           <LogoMark size={34} />
           <div>
-            <p className="pr-word">jagapadi</p>
+            <p className="pr-word">tuai</p>
             <p className="pr-sub">{t.sub}</p>
           </div>
         </div>

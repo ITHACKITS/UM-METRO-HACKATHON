@@ -130,12 +130,17 @@ def _bands(item: dict, need: tuple) -> tuple:
 
 
 def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
-    """NDVI, NDWI (Gao, vegetation water) and open-water fraction for field and neighbour ring."""
+    """NDVI, NDMI (crop moisture) and open-water fraction for field and neighbour ring."""
     SCENE_CACHE.mkdir(parents=True, exist_ok=True)
     gkey = hashlib.sha1(json.dumps(geom, sort_keys=True).encode()).hexdigest()[:12]
     cache_file = SCENE_CACHE / f"{item['id']}-{gkey}.json"
     if cache_file.exists():
-        return json.loads(cache_file.read_text())
+        # Scenes cached before the NDWI -> NDMI rename use the old key for the same index.
+        out = json.loads(cache_file.read_text())
+        for part in ("field", "neighbours"):
+            if "ndwi_mean" in out[part]:
+                out[part]["ndmi_mean"] = out[part].pop("ndwi_mean")
+        return out
 
     field = shape(geom)
     ring_poly = field.buffer(NEIGHBOUR_RING_DEG)
@@ -150,12 +155,12 @@ def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
 
     with np.errstate(divide="ignore", invalid="ignore"):
         ndvi = (N - R) / (N + R)
-        ndwi = (N - S) / (N + S)  # Gao 1996: vegetation liquid water
+        ndmi = (N - S) / (N + S)  # NDMI (B8, B11), the same index as Gao 1996 NDWI: crop moisture
         mcf = (G - N) / (G + N)  # McFeeters 1996: open water when > 0
 
     def summarise(mask):
         total = int(mask.sum())
-        ok = mask & valid & np.isfinite(ndvi) & np.isfinite(ndwi)
+        ok = mask & valid & np.isfinite(ndvi) & np.isfinite(ndmi)
         n = int(ok.sum())
         if total == 0 or n / total < MIN_VALID_FRACTION:
             return {"valid_fraction": round(n / total, 3) if total else 0.0, "usable": False}
@@ -165,7 +170,7 @@ def scene_stats(item: dict, geom: dict) -> dict[str, Any]:
             "ndvi_mean": round(float(np.nanmean(ndvi[ok])), 4),
             "ndvi_p10": round(float(np.nanpercentile(ndvi[ok], 10)), 4),
             "ndvi_p90": round(float(np.nanpercentile(ndvi[ok], 90)), 4),
-            "ndwi_mean": round(float(np.nanmean(ndwi[ok])), 4),
+            "ndmi_mean": round(float(np.nanmean(ndmi[ok])), 4),
             "water_fraction": round(float((mcf[ok] > 0).mean()), 4),
             "pixels": n,
         }

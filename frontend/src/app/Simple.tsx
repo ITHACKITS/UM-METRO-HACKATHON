@@ -16,7 +16,7 @@ const T = {
     alertOpen: "Buka Telegram dan tekan Mulai (Start). Pesan pertama datang dalam satu menit.",
     alertLink: "Kalau Telegram tidak terbuka, pakai tautan ini",
     alertOff: "Peringatan Telegram belum diaktifkan di server ini.",
-    apiDown: "Server Jagapadi tidak menjawab. Coba lagi sebentar.",
+    apiDown: "Server TUAI tidak menjawab. Coba lagi sebentar.",
     sure: {
       low: "Keyakinan rendah: data satelit lama atau tahap tanam belum pasti.",
       medium: "Keyakinan sedang.",
@@ -36,7 +36,7 @@ const T = {
     alertOpen: "Open Telegram and press Start. The first message arrives within a minute.",
     alertLink: "If Telegram did not open, use this link",
     alertOff: "Telegram alerts are not enabled on this server.",
-    apiDown: "The Jagapadi server is not responding. Try again shortly.",
+    apiDown: "The TUAI server is not responding. Try again shortly.",
     sure: {
       low: "Low confidence: old satellite data or unsure crop stage.",
       medium: "Medium confidence.",

@@ -13,6 +13,15 @@
 | Esri World Imagery | Esri terms of use | Esri, Maxar, Earthstar Geographics, and the GIS User Community |
 | Sentinel-2 cloudless 2023 (EOX) | CC BY-NC-SA 4.0 | Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2023) |
 | Rice loss figures | Cited news reports of BPS and Kementan releases | Links in README |
+| BMKG Prakiraan Cuaca Terbuka (api.bmkg.go.id) | Free; BMKG must be credited | Sumber: BMKG |
+| Copernicus Sentinel-1 RTC via Microsoft Planetary Computer | Copernicus free and open data policy | Contains modified Copernicus Sentinel data (2026) |
+| ISRIC SoilGrids 2.0 | CC BY 4.0 | ISRIC World Soil Information |
+| prithivMLmods/Rice-Leaf-Disease (Hugging Face model) | Apache-2.0 | prithivMLmods; fine-tuned from google/siglip2-base-patch16-224 |
+| Roboflow identification-planthopper (training, scripts/sigap) | CC BY 4.0 | S. A. Supriadi, Roboflow Universe |
+| IP102 (optional pre-training) | Academic use only | Wu et al., CVPR 2019 |
+| Paddy Doctor (pest-symptom training) | No licence stated; ask the authors | Petchiammal et al., CODS-COMAD 2023 |
+| UN-SPIDER Recommended Practice, flood mapping with Sentinel-1 | Method cited and rewritten; code licence not stated | UN-SPIDER |
+| Problem figures 2024 | Pusdatin Kementan, Statistik Iklim, OPT dan DPI 2024; Prasetyo & Kadir 2023 (MPRA 119446) | Team concept paper |
 
 ## Libraries
 

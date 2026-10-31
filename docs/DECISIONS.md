@@ -40,3 +40,20 @@ Recorded as they were made, with the reason. Dates are 2026-10-28/29.
 
 - Class names from the app (`.chat`) leaked onto a landing card named `chat` after visiting the app; components are now namespaced (`.chat-panel`, `.isle-*`) and a regression test covers it.
 - The printed report snapshots the live map (`preserveDrawingBuffer`) and falls back to coordinates if the canvas is tainted.
+
+## TUAI realignment (2026-10-31)
+
+The product was realigned to the team concept paper *Konsep TUAI Tim Infinits* (sub-theme A: crop monitoring, disease detection, harvest prediction).
+
+- **Name: TUAI** ("tuai" = to harvest rice), features TUAI Pantau, Siaga, Sigap, Lancar, Taksir. The leaf-and-water icon is kept; the wordmark reads "tuai". Browser storage keys (`jagapadi-*`) and the `JAGAPADI_*` environment variables keep their old names so existing watchlists and deployments keep working.
+- **NDWI renamed NDMI.** The index was always (B8 − B11)/(B8 + B11): Gao's NDWI and NDMI are the same formula. Cached scene stats with the old key are renamed on read.
+- **BMKG by village code.** BMKG's public API is per adm4 code, not per coordinate. `backend/config/bmkg_adm4.json` holds the 22 Kota Metro villages with BMKG's own point for each (read 2026-10-31); a field uses the nearest within 15 km, otherwise BMKG is reported unavailable. Partner villages outside Metro must be added there.
+- **UN-SPIDER on the field mean.** The ratio test (> 1.25, slopes > 5% masked) runs on the field-mean VV dB already read per pass, not per pixel on VH; the reference is the median of same-direction passes ≥ 30 days earlier. Standing water within 10 days of transplanting is labelled as puddling, not flooding.
+- **Sigap models load lazily and report unavailability.** The leaf model is pinned to a Hugging Face revision. Planthopper and pest-symptom weights are not shipped; training scripts in `scripts/sigap`. A plain green image was classified as brown spot at 99.999%, so the threshold does not catch non-leaf photos: retest before the pilot.
+- **Sigap advice never says spray.** Drafts from IRRI guidance (reusing the existing pest actions) are marked `checked_by_ppl: false` until replaced by Kementan guidance checked by the PPL.
+- **Report warnings count only PPL-verified planthopper and rat reports**: 2 within 500 m in 7 days (env-configurable starting assumptions from the concept paper).
+- **No PostGIS yet.** Reports, decisions and harvests are JSON files under `backend/data/` (gitignored: partner data needs written consent); blocks stay in the browser with GeoJSON import/export. Enough for a two-partner pilot.
+- **Planetary Computer / Earth Search instead of Google Earth Engine, MapLibre instead of Leaflet**: both already worked without accounts; listed in the README "Concept alignment" table rather than migrated.
+- **Lancar flowering window** = variety duration − 30 (ripening) − 21 (nursery) ± 10 days after transplanting, durations from Balitbangtan variety descriptions (approximate).
+- **Taksir season one is relative.** Recorded events are penalised against the group mean: when a drought hits every block, it should not push every block "below average".
+- **scikit-learn and transformers were broken in the dev Python** (numpy 2 ABI; huggingface-hub 1.x). Upgraded to scikit-learn 1.9.1 and transformers 5.22.1.

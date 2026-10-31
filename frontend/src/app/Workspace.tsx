@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { api, API_DOWN, tr, type Txt, type Analysis, type Polygon, type Rec, type Risk, type Scenario, type WaterFeature } from "../lib/api";
+import { api, API_DOWN, tr, type Txt, type Analysis, type Siaga, type Polygon, type Rec, type Risk, type Scenario, type WaterFeature } from "../lib/api";
 import { LangToggle, useLang } from "../lib/i18n";
 import { Logo } from "../components/Logo";
 import { FanChart, ProbBars, SeriesChart } from "../components/Charts";
@@ -32,11 +32,12 @@ const L = {
     viewSimple: "Petani",
     watch: "Pantau",
     watched: "Dipantau",
-    officer: "Dasbor penyuluh",
+    officer: "Dasbor P3A & PPL",
+    sigap: "TUAI Sigap",
     viewExpert: "Ahli",
     waterIn: "Air di sawah",
     ksPlain: ["cukup air", "mulai kurang air", "kurang air berat"],
-    apiDown: "Server Jagapadi tidak menjawab. Jalankan `npm run dev` (API di port 8000), lalu coba lagi.",
+    apiDown: "Server TUAI tidak menjawab. Jalankan `npm run dev` (API di port 8000), lalu coba lagi.",
     analyzing: "Membaca data lahan…",
     steps: ["Mencari citra Sentinel-2 bebas awan", "Mengambil 51 skenario hujan ECMWF", "Membaca debit sungai dan ketinggian lahan", "Menjalankan neraca air harian"],
     firstRun: "Analisis pertama butuh sekitar satu menit karena citra satelit dibaca langsung. Berikutnya lebih cepat.",
@@ -72,6 +73,15 @@ const L = {
     radarT: "Radar Sentinel-1 (tembus awan)",
     radarV: (f: string, r: string, m: string, d: number) => `${f} air di lahan · sekitar ${r} (biasanya ${m}) · ${d} hari lalu`,
     subDays: "Hari terendam penuh (P50 / P95)",
+    siagaT: "TUAI Siaga",
+    siagaNone: "Tidak ada peringatan hujan lebat dari BMKG dan radar tidak melihat genangan baru.",
+    bmkgT: (desa: string, km: number) => `Prakiraan BMKG, ${desa} (${km} km)`,
+    bmkgNone: "Prakiraan BMKG tidak tersedia untuk lokasi ini.",
+    flooded: (since: string, d: number) => `Tergenang sejak ${since} (${d} hari)`,
+    notFlooded: "Tidak terlihat genangan baru",
+    puddling: "genangan masa olah tanah/tanam dianggap normal",
+    rfT: "Radar Sentinel-1, metode UN-SPIDER",
+    pestPhoto: "Lihat gejala di sawah? Foto daun atau pangkal rumpun di TUAI Sigap.",
     pestNote: "Kesesuaian cuaca 7 hari lalu dan 7 hari ke depan. Bukan deteksi hama: tetap cek langsung di sawah.",
     scout: "Cara mengecek",
     waterT: "Sumber air terdekat",
@@ -121,7 +131,7 @@ const L = {
     myField: "Lahan saya",
     sceneChip: "citra",
     confChip: "keyakinan",
-    stepsT: ["Gambar batas petak di peta, atau pakai lahan contoh.", "Jagapadi membaca satelit, 51 skenario hujan, debit sungai dan ketinggian lahan.", "Lihat kapan kering, kapan tergenang, dan apa yang bisa dikerjakan."],
+    stepsT: ["Gambar batas petak di peta, atau pakai lahan contoh.", "TUAI membaca satelit, 51 skenario hujan, debit sungai dan ketinggian lahan.", "Lihat kapan kering, kapan tergenang, dan apa yang bisa dikerjakan."],
     irrAssume: "Asumsi: tanpa irigasi (kasus terburuk untuk kekeringan). Ubah di simulator kalau sawahmu dapat air irigasi.",
   },
   en: {
@@ -141,11 +151,12 @@ const L = {
     viewSimple: "Farmer",
     watch: "Watch",
     watched: "Watching",
-    officer: "Officer dashboard",
+    officer: "P3A & PPL dashboard",
+    sigap: "TUAI Sigap",
     viewExpert: "Expert",
     waterIn: "Water in field",
     ksPlain: ["enough water", "starting to dry", "severely dry"],
-    apiDown: "The Jagapadi server is not responding. Run `npm run dev` (API on port 8000), then try again.",
+    apiDown: "The TUAI server is not responding. Run `npm run dev` (API on port 8000), then try again.",
     analyzing: "Reading field data…",
     steps: ["Finding cloud-free Sentinel-2 scenes", "Fetching 51 ECMWF rain scenarios", "Reading river flow and terrain", "Running the daily water balance"],
     firstRun: "The first analysis takes about a minute because satellite scenes are read live. It is faster after that.",
@@ -181,6 +192,15 @@ const L = {
     radarT: "Sentinel-1 radar (sees through cloud)",
     radarV: (f: string, r: string, m: string, d: number) => `${f} water in field · surroundings ${r} (usually ${m}) · ${d} days ago`,
     subDays: "Days fully submerged (P50 / P95)",
+    siagaT: "TUAI Siaga",
+    siagaNone: "No BMKG heavy-rain warning and the radar sees no new standing water.",
+    bmkgT: (desa: string, km: number) => `BMKG forecast, ${desa} (${km} km)`,
+    bmkgNone: "BMKG forecast unavailable for this location.",
+    flooded: (since: string, d: number) => `Under water since ${since} (${d} days)`,
+    notFlooded: "No new standing water seen",
+    puddling: "water during land preparation/transplanting counts as normal",
+    rfT: "Sentinel-1 radar, UN-SPIDER method",
+    pestPhoto: "Seeing symptoms in the field? Photograph a leaf or the base of a hill in TUAI Sigap.",
     pestNote: "Weather suitability over the last 7 and next 7 days. Not detection: still scout the field.",
     scout: "How to scout",
     waterT: "Nearest water sources",
@@ -230,7 +250,7 @@ const L = {
     myField: "My field",
     sceneChip: "scene",
     confChip: "confidence",
-    stepsT: ["Draw your plot on the map, or use the sample field.", "Jagapadi reads satellite, 51 rain scenarios, river flow and terrain.", "See when it runs dry, when it floods, and what to do."],
+    stepsT: ["Draw your plot on the map, or use the sample field.", "TUAI reads satellite, 51 rain scenarios, river flow and terrain.", "See when it runs dry, when it floods, and what to do."],
     irrAssume: "Assumes no irrigation (worst case for drought). Change it in the simulator if your field gets canal water.",
   },
 };
@@ -405,7 +425,7 @@ export default function Workspace() {
   return (
     <div className={`ws ${analysis?.hypothetical ? "is-hypo" : ""}`}>
       <header className="ws-top">
-        <Link to="/" className="ws-logo" aria-label="Jagapadi, kembali ke beranda">
+        <Link to="/" className="ws-logo" aria-label="TUAI, kembali ke beranda">
           <Logo size={28} />
         </Link>
         <div className="seg" role="group" aria-label={`${s.viewSimple} / ${s.viewExpert}`}>
@@ -437,6 +457,9 @@ export default function Workspace() {
               {watched ? `✓ ${s.watched}` : `+ ${s.watch}`}
             </button>
           )}
+          <Link to="/sigap" className="btn btn-ghost small">
+            {s.sigap}
+          </Link>
           <Link to="/ppl" className="btn btn-ghost small">
             {s.officer}
           </Link>
@@ -879,9 +902,9 @@ function Summary({ a, s, dat, setDat, goto }: { a: Analysis; s: S; dat: number |
         </div>
         {lc && (
           <div>
-            <dt>NDVI / NDWI</dt>
+            <dt>NDVI / NDMI</dt>
             <dd>
-              {lc.field.ndvi_mean?.toFixed(2)} / {lc.field.ndwi_mean?.toFixed(2)}
+              {lc.field.ndvi_mean?.toFixed(2)} / {lc.field.ndmi_mean?.toFixed(2)}
             </dd>
           </div>
         )}
@@ -965,6 +988,7 @@ function Flood({ a, s, day }: { a: Analysis; s: S; day: number }) {
   const sub = a.flood.risk.max_submergence_days!;
   return (
     <>
+      {a.siaga && <SiagaCard g={a.siaga} s={s} />}
       <RiskCard title={s.flood} risk={a.flood.risk} s={s} kind="flood" />
       <FanChart
         dates={wb.dates}
@@ -1025,11 +1049,61 @@ function Flood({ a, s, day }: { a: Analysis; s: S; day: number }) {
   );
 }
 
+function SiagaCard({ g, s }: { g: Siaga; s: S }) {
+  const { lang } = useLang();
+  const rf = g.radar_flood;
+  return (
+    <section className="felt pad siaga" style={{ ["--lv" as string]: levelColor(g.level) }}>
+      <div className="pest-head">
+        <h3>{s.siagaT}</h3>
+        <span className="pill">{s.level[g.level]}</span>
+      </div>
+      {g.warnings.length ? (
+        <ul className="siaga-warn">
+          {g.warnings.map((w, i) => (
+            <li key={i} className="small">
+              {w.text[lang]}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="small">{s.siagaNone}</p>
+      )}
+      {g.bmkg ? (
+        <>
+          <p className="tiny muted">{s.bmkgT(g.bmkg.area.desa, g.bmkg.area.distance_km)}</p>
+          <ol className="bmkg-days">
+            {g.bmkg.days.map((d) => (
+              <li key={d.date} className={d.rain_mm >= 50 ? "heavy" : ""}>
+                <b className="tabular">{d.date.slice(5)}</b>
+                <span className="tabular">{d.rain_mm} mm</span>
+                <span className="tiny muted">{d.category ? d.category[lang] : d.weather[0] ?? ""}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : (
+        <p className="tiny muted">{s.bmkgNone}</p>
+      )}
+      {rf && (
+        <p className="tiny muted">
+          {s.rfT}: {rf.flooded_now ? s.flooded(rf.since ?? "", rf.days_observed) : s.notFlooded}
+          {rf.puddling_stage ? ` (${s.puddling})` : ""}. {rf.method[lang]}.
+        </p>
+      )}
+      {g.bmkg && <p className="tiny muted">Sumber: BMKG</p>}
+    </section>
+  );
+}
+
 function Pests({ a, s }: { a: Analysis; s: S }) {
   const { lang } = useLang();
   return (
     <>
       <p className="muted small">{s.pestNote}</p>
+      <Link to="/sigap" className="btn btn-primary small" style={{ justifySelf: "start" }}>
+        {s.pestPhoto}
+      </Link>
       <ul className="pests">
         {a.pest.map((p) => (
           <li key={p.id} className="felt pad" style={{ ["--lv" as string]: levelColor(p.level) }}>
