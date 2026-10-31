@@ -115,22 +115,21 @@ const T = {
 type Loc = { lat: number; lon: number; block?: WatchField | null };
 type Tab = "photo" | "rat" | "ppl";
 
-/** Downscale on the phone before upload: field photos are often 4000 px and several MB. */
-function shrink(file: File, max = 1280): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * k);
-      c.height = Math.round(img.height * k);
-      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => reject(new Error("image"));
-    img.src = URL.createObjectURL(file);
-  });
+/**
+ * Downscale on the phone before upload: field photos are often 4000 px and several MB.
+ * Pixels are kept as stored, without the browser's colour management: the models were
+ * trained on unmanaged pixels, and a photo with an ICC profile otherwise shifted from
+ * blast 83% to brown spot 53%.
+ */
+async function shrink(file: File, max = 1280): Promise<string> {
+  const bm = await createImageBitmap(file, { colorSpaceConversion: "none", imageOrientation: "from-image" });
+  const k = Math.min(1, max / Math.max(bm.width, bm.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bm.width * k);
+  c.height = Math.round(bm.height * k);
+  c.getContext("2d")!.drawImage(bm, 0, 0, c.width, c.height);
+  bm.close();
+  return c.toDataURL("image/jpeg", 0.85);
 }
 
 export default function Sigap() {

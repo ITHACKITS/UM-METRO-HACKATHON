@@ -1,4 +1,6 @@
-# Jagapadi design direction
+# TUAI design direction
+
+(Written when the product was called Jagapadi; the design direction is unchanged.)
 
 This file gives direction; quality filters (anti-slop) remove what does not belong.
 

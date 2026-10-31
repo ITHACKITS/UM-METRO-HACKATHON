@@ -1,7 +1,9 @@
 <p align="center">
-  <img src="frontend/public/logo/jagapadi-icon.svg" alt="" width="72" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo/tuai-lockup-dark.svg" />
+    <img src="frontend/public/logo/tuai-lockup.svg" alt="TUAI" width="240" />
+  </picture>
 </p>
-<h1 align="center">TUAI</h1>
 
 <p align="center"><b>Sistem pertanian cerdas berbasis citra satelit dan computer vision.</b><br/>
 Monitoring kondisi padi, deteksi penyakit dan hama, giliran air, dan prediksi hasil panen dalam satu peta per blok sawah.<br/>
@@ -69,7 +71,11 @@ TUAI menampilkan semua informasi dalam **satu peta per blok sawah dengan warna h
 <table>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/app-petani.png" alt="Tampilan Petani: satu status, satu alasan, satu langkah" /><br/><sub>Tampilan Petani: satu status, satu alasan, satu langkah</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/ppl-dashboard.png" alt="Dasbor penyuluh: petak diurutkan menurut risiko" /><br/><sub>Dasbor penyuluh: petak diurutkan menurut risiko</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/ppl-dashboard.png" alt="Dasbor P3A dan PPL: blok diurutkan menurut risiko" /><br/><sub>Dasbor P3A dan PPL: blok diurutkan menurut risiko</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-sigap.png" alt="TUAI Sigap: foto daun terbaca blas" /><br/><sub>TUAI Sigap: foto daun → blas 83%, saran awal, laporan ke PPL</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-lancar.png" alt="TUAI Lancar: urutan giliran air" /><br/><sub>TUAI Lancar: urutan giliran air per blok</sub></td>
   </tr>
 </table>
 

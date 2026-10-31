@@ -1,15 +1,19 @@
 # 3-minute demo script
 
-Before the demo: run the app once on the sample field and the sample farmer group (fills the caches). If venue Wi-Fi is doubtful, start the API with `JAGAPADI_OFFLINE=1`; the recorded responses are real and show their capture time. For the Telegram step, set `TELEGRAM_BOT_TOKEN` and have Telegram open on a phone.
+Demo Day MVP per the concept paper: TUAI Sigap, TUAI Lancar and the partner's block map.
 
-**0:00 – Problem (25 s).** Landing page. "In 2023 El Niño cut Indonesia's rice harvest area by 2.29%. NOAA's index says another El Niño is building now, +2.16 in August. Farmers learn about drought when the soil cracks." Click **Kering** on the dock: the paddies dry and crack. Click **Banjir**: muddy water rises. Back to **Normal**.
+Before the demo:
+- Run the app once on the sample field and the sample farmer group (fills the caches). If venue Wi-Fi is doubtful, start the API with `JAGAPADI_OFFLINE=1`; recordings are real and show their capture time.
+- On `/ppl`, open **Data blok** for each sample plot and fill in a transplanting date and variety, so Lancar shows real growth stages.
+- Install `backend/requirements-ml.txt` and send one photo through `/sigap` beforehand, so the leaf model is downloaded and loaded.
+- Have one clear photo of a diseased rice leaf on the phone or laptop. Do not demo with non-leaf images: the model is overconfident on them.
 
-**0:25 – One field, one answer (30 s).** **Buka peta** → **Pakai lahan contoh**. While it loads: "We read this field's Sentinel-2 history, Sentinel-1 radar through the clouds, 51 ECMWF rain scenarios, GloFAS river flow and the terrain." The farmer view appears: **BAHAYA**, "the field may run short of water around 6 Nov", and one thing to do today. "This is all a farmer needs to read."
+**0:00 – Problem (25 s).** Landing page. "In 2024, floods hit 172 thousand hectares of rice, and in Lampung brown planthopper attacks rose almost six-fold in two years. Our partner, farming since the 1980s, said: crop failure comes without warning." Click **Kering** and **Banjir** on the dock, back to **Normal**.
 
-**0:55 – It comes to the farmer (25 s).** **Kirim peringatan ke Telegram** → Start in Telegram. The first message arrives: status, reason, today's action. "Every morning while the field is at risk, and once when it is safe again. No app to install."
+**0:25 – TUAI Pantau and Siaga (25 s).** **Buka peta** → **Pakai lahan contoh**. The farmer view: one status, one reason, one action. **Ahli** → **Banjir** tab: the TUAI Siaga card with BMKG's 3-day forecast for the nearest village and the Sentinel-1 radar reading. "Satellite watches the whole area without a field visit."
 
-**1:20 – The extension officer (25 s).** **Dasbor penyuluh** → **Pakai contoh kelompok tani**: five real plots on one map, ranked by risk. "One officer advises hundreds of plots. Now they see which ones to visit first." **Buka analisis** on the top plot.
+**0:50 – TUAI Sigap (50 s).** **TUAI Sigap** → **Daun** → take or pick the leaf photo. The result: disease name, confidence, *perlu dicek PPL* or not, first advice marked as draft. "The system never just says spray." Tap the plot on the map, **Kirim laporan**. Switch to **Cek PPL**: the report waits there; press **Benar**. "Checked reports become the village pest map; two planthopper or rat reports nearby in a week warn the blocks around them." Show **Lapor tikus**: "Rats are not in any photo dataset, so they get a quick form; they caused the largest crop loss among rice pests in 2024."
 
-**1:45 – The science, for the judges (30 s).** **Ahli**: the first-stress day with its P5–P95 range, the daily probability strip, the drivers. **Uji skenario**: rain ×0.3 → run; the banner says HIPOTETIS. "Planning, not a forecast."
+**1:40 – TUAI Lancar (40 s).** **Dasbor P3A & PPL** → **Giliran air** → **Hitung urutan giliran air**. "Each block's water need for the next 7 days from FAO-56, checked against the satellite. Red means both say dry; yellow means check the field. Flowering blocks go first." Point at the map colours, then the decision log: "the P3A chair records what was decided, so each season has a record."
 
-**2:15 – Honesty (30 s).** README, Validation: "We ran the model through 21 dry seasons. Its worst years are El Niño and Indian Ocean Dipole years, AUC 0.95. But a plain rain total does as well, and 2023 does not stand out at this grid point. We say that. Field-level skill needs records from a farmer group in Metro: that is our next step." **Cetak laporan** for the A4 report with every source and capture time.
+**2:20 – TUAI Taksir and honesty (40 s).** **Taksir panen** → run. "Season one gives below, around or above the block average; tonnes per hectare come after two seasons of weighed harvests from our partners." README, Concept alignment and Validation: "What we have not validated, we say: the planthopper detector still needs training, and the leaf model must be retested on field photos in the pilot from December."

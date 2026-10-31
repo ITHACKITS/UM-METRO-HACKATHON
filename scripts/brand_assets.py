@@ -1,4 +1,4 @@
-"""Build the Jagapadi logo set from code.
+"""Build the TUAI logo set from code.
 
 The mark: a rice stalk with a drooping golden panicle and two leaves, growing out of
 paddy water, on a teal felt badge with a stitched edge. The wordmark is Instrument Serif
@@ -89,12 +89,12 @@ def mark(bg=TEAL, fg=CREAM, gold=GOLD, leaf=SAGE, stitch=True) -> str:
 
 def svg(body: str, w=64, h=64) -> str:
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img" aria-label="Jagapadi">\n'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img" aria-label="TUAI">\n'
         f"  {body}\n</svg>\n"
     )
 
 
-def wordmark_path(font_path: Path, text="jagapadi", size=46, x=76, baseline=50, tracking=-1.5) -> str:
+def wordmark_path(font_path: Path, text="tuai", size=46, x=76, baseline=50, tracking=-1.5) -> tuple[str, float]:
     font = TTFont(font_path)
     gs, cmap = font.getGlyphSet(), font.getBestCmap()
     scale = size / font["head"].unitsPerEm
@@ -104,12 +104,12 @@ def wordmark_path(font_path: Path, text="jagapadi", size=46, x=76, baseline=50, 
         name = cmap[ord(ch)]
         gs[name].draw(TransformPen(pen, (scale, 0, 0, -scale, cursor, baseline)))
         cursor += gs[name].width * scale + tracking
-    return pen.getCommands()
+    return pen.getCommands(), cursor
 
 
-def lockup(word: str, ink: str) -> str:
+def lockup(word: str, ink: str, width: int) -> str:
     return svg(
-        f'<g transform="translate(2 4)">\n  {mark()}\n  </g>\n  <path d="{word}" fill="{ink}"/>', 300, 72
+        f'<g transform="translate(2 4)">\n  {mark()}\n  </g>\n  <path d="{word}" fill="{ink}"/>', width, 72
     )
 
 
@@ -130,17 +130,18 @@ def main() -> None:
         font_path = Path(tempfile.gettempdir()) / "InstrumentSerif-Italic.ttf"
         if not font_path.exists():
             urllib.request.urlretrieve(FONT_URL, font_path)
-    word = wordmark_path(font_path)
+    word, end = wordmark_path(font_path)
+    width = int(end) + 8
 
     icon = svg(mark())
     small = svg(mark(stitch=False))
     files = {
-        LOGO / "jagapadi-icon.svg": icon,
+        LOGO / "tuai-icon.svg": icon,
         PUBLIC / "favicon.svg": small,
-        LOGO / "jagapadi-icon-mono-dark.svg": svg(mark(bg=INK, fg=PAPER, gold=PAPER, leaf=PAPER)),
-        LOGO / "jagapadi-icon-mono-light.svg": svg(mark(bg=PAPER, fg=INK, gold=INK, leaf=INK)),
-        LOGO / "jagapadi-lockup.svg": lockup(word, INK),
-        LOGO / "jagapadi-lockup-dark.svg": lockup(word, CREAM),
+        LOGO / "tuai-icon-mono-dark.svg": svg(mark(bg=INK, fg=PAPER, gold=PAPER, leaf=PAPER)),
+        LOGO / "tuai-icon-mono-light.svg": svg(mark(bg=PAPER, fg=INK, gold=INK, leaf=INK)),
+        LOGO / "tuai-lockup.svg": lockup(word, INK, width),
+        LOGO / "tuai-lockup-dark.svg": lockup(word, CREAM, width),
     }
     for path, text in files.items():
         path.write_text(text, encoding="utf-8")
@@ -149,19 +150,19 @@ def main() -> None:
         browser = p.chromium.launch()
         page = browser.new_page()
         for size in (192, 512):
-            render(page, icon, size).save(LOGO / f"jagapadi-icon-{size}.png", optimize=True)
+            render(page, icon, size).save(LOGO / f"tuai-icon-{size}.png", optimize=True)
         render(page, icon, 180).save(PUBLIC / "apple-touch-icon.png", optimize=True)
         render(page, small, 256).save(PUBLIC / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
 
         # Link preview: lockup and tagline on cream, the waving mascot on the right.
         mascot = (PUBLIC / "mascot" / "mascot-waving-1024.png").as_uri()
-        lock = (LOGO / "jagapadi-lockup.svg").as_uri()
+        lock = (LOGO / "tuai-lockup.svg").as_uri()
         page.set_viewport_size({"width": 1200, "height": 630})
-        og = Path(tempfile.gettempdir()) / "jagapadi-og.html"
+        og = Path(tempfile.gettempdir()) / "tuai-og.html"
         og.write_text(
             f"""<html><head><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500&display=swap" rel="stylesheet"></head>
 <body style="margin:0;width:1200px;height:630px;background:{PAPER};display:flex;align-items:center;justify-content:space-between;padding:0 40px 0 96px;box-sizing:border-box;font-family:Manrope,sans-serif">
-<div><img src="{lock}" width="520"><p style="margin:28px 0 0 8px;font-size:34px;color:{INK};opacity:.75;white-space:nowrap">Jaga sawah sebelum kering atau banjir.</p></div>
+<div><img src="{lock}" height="125"><p style="margin:28px 0 0 8px;font-size:34px;color:{INK};opacity:.75;white-space:nowrap">Tahu risiko sawah sebelum terlambat.</p></div>
 <img src="{mascot}" width="520" height="520"></body></html>""",
             encoding="utf-8",
         )

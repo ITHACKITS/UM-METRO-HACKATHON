@@ -74,3 +74,47 @@ Water-balance consistency check: `{ "status": "ok", "pearson_r": 0.095, "mae_m3m
 ## GET /api/health
 
 Per-source status from the most recent calls, plus `offline_replay`, `llm` and `openweather` flags.
+
+## TUAI blocks
+
+A block is `{ "id": "...", "name": "Petak 1", "geometry": Polygon, "planting_date": "2026-09-01" | null, "variety": "ciherang|inpari32|inpari42|ir64|mekongga|lainnya" | null, "soil": "clay|clay_loam|silt_loam|loam|sandy_loam" | null }`. A blank soil is read from SoilGrids, else clay loam.
+
+## POST /api/analyze: `siaga`
+
+The analysis now carries `siaga`: `{ "level": "low|medium|high", "warnings": [{ "kind": "heavy_rain|flooded|submergence_forecast", "level", "date", "text" }], "bmkg": { "area": { "adm4", "desa", "kecamatan", "distance_km" }, "days": [{ "date", "rain_mm", "max_3h_mm", "weather", "category" }], "source", "captured_at" } | null, "radar_flood": { "flooded_now", "since", "days_observed", "passes", "puddling_stage", "slope_masked", "history": [...], "method" } | null }`. Scene stats use `ndmi_mean` (formerly `ndwi_mean`).
+
+## POST /api/lancar/rank
+
+`{ "blocks": [Block, ...] }` (1-40) → `{ "order": [{ "id", "name", "rank", "color": "merah|kuning|hijau", "flowering", "days_after_transplant", "need_mm_7d", "need_m3_7d", "prob_stress_7d", "calc_bad", "pantau_bad", "pantau_known", "check_field", "soil": { "class", "name", "basis" }, "reasons": [Txt] }], "skipped": [...], "rule": Txt }`.
+
+## POST /api/lancar/decisions · GET /api/lancar/decisions?season=
+
+`{ "season": "MT1 2026/27", "block_id", "block_name", "date": "YYYY-MM-DD", "decision", "outcome", "followed_recommendation", "by" }` → stored item; GET returns `{ "decisions": [...] }`, newest first.
+
+## POST /api/taksir
+
+`{ "blocks": [Block, ...] }` → `{ "mode": "class|regression", "model": { "n", "seasons", "rmse_t_ha", "r2_in_sample", "coef" } | null, "blocks": [{ "id", "name", "features": { "ndvi", "ndmi", "events", "event_text", "scenes", "window" }, "class": "di_bawah|sekitar|di_atas" | null, "class_reason", "estimate": { "t_ha", "low", "high" } }], "harvest_records", "needs": { "records": 8, "seasons": 2 }, "note" }`.
+
+## POST /api/taksir/harvest · GET /api/taksir/harvest
+
+`{ "block": Block, "season": "MT1 2026/27", "yield_t_ha": 6.0 }` → stored record with the block's season features (the training data).
+
+## GET /api/sigap/status
+
+`{ "disease": { "model", "state" }, "planthopper": { "state" }, "symptoms": { "state" }, "review_below": 0.7, "classes": { key: { "key", "name", "kind", "advice", "checked_by_ppl", "source" } } }`.
+
+## POST /api/sigap/analyze
+
+`{ "image": "data:image/jpeg;base64,...", "part": "daun|pangkal|gejala" }` → `{ "finding": { "key", "label", "confidence", "count"? } | null, "needs_review", "review_reasons": [Txt], "models": { "disease"?, "symptoms"?, "planthopper"?: { "status", "boxes": [{ "x", "y", "w", "h", "confidence" }] (0-1 of the image), "count", "note" } }, "advice" }`. HTTP 422 for unreadable or tiny images.
+
+## POST /api/sigap/reports · GET /api/sigap/reports?days=60
+
+`{ "lat", "lon", "label", "source": "foto|laporan_cepat", "confidence"?, "count"?, "severity"?: "ringan|sedang|berat", "needs_review", "block_id"?, "block_name"?, "reporter"?, "note"?, "image"? }` → stored report with `id`, `status: "pending"`, `kind`, `photo`. `GET /api/sigap/reports/{id}/photo` returns the JPEG.
+
+## POST /api/sigap/reports/{id}/review
+
+`{ "status": "verified|rejected", "label"?, "reviewer", "note", "pin"? }` → the updated report. HTTP 403 when `SIGAP_PPL_PIN` is set and the PIN is wrong.
+
+## POST /api/sigap/warnings
+
+`{ "blocks": [{ "id", "lat", "lon" }] }` → `{ "blocks": { id: { "warning", "counts", "triggered" } }, "rule": { "radius_m", "min_reports", "days", "labels" }, "note" }`. Only verified `wereng` and `tikus` reports count.

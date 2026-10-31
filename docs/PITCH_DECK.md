@@ -1,10 +1,12 @@
 # Pitch deck outline (8 slides, ~5 minutes)
 
-1. **Jaga sawah sebelum kering atau banjir.** The diorama on screen. One line: Jagapadi tells a rice farmer, two weeks ahead, when the field will run short of water or flood, and what to do this week.
-2. **The problem.** 2023: harvested area −2.29%, rice output −440,000 t (BPS). 2019 dry season: 102,746 ha hit by drought, 9,358 ha lost (Kementan). Farmers see it when the soil has already cracked.
-3. **The gap.** The signals exist (Sentinel-2, ECMWF ensembles, GloFAS) but are built for scientists, not for one plot. Weather apps forecast rain, not water in a paddy.
-4. **How it works.** Draw the field → read satellite + 51 rain scenarios + river + terrain → drought, flood and pest outlook with reasons and ranked actions. All open data, no accounts needed.
+Follows the team concept paper *Konsep TUAI Tim Infinits*.
+
+1. **TUAI: tahu risiko sawah sebelum terlambat.** The diorama on screen. One line: TUAI puts satellite imagery and phone photos on one map per rice block, green, yellow or red, with the action to take, from planting to harvest ("tuai" = to harvest rice).
+2. **The problem.** Farmers and P3A do not know early when, and in which block, their rice is at risk. 2024 (Pusdatin Kementan): floods 172,093 ha, drought 134,440 ha, stem borer 61,711 ha, blast/blight/tungro 46,826 ha, rats 46,023 ha (1,205 ha lost). Lampung: brown planthopper attacks almost 6× in two years. Rising pest attacks are the strongest yield-loss factor, odds 9.43 (Prasetyo & Kadir 2023).
+3. **The partner's voice.** A farmer since the 1980s, 3 ha, irrigated: *"Gagal panen gaada tanda-tandanya."* Normal 6 t/ha, failed season 0.3 t/ha. No word from government or BMKG. Rats in the rainy season, planthoppers in the dry season.
+4. **The solution: five features, one map.** Pantau (NDVI, NDMI per block), Siaga (BMKG + Sentinel-1 flood mapping, days under water), Sigap (photo AI for disease and pests, PPL check, village pest map), Lancar (FAO-56 water turns for the P3A chair), Taksir (harvest estimate before harvest). Satellite sees the whole area; the camera sees the leaf and the stem base.
 5. **Live demo** (see DEMO_SCRIPT.md).
-6. **Why trust it.** Every number has a source and a capture time; ranges instead of single numbers; hypothetical results are stamped; what we have not validated is said out loud (event skill not testable yet).
-7. **Impact and path.** Extension officers (PPL) cover many farmers: one report per field per week. Next: Sentinel-1 radar for cloudy months, SoilGrids, WhatsApp alerts, crop-insurance (AUTP) evidence reports, the ESP32 sensor to correct the model in the field.
-8. **Team and ask.** Hikari Reiziq, Ziddan Habibi, Aryarefman. Ask: pilot with a kelompok tani in Metro and a PPL to validate against real stress and flood records.
+6. **Why trust it.** Every number has a source and capture time. AI results below 70% confidence go to the PPL; advice never says spray. Ranges, not single numbers. What is not validated is said out loud: the leaf model is overconfident on non-leaf photos, the planthopper detector is not trained yet, Taksir has no harvest data yet.
+7. **Business and path.** Farmers free; P3A/Gapoktan dashboard subscription per hectare per season; Dinas/BPP contract for the OPT map; aggregated risk reports for insurance (AUTP premium Rp36,000/ha/season as reference) or cooperatives; grants early. Pilot MT1 (Dec 2026-Mar 2027) and MT2 (Apr-Jul 2027) on the partners' fields, then the kecamatan.
+8. **Team and ask.** Tim Infinits (ITS): Hikari (lead, business), Wildan (operations, proposal), Rakha (AI), Arya (web, backend, Lancar), Ziddan (user validation); supervisor Prof. Dedin Finatsiyatull Rosida. Ask: a P3A chair and a PPL in the partner village for the pilot, and field photos labelled with the PPL.

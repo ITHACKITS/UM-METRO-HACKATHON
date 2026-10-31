@@ -6,7 +6,7 @@
 - **docs/reference/landing-sky-islands.jpg** (user supplied): floating islands, pink and lavender clouds, waterfalls. Informed the first landing version.
 - **docs/reference/image.png** (user supplied): a miniature shrine island in a rounded block of clear water on warm paper, with a detailed prompt describing its pipeline. Observed in the image: heightfield terrain visible through the water's side walls, dense blob-instanced trees, water colour that deepens with thickness, a soft floor shadow, tilt-shift. The prompt's techniques (depth-texture water with Beer-Lambert absorption, refraction, Fresnel, foam, caustics, instanced vegetation, merged architecture, tilt-shift) were reimplemented for an original rice landscape.
 
-## What Jagapadi's diorama does (`frontend/src/landing/Diorama.ts`)
+## What the TUAI (then Jagapadi) diorama does (`frontend/src/landing/Diorama.ts`)
 
 | Part | Technique |
 |---|---|

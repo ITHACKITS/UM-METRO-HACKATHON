@@ -1,0 +1,1 @@
+daun-blas.jpg: "Rice blast Magnaporthe grisea.jpg", Wikimedia Commons, public domain. Used by scripts/capture.py for the TUAI Sigap screenshot.

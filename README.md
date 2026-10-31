@@ -1,7 +1,9 @@
 <p align="center">
-  <img src="frontend/public/logo/jagapadi-icon.svg" alt="" width="72" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo/tuai-lockup-dark.svg" />
+    <img src="frontend/public/logo/tuai-lockup.svg" alt="TUAI" width="240" />
+  </picture>
 </p>
-<h1 align="center">TUAI</h1>
 
 <p align="center"><b>Smart rice farming from satellite imagery and computer vision.</b><br/>
 Crop monitoring, disease and pest detection, irrigation turns and harvest prediction, on one map per rice block.<br/>
@@ -14,7 +16,7 @@ Crop monitoring, disease and pest detection, irrigation turns and harvest predic
   <img alt="backend" src="https://img.shields.io/badge/backend-FastAPI-1b2a23" />
   <img alt="map" src="https://img.shields.io/badge/map-MapLibre%20GL-7fa35b" />
   <img alt="data" src="https://img.shields.io/badge/data-Sentinel--2%20%C2%B7%20ECMWF%20%C2%B7%20GloFAS-e2a93b" />
-  <img alt="tests" src="https://img.shields.io/badge/tests-25%20unit%20%2B%2063%20e2e-4f8a3a" />
+  <img alt="tests" src="https://img.shields.io/badge/tests-40%20unit%20%2B%2072%20e2e-4f8a3a" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgrey" />
 </p>
 
@@ -111,29 +113,44 @@ TUAI puts every signal on **one map per rice block, coloured green, yellow or re
 
 <table>
   <tr>
-    <td align="center" width="50%"><img src="docs/screenshots/story-02.png" alt="The problem: drought arrives before the news" /><br/><sub>The problem: drought arrives before the news</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/story-03.png" alt="How it works, in three steps" /><br/><sub>How it works, in three steps</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/story-02.png" alt="The problem: crop failure comes without warning" /><br/><sub>The problem: crop failure comes without warning</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/story-03.png" alt="How it works: satellite and camera together" /><br/><sub>How it works: satellite and camera together</sub></td>
   </tr>
   <tr>
-    <td align="center" width="50%"><img src="docs/screenshots/story-04.png" alt="Four guards: drought, flood, pests, Si Padi" /><br/><sub>Four guards: drought, flood, pests, Si Padi</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/story-04.png" alt="Five features: Pantau, Siaga, Sigap, Lancar, Taksir" /><br/><sub>Five features: Pantau, Siaga, Sigap, Lancar, Taksir</sub></td>
     <td align="center" width="50%"><img src="docs/screenshots/story-05.png" alt="Real data only, at dusk" /><br/><sub>Real data only, at dusk</sub></td>
   </tr>
 </table>
+
+**TUAI Sigap, Lancar and Taksir.**
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-sigap.png" alt="TUAI Sigap: a leaf photo read as blast, first advice, report sent" /><br/><sub>TUAI Sigap: leaf photo → blast 83%, draft advice, report sent to the PPL</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-sigap-ppl.png" alt="TUAI Sigap: the PPL review queue" /><br/><sub>TUAI Sigap: PPL review queue</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/app-lancar.png" alt="TUAI Lancar: water-turn order per block" /><br/><sub>TUAI Lancar: water-turn order, flowering red blocks first</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-taksir.png" alt="TUAI Taksir: harvest class per block" /><br/><sub>TUAI Taksir: harvest class per block (season one)</sub></td>
+  </tr>
+</table>
+
+The leaf in the Sigap shot is a public-domain Wikimedia Commons photo (`scripts/fixtures`). Refresh every image with `python scripts/capture.py http://localhost:5173 docs/screenshots all`.
 
 **Field workspace.** One field, read from satellite, weather and terrain.
 
 <table>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/app-petani.png" alt="Farmer view: one status, one reason, one action" /><br/><sub>Farmer view: one status, one reason, one action</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/ppl-dashboard.png" alt="Extension officer dashboard: plots ranked by risk" /><br/><sub>Extension officer dashboard: plots ranked by risk</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/ppl-dashboard.png" alt="P3A and PPL dashboard: blocks ranked by risk" /><br/><sub>P3A and PPL dashboard: blocks ranked by risk</sub></td>
   </tr>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/app-ringkasan.png" alt="Expert view: summary with risk gauges" /><br/><sub>Expert view: summary with risk gauges</sub></td>
     <td align="center" width="50%"><img src="docs/screenshots/app-kering.png" alt="Drought outlook and actions" /><br/><sub>Drought outlook and actions</sub></td>
   </tr>
   <tr>
-    <td align="center" width="50%"><img src="docs/screenshots/app-banjir.png" alt="Flood outlook with radar water" /><br/><sub>Flood outlook with radar water</sub></td>
-    <td align="center" width="50%"><img src="docs/screenshots/app-hama.png" alt="Pest risk" /><br/><sub>Pest risk</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-banjir.png" alt="TUAI Siaga: BMKG forecast and radar flood check" /><br/><sub>TUAI Siaga: BMKG forecast and radar flood check</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/app-hama.png" alt="Pest weather suitability, with a link to TUAI Sigap" /><br/><sub>Pest weather suitability, with a link to TUAI Sigap</sub></td>
   </tr>
   <tr>
     <td align="center" width="50%"><img src="docs/screenshots/app-simulator.png" alt="Scenario simulator" /><br/><sub>Scenario simulator</sub></td>
@@ -336,10 +353,10 @@ Request and response shapes: [backend/docs/API_CONTRACT.md](backend/docs/API_CON
 
 ```bash
 npm test                        # 40 backend unit tests + ruff
-npm run qa                      # 63 end-to-end browser checks (servers must be running)
+npm run qa                      # 72 end-to-end browser checks (servers must be running)
 ```
 
-The end-to-end suite drives every feature in Chrome: landing story and dock, farmer view and watch button, officer dashboard (sample group, ranking, opening a plot), language switch, reduced motion, no-WebGL fallback, field drawing (including a rejected tiny field), every tab, timeline, basemap, crop-age edit, scenario mode, chatbot, return-to-landing regressions, and 360 px mobile checks (overflow and tap targets). Results: [docs/VERIFICATION.md](docs/VERIFICATION.md).
+The end-to-end suite drives every feature in Chrome: landing story and dock, farmer view and watch button, officer dashboard (sample group, ranking, opening a plot), language switch, reduced motion, no-WebGL fallback, field drawing (including a rejected tiny field), every tab, timeline, basemap, crop-age edit, scenario mode, chatbot, return-to-landing regressions, TUAI block details, Lancar ranking, Taksir rating, Sigap photo → report → PPL review, and 360 px mobile checks (overflow and tap targets). Results: [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Repository structure
 

@@ -16,9 +16,9 @@ Source: github.com/nyarikerja/JOINTS2026 README, read 2026-10-28. Logic and clar
 
 Header with status and clock, a control dock (hazard, place, mode, run, print), a map workspace with layers and a time player, and an analytics drawer with tabs (area, facilities, protocol + AI).
 
-## What Jagapadi took (adapted to rice)
+## What TUAI (then Jagapadi) took (adapted to rice)
 
-| HELALOKA idea | Jagapadi version |
+| HELALOKA idea | TUAI version |
 |---|---|
 | Ensemble members → P5/P50/P95 | The paddy water balance runs once per ECMWF member (51); first-stress day and submergence days as P5/P50/P95; daily probabilities |
 | Real vs test mode | Kondisi nyata / Uji skenario; hypothetical stamp on screen and on the printed report |

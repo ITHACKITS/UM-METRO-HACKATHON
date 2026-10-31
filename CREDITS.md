@@ -29,11 +29,11 @@ React, React Router, Vite, TypeScript, Three.js, MapLibre GL JS, GSAP (ScrollTri
 
 ## Methods
 
-FAO-56 (Allen et al. 1998), USDA NRCS TR-55 curve number, Gao (1996) NDWI, McFeeters (1996) NDWI, IRRI Rice Knowledge Bank (pest and AWD guidance).
+FAO-56 (Allen et al. 1998), USDA NRCS TR-55 curve number, Gao (1996) NDWI (= NDMI, B8/B11), McFeeters (1996) NDWI (open water), UN-SPIDER Sentinel-1 flood mapping, FAO-56 ch. 6, IRRI Rice Knowledge Bank (pest and AWD guidance).
 
 ## Artwork and design references
 
-- Mascot Si Padi: artwork supplied by the Jagapadi team.
+- Mascot Si Padi: artwork supplied by the TUAI team (Tim Infinits).
 - Landing diorama: original procedural scene. The "miniature in a water block" presentation was inspired by a reference image the team supplied; no assets or code were copied.
 - The app's layout ideas (control dock, map workspace, analysis drawer, real vs test modes, P5/P50/P95 reporting) were studied from HELALOKA (github.com/nyarikerja/JOINTS2026); no UI, code or assets were copied.
 - MotionSites web-builder skill used as a design checklist during development.
