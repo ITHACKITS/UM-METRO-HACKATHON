@@ -60,7 +60,7 @@ async def test_health_and_capabilities(settings, disease_adapter, pest_adapter):
         body = capabilities.json()
         assert [mode["mode"] for mode in body["modes"]] == ["disease", "pest"]
         assert len(body["modes"][0]["classes"]) == 5
-        assert len(body["modes"][1]["classes"]) == 3
+        assert len(body["modes"][1]["classes"]) == 7
         assert body["input_limits"]["max_compressed_bytes"] == MAX_COMPRESSED_BYTES
 
 
@@ -78,11 +78,11 @@ async def test_missing_real_models_report_degraded(settings):
 
 
 @pytest.mark.anyio
-async def test_disease_abstains_without_local_calibration(settings, disease_adapter, pest_adapter):
+async def test_disease_is_uncertain_without_thresholds(settings, disease_adapter, pest_adapter):
     async with client_for(settings, disease_adapter, pest_adapter) as client:
         response = await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("leaf.jpg", image_bytes(), "image/jpeg")},
         )
     assert response.status_code == 200
@@ -102,24 +102,6 @@ async def test_disease_abstains_without_local_calibration(settings, disease_adap
 
 
 @pytest.mark.anyio
-async def test_disease_requires_explicit_closeup_leaf_confirmation(
-    settings, disease_adapter, pest_adapter
-):
-    async with client_for(settings, disease_adapter, pest_adapter) as client:
-        response = await client.post(
-            "/api/sigap/v1/analyze",
-            data={"mode": "disease"},
-            files={"file": ("field.jpg", image_bytes(), "image/jpeg")},
-        )
-    body = response.json()
-    assert response.status_code == 200
-    assert body["status"] == "retake"
-    assert body["disease"]["candidates"] == []
-    assert body["quality"]["rejection_reason"] is not None
-    assert disease_adapter.calls == 0
-
-
-@pytest.mark.anyio
 async def test_unstable_multiview_result_cannot_be_accepted(
     settings, disease_adapter, pest_adapter
 ):
@@ -132,7 +114,7 @@ async def test_unstable_multiview_result_cannot_be_accepted(
     async with client_for(settings, disease_adapter, pest_adapter, calibration) as client:
         body = (await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("leaf.jpg", image_bytes(), "image/jpeg")},
         )).json()
     assert body["status"] == "abstain"
@@ -141,14 +123,14 @@ async def test_unstable_multiview_result_cannot_be_accepted(
 
 
 @pytest.mark.anyio
-async def test_disease_accepts_only_frozen_class_threshold(settings, disease_adapter, pest_adapter):
+async def test_disease_names_a_result_only_above_its_threshold(settings, disease_adapter, pest_adapter):
     calibration = Calibration(
         disease={"blast": DiseaseThreshold(min_score=0.7, min_margin=0.5)}, pest={}
     )
     async with client_for(settings, disease_adapter, pest_adapter, calibration) as client:
         body = (await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("leaf.jpg", image_bytes(), "application/octet-stream")},
         )).json()
     assert body["status"] == "ok"
@@ -157,7 +139,7 @@ async def test_disease_accepts_only_frozen_class_threshold(settings, disease_ada
 
 
 @pytest.mark.anyio
-async def test_pest_boxes_are_candidates_until_calibrated(settings, disease_adapter, pest_adapter):
+async def test_pest_boxes_stay_tentative_without_thresholds(settings, disease_adapter, pest_adapter):
     async with client_for(settings, disease_adapter, pest_adapter) as client:
         body = (await client.post(
             "/api/sigap/v1/analyze",
@@ -195,8 +177,8 @@ async def test_low_resolution_returns_retake_without_inference(settings, disease
     async with client_for(settings, disease_adapter, pest_adapter) as client:
         body = (await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
-            files={"file": ("small.jpg", image_bytes((180, 300)), "image/jpeg")},
+            data={"mode": "disease"},
+            files={"file": ("small.jpg", image_bytes((120, 300)), "image/jpeg")},
         )).json()
     assert body["status"] == "retake"
     assert body["quality"]["rejection_reason"] is not None
@@ -209,7 +191,7 @@ async def test_exif_orientation_is_applied(settings, disease_adapter, pest_adapt
     async with client_for(settings, disease_adapter, pest_adapter) as client:
         body = (await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={
                 "file": (
                     "rotated.jpg",
@@ -229,19 +211,19 @@ async def test_corrupt_empty_and_unsupported_files_have_explicit_errors(
     async with client_for(settings, disease_adapter, pest_adapter) as client:
         corrupt = await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("bad.jpg", b"not an image", "image/jpeg")},
         )
         empty = await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("empty.jpg", b"", "image/jpeg")},
         )
         gif = io.BytesIO()
         Image.new("RGB", (300, 300), (20, 80, 20)).save(gif, format="GIF")
         unsupported = await client.post(
             "/api/sigap/v1/analyze",
-            data={"mode": "disease", "confirm_leaf_subject": "true"},
+            data={"mode": "disease"},
             files={"file": ("leaf.jpg", gif.getvalue(), "image/jpeg")},
         )
     assert corrupt.status_code == 422
@@ -293,7 +275,7 @@ async def test_invalid_mode_and_model_absence(settings, disease_adapter, pest_ad
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             unavailable = await client.post(
                 "/api/sigap/v1/analyze",
-                data={"mode": "disease", "confirm_leaf_subject": "true"},
+                data={"mode": "disease"},
                 files={"file": ("leaf.jpg", image_bytes(), "image/jpeg")},
             )
     finally:
@@ -305,3 +287,33 @@ async def test_invalid_mode_and_model_absence(settings, disease_adapter, pest_ad
 def test_accepted_uploads_remain_in_memory():
     assert MultiPartParser.spool_max_size > MAX_COMPRESSED_BYTES
 
+
+@pytest.mark.anyio
+async def test_named_disease_result_has_sourced_steps(settings, disease_adapter, pest_adapter):
+    calibration = Calibration(
+        disease={"blast": DiseaseThreshold(min_score=0.7, min_margin=0.5)}, pest={}
+    )
+    async with client_for(settings, disease_adapter, pest_adapter, calibration) as client:
+        body = (await client.post(
+            "/api/sigap/v1/analyze",
+            data={"mode": "disease"},
+            files={"file": ("leaf.jpg", image_bytes(), "image/jpeg")},
+        )).json()
+    recommendation = body["recommendations"][0]
+    assert recommendation["source_url"].startswith("https://www.knowledgebank.irri.org/")
+    assert recommendation["steps"]
+    assert body["next_action"] == recommendation["steps"][0]
+    assert body["general_steps"] == []
+
+
+@pytest.mark.anyio
+async def test_uncertain_disease_result_gives_general_steps(settings, disease_adapter, pest_adapter):
+    async with client_for(settings, disease_adapter, pest_adapter) as client:
+        body = (await client.post(
+            "/api/sigap/v1/analyze",
+            data={"mode": "disease"},
+            files={"file": ("leaf.jpg", image_bytes(), "image/jpeg")},
+        )).json()
+    assert body["status"] == "abstain"
+    assert body["recommendations"] == []
+    assert body["general_steps"]

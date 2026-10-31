@@ -54,8 +54,8 @@ def assess_quality(decoded: DecodedImage, mode: str) -> QualityReport:
         warnings.append(
             _warning(
                 "resolution_too_low",
-                f"Sisi terpendek foto harus minimal {minimum_side} piksel untuk mode ini.",
-                f"The shortest side must be at least {minimum_side} pixels for this mode.",
+                f"Sisi terpendek foto harus minimal {minimum_side} piksel.",
+                f"The shortest side must be at least {minimum_side} pixels.",
             )
         )
         rejection_reason = _text(

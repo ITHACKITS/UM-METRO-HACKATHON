@@ -1,42 +1,59 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T00:00:00+07:00",
+  "updated_at": "2026-10-31T17:00:00+07:00",
   "models": {
     "disease": {
-      "id": "prithivMLmods/Rice-Leaf-Disease",
-      "source": "https://huggingface.co/prithivMLmods/Rice-Leaf-Disease",
-      "revision": "170d10e070c308e0e5337690d67371825591f35b",
+      "id": "Huyt/rice-leaf-disease-efficientnet-b0",
+      "source": "https://huggingface.co/Huyt/rice-leaf-disease-efficientnet-b0",
+      "revision": "a12e09fd765eda2b846836a965e951151a9125f7",
       "license": "Apache-2.0 (as declared by the model repository)",
-      "runtime": "PyTorch + Transformers",
-      "architecture": "SigLIP2 base patch16 224, image classification",
-    "preprocessing_version": "hf-auto-image-processor-slow@revision+exif-rgb+tta3-consistency-v2",
-      "input_size": [224, 224],
+      "runtime": "ONNX Runtime",
+      "architecture": "efficientnet_b0",
+      "preprocessing_version": "timm-efficientnet-b0-bicubic-crop0.875-imagenet-norm+mirror2-v1",
+      "input_size": [
+        224,
+        224
+      ],
       "labels": [
-        "Bacterialblight",
-        "Blast",
-        "Brownspot",
+        "Bacterial Blight",
+        "Bacterial Streak",
+        "Bakanae",
+        "Brown Spot",
+        "False Smut",
+        "Grassy Stunt Virus",
         "Healthy",
+        "Hispa",
+        "Leaf Blast",
+        "Leaf Scald",
+        "Narrow Brown Spot",
+        "Neck Blast",
+        "Ragged Stunt Virus",
+        "Sheath Blight",
+        "Sheath Rot",
+        "Stem Rot",
         "Tungro"
       ],
       "files": [
         {
-          "path": "config.json",
-          "sha256": "3a8722efa67fead11914f6f76d3bc5c5fd12e0f1c2a5f82bae9a242b4d79a928"
-        },
-        {
-          "path": "preprocessor_config.json",
-          "sha256": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc"
-        },
-        {
           "path": "model.safetensors",
-          "size_bytes": 371577220,
-          "sha256": "172e8e76ac71c08fd1ac4b0969b50ed1b710d2c3605dd44a7b99ae1ce5800750"
+          "sha256": "33e38196b5726796cdaccfdfa906f8db8524b087b4d5e13d87de7a1a5e118023"
         }
       ],
+      "conversion": {
+        "format": "ONNX",
+        "opset": 17,
+        "output_path": ".models/disease-efficientnet/model.onnx",
+        "extra_output": "cam: classifier applied to the 7x7 feature map; its mean equals the logits"
+      },
       "training_lineage": {
-        "dataset": "sharmin3/Rice-Leaf-Disease",
-        "license_status": "No declared dataset license; provenance only, do not download or redistribute",
-        "risk": "The model can be evaluated as a hackathon baseline, but is not cleared as a final commercial asset"
+        "dataset": "Rice Leaf Disease Images (about 29.4k images, per the model card)",
+        "license_status": "The card does not state the dataset licence; confirm it before any commercial claim",
+        "risk": "The card warns that the lab/field mix may teach capture condition and that field generalisation is unmeasured"
+      },
+      "replaces": {
+        "id": "prithivMLmods/Rice-Leaf-Disease",
+        "revision": "170d10e070c308e0e5337690d67371825591f35b",
+        "reason": "Named all 1,000 RiceLeafBD photos Healthy, including 400 with blast or tungro labels. See docs/reports/MODEL_TEST_2026-10-31.md."
       }
     },
     "pest": {
@@ -67,7 +84,10 @@
       "conversion": {
         "format": "ONNX",
         "opset": 17,
-        "input_size": [640, 640],
+        "input_size": [
+          640,
+          640
+        ],
         "dynamic": false,
         "simplify": false,
         "output_path": ".models/pest/model.onnx",
@@ -80,4 +100,3 @@
     }
   }
 }
-

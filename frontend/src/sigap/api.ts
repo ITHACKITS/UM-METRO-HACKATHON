@@ -78,14 +78,12 @@ export async function analyzePhoto(
 	file: File,
 	mode: AnalysisMode,
 	signal?: AbortSignal,
-	allowRemoteFallback = false,
-	confirmLeafSubject = false,
+	live = false,
 ): Promise<AnalysisResponse> {
 	const body = new FormData();
 	body.append("file", file, file.name);
 	body.append("mode", mode);
-	body.append("allow_remote_fallback", String(allowRemoteFallback));
-	body.append("confirm_leaf_subject", String(confirmLeafSubject));
+	if (live) body.append("live", "true");
 
 	let response: Response;
 	try {

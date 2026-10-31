@@ -1,0 +1,29 @@
+{
+  "status": "operating",
+  "note": "Thresholds that decide when TUAI Sigap names a result or says uncertain. Measured on public datasets on 2026-10-31, not on Lampung photos; see docs/reports/MODEL_TEST_2026-10-31.md. Replace after the PPL-labelled field audit.",
+  "disease_model_revision": "a12e09fd765eda2b846836a965e951151a9125f7",
+  "pest_model_revision": "b64a9302e50ae089e52b770fe0d054ac77c1c3d8",
+  "disease_preprocessing_version": "timm-efficientnet-b0-bicubic-crop0.875-imagenet-norm+mirror2-v1",
+  "pest_preprocessing_version": "yolo11-letterbox-640-rgb-v1",
+  "calibration_manifest_sha256": "38663fd206106584f30fec40a0c1ca9bbf0e269be12b34663a99db9eb5f2fe77",
+  "disease": {
+    "bacterial_leaf_blight": {"status": "operating", "min_score": 0.75, "min_margin": 0.4},
+    "blast": {"status": "operating", "min_score": 0.75, "min_margin": 0.4},
+    "brown_spot": {"status": "operating", "min_score": 0.75, "min_margin": 0.4},
+    "healthy": {"status": "operating", "min_score": 0.75, "min_margin": 0.4},
+    "tungro": {"status": "operating", "min_score": 0.75, "min_margin": 0.4}
+  },
+  "pest": {
+    "rice_leaf_roller": {"status": "operating", "min_score": 0.5},
+    "yellow_rice_borer": {"status": "operating", "min_score": 0.5},
+    "brown_plant_hopper": {"status": "operating", "min_score": 0.5}
+  },
+  "pest_remote": {
+    "rice_leaf_roller": {"status": "operating", "min_score": 0.6},
+    "brown_plant_hopper": {"status": "operating", "min_score": 0.6},
+    "green_leafhopper": {"status": "operating", "min_score": 0.6},
+    "rice_bug": {"status": "operating", "min_score": 0.6},
+    "stem_borer": {"status": "operating", "min_score": 0.6},
+    "whorl_maggot": {"status": "operating", "min_score": 0.6}
+  }
+}

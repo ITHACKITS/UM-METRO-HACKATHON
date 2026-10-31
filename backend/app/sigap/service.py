@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import platform
 import sys
 from concurrent.futures import ThreadPoolExecutor
+
+from PIL import Image
 
 from . import __version__
 from .calibration import Calibration
@@ -20,7 +23,7 @@ from .constants import (
 from .errors import APIError
 from .image_io import DecodedImage
 from .models import DiseaseAdapter, PestAdapter, RoboflowPestAdapter
-from .models.base import ModelInferenceError, ModelUnavailableError
+from .models.base import ModelInferenceError, ModelUnavailableError, PestPrediction
 from .policy import (
     DISEASE_LIMITATIONS,
     PEST_LIMITATIONS,
@@ -43,6 +46,8 @@ from .schemas import (
 )
 from .settings import Settings
 
+logger = logging.getLogger(__name__)
+
 
 class InferenceService:
     def __init__(
@@ -59,7 +64,7 @@ class InferenceService:
         )
         self.pest_adapter = pest_adapter or PestAdapter(settings.pest_onnx)
         self.roboflow_adapter = roboflow_adapter or RoboflowPestAdapter(
-            enabled=settings.roboflow_fallback_enabled,
+            enabled=settings.roboflow_enabled,
             api_url=settings.roboflow_api_url,
             api_key=settings.roboflow_api_key,
             remote_model_id=settings.roboflow_model_id,
@@ -90,14 +95,14 @@ class InferenceService:
         pest = self.pest_adapter.health()
         fallback = self.roboflow_adapter.health()
         models = [disease, pest]
-        if self.settings.roboflow_fallback_enabled:
+        if self.settings.roboflow_enabled:
             models.append(fallback)
         return HealthResponse(
             status="ready" if disease.ready and (pest.ready or fallback.ready) else "degraded",
             service="TUAI Sigap API",
             version=__version__,
             offline=self.settings.offline
-            and not self.settings.roboflow_fallback_enabled,
+            and not self.settings.roboflow_enabled,
             runtime=RuntimeHealth(
                 python=sys.version.split()[0],
                 platform=platform.platform(),
@@ -115,6 +120,7 @@ class InferenceService:
                 label=BilingualText(id=str(data["id"]), en=str(data["en"])),
             )
             for class_id, data in DISEASE_CLASSES.items()
+            if data["result"]
         ]
         pest_classes = [
             CapabilityClass(
@@ -128,16 +134,9 @@ class InferenceService:
             self.disease_adapter.provenance(),
             self.pest_adapter.provenance(),
         ]
-        if self.settings.roboflow_fallback_enabled:
+        if self.settings.roboflow_enabled:
             models.append(self.roboflow_adapter.provenance())
         limitations = list(DISEASE_LIMITATIONS + PEST_LIMITATIONS)
-        if self.settings.roboflow_fallback_enabled:
-            limitations.append(
-                BilingualText(
-                    id="Fallback hama Roboflow hanya digunakan setelah persetujuan; foto dikirim ke layanan cloud eksternal.",
-                    en="The Roboflow pest fallback is used only after consent; the photo is sent to an external cloud service.",
-                )
-            )
         return CapabilitiesResponse(
             service="TUAI Sigap — Cek Daun & Hama",
             models=models,
@@ -177,45 +176,27 @@ class InferenceService:
             return APIError(
                 503,
                 "model_unavailable",
-                "Model untuk mode ini belum siap. Jalankan pemeriksaan model sebelum demo.",
-                "The model for this mode is not ready. Run model preflight before the demo.",
+                "Pemeriksaan foto tidak tersedia saat ini. Coba lagi sebentar lagi.",
+                "Photo checking is unavailable right now. Please try again shortly.",
             )
         return APIError(
             503,
             "inference_failed",
-            "Model gagal memproses foto ini. Periksa status layanan dan coba lagi.",
-            "The model failed to process this photo. Check service health and try again.",
+            "Foto ini tidak berhasil diperiksa. Coba lagi.",
+            "This photo could not be checked. Please try again.",
         )
 
-    def analyze_disease(
-        self, decoded: DecodedImage, confirm_leaf_subject: bool = False
-    ) -> DiseaseAnalysisResponse:
+    def analyze_disease(self, decoded: DecodedImage) -> DiseaseAnalysisResponse:
         quality = assess_quality(decoded, "disease")
-        provenance = self.disease_adapter.provenance()
-        subject_rejection = None
-        if not confirm_leaf_subject:
-            subject_rejection = BilingualText(
-                id="Konfirmasikan bahwa foto menampilkan satu daun padi dari dekat, bukan hamparan sawah atau serangga.",
-                en="Confirm that the photo shows one rice leaf close up, not a whole field or an insect.",
-            )
-            quality = quality.model_copy(update={"rejection_reason": subject_rejection})
         if quality.rejection_reason:
             return DiseaseAnalysisResponse(
                 status="retake",
-                model=provenance,
+                model=self.disease_adapter.provenance(),
                 quality=quality,
                 limitations=list(DISEASE_LIMITATIONS),
                 next_action=BilingualText(
-                    id=(
-                        "Pilih atau ambil foto satu daun padi dari dekat, lalu konfirmasikan subjek sebelum analisis."
-                        if subject_rejection
-                        else "Ambil ulang satu daun dari dekat dengan fokus dan cahaya merata."
-                    ),
-                    en=(
-                        "Choose or take a close-up photo of one rice leaf, then confirm the subject before analysis."
-                        if subject_rejection
-                        else "Retake one leaf close up, in focus, with even lighting."
-                    ),
+                    id="Ambil ulang satu daun dari dekat dengan fokus dan cahaya merata.",
+                    en="Retake one leaf close up, in focus, with even lighting.",
                 ),
                 disease=DiseaseResult(
                     accepted=False,
@@ -229,7 +210,7 @@ class InferenceService:
             inference = self.disease_adapter.predict(decoded.image)
         except (ModelUnavailableError, ModelInferenceError) as exc:
             raise self._model_error(exc) from exc
-        status, result, limitations, action = disease_decision(
+        status, result, limitations, action, recommendations, general = disease_decision(
             inference, self.calibration
         )
         return DiseaseAnalysisResponse(
@@ -238,28 +219,48 @@ class InferenceService:
             quality=quality,
             limitations=limitations,
             next_action=action,
+            recommendations=recommendations,
+            general_steps=general,
             disease=result,
         )
 
-    def analyze_pest(
-        self, decoded: DecodedImage, allow_remote_fallback: bool = False
-    ) -> PestAnalysisResponse:
+    def _detect_pests(
+        self, image: Image.Image, live: bool
+    ) -> tuple[list[PestPrediction], str]:
+        """Try the detectors in order and return the first answer.
+
+        Full photos go to Roboflow first. Live camera frames stay local when possible,
+        because they arrive continuously and each cloud call uses account credits.
+        """
+        remote = (self.roboflow_adapter, "roboflow_cloud")
+        local = (self.pest_adapter, "local")
+        order = [local, remote] if live else [remote, local]
+        failure: Exception | None = None
+        for adapter, processing in order:
+            if adapter is self.roboflow_adapter and not adapter.ready:
+                continue
+            try:
+                return adapter.predict(image), processing
+            except (ModelUnavailableError, ModelInferenceError) as exc:
+                logger.info("Pest detector %s unavailable: %s", processing, type(exc).__name__)
+                failure = exc
+        raise self._model_error(failure or ModelUnavailableError("No pest detector."))
+
+    def analyze_pest(self, decoded: DecodedImage, live: bool = False) -> PestAnalysisResponse:
         quality = assess_quality(decoded, "pest")
-        local_ready = self.pest_adapter.health().ready
-        provenance = (
-            self.pest_adapter.provenance()
-            if local_ready or not allow_remote_fallback
-            else self.roboflow_adapter.provenance()
-        )
         if quality.rejection_reason:
             return PestAnalysisResponse(
                 status="retake",
-                model=provenance,
+                model=(
+                    self.roboflow_adapter
+                    if self.roboflow_adapter.ready
+                    else self.pest_adapter
+                ).provenance(),
                 quality=quality,
                 limitations=list(PEST_LIMITATIONS),
                 next_action=BilingualText(
-                    id="Ambil ulang serangga yang terlihat dari jarak lebih dekat dan dalam fokus.",
-                    en="Retake the visible insect closer and in focus.",
+                    id="Ambil ulang serangga dari jarak lebih dekat dan dalam fokus.",
+                    en="Retake the insect closer and in focus.",
                 ),
                 pest=PestResult(
                     detections=[],
@@ -268,48 +269,23 @@ class InferenceService:
                     calibration_status=self.calibration.status,
                 ),
             )
-        processing = "local"
-        try:
-            predictions = self.pest_adapter.predict(decoded.image)
-        except (ModelUnavailableError, ModelInferenceError) as exc:
-            if not self.roboflow_adapter.ready:
-                raise self._model_error(exc) from exc
-            if not allow_remote_fallback:
-                raise APIError(
-                    503,
-                    "remote_fallback_requires_consent",
-                    "Model hama lokal belum siap. Aktifkan izin fallback cloud untuk mengirim foto ini ke Roboflow.",
-                    "The local pest model is not ready. Enable cloud-fallback consent to send this photo to Roboflow.",
-                ) from exc
-            try:
-                predictions = self.roboflow_adapter.predict(decoded.image)
-                provenance = self.roboflow_adapter.provenance()
-                processing = "roboflow_cloud"
-            except (ModelUnavailableError, ModelInferenceError) as remote_exc:
-                raise self._model_error(remote_exc) from remote_exc
-        status, result, limitations, action = pest_decision(
-            predictions, self.calibration, quality.width, quality.height
+        predictions, processing = self._detect_pests(decoded.image, live)
+        is_remote = processing == "roboflow_cloud"
+        status, result, limitations, action, recommendations, general = pest_decision(
+            predictions,
+            self.calibration,
+            quality.width,
+            quality.height,
+            thresholds=self.calibration.pest_remote if is_remote else self.calibration.pest,
         )
-        if processing == "roboflow_cloud":
-            limitations.extend(
-                [
-                    BilingualText(
-                        id="Foto ini dikirim ke layanan cloud Roboflow karena model hama lokal tidak siap; TUAI tidak menyimpan salinannya.",
-                        en="This photo was sent to Roboflow cloud because the local pest model was unavailable; TUAI does not retain a copy.",
-                    ),
-                    BilingualText(
-                        id="Fallback hanya memetakan brown-planthopper dan leaf-folder. Kelas stem-borer umum tidak dianggap penggerek batang padi kuning.",
-                        en="The fallback maps only brown-planthopper and leaf-folder. Its generic stem-borer class is not treated as yellow rice stem borer.",
-                    ),
-                ]
-            )
         return PestAnalysisResponse(
             status=status,
             processing=processing,
-            model=provenance,
+            model=(self.roboflow_adapter if is_remote else self.pest_adapter).provenance(),
             quality=quality,
             limitations=limitations,
             next_action=action,
+            recommendations=recommendations,
+            general_steps=general,
             pest=result,
         )
-

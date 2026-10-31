@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..schemas import BoundingBox, ModelHealth, ModelProvenance
+from ..schemas import BoundingBox, DiseaseHeatmap, ModelHealth, ModelProvenance
 
 
 class ModelUnavailableError(RuntimeError):
@@ -30,6 +30,7 @@ class DiseaseInference:
     top_class_agreement: float
     top_score_spread: float
     stable: bool
+    heatmap: DiseaseHeatmap | None = None
 
 
 @dataclass(frozen=True, slots=True)

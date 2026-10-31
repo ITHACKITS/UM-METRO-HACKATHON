@@ -60,8 +60,7 @@ def create_router(service: InferenceService) -> APIRouter:
     async def analyze(
         mode: Annotated[Literal["disease", "pest"], Form()],
         file: Annotated[UploadFile, File()],
-        confirm_leaf_subject: Annotated[bool, Form()] = False,
-        allow_remote_fallback: Annotated[bool, Form()] = False,
+        live: Annotated[bool, Form()] = False,
     ) -> AnalyzeResponse:
         try:
             payload = await file.read(MAX_COMPRESSED_BYTES + 1)
@@ -73,13 +72,12 @@ def create_router(service: InferenceService) -> APIRouter:
                 service.executor,
                 service.analyze_disease,
                 decoded,
-                confirm_leaf_subject,
             )
         return await _run_in_executor(
             service.executor,
             service.analyze_pest,
             decoded,
-            allow_remote_fallback,
+            live,
         )
 
     return api

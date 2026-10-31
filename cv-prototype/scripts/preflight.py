@@ -57,12 +57,14 @@ def main() -> int:
     print(f"Model root: {MODEL_ROOT}")
 
     disease = lock["models"]["disease"]
-    for item in disease["files"]:
-        ok, message = check_file(MODEL_ROOT / "disease" / item["path"], item["sha256"])
-        print(message)
-        if not ok:
-            errors.append(message)
     disease_provenance = provenance.get("disease", {})
+    ok, message = check_file(
+        MODEL_ROOT / "disease-efficientnet" / "model.onnx",
+        disease_provenance.get("artifact_sha256"),
+    )
+    print(message)
+    if not ok:
+        errors.append(message)
     if disease_provenance.get("revision") != disease["revision"]:
         errors.append("disease provenance is missing or does not match the locked revision")
     if disease["preprocessing_version"] != DISEASE_PREPROCESSING_VERSION:
@@ -96,7 +98,7 @@ def main() -> int:
     if pest_provenance.get("source_checkpoint_retained") is not False:
         errors.append("pest provenance does not confirm deletion of the pickle checkpoint")
 
-    required_modules = ("fastapi", "PIL", "numpy", "torch", "transformers", "onnxruntime")
+    required_modules = ("fastapi", "PIL", "numpy", "onnxruntime")
     for module in required_modules:
         available = importlib.util.find_spec(module) is not None
         print(f"runtime module {module}: {'ok' if available else 'missing'}")

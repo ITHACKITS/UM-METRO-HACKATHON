@@ -16,176 +16,243 @@ function renderSigap() {
 	);
 }
 
+const base = {
+	processing: "local",
+	score_kind: "model_score",
+	model: { id: "m", revision: "r", artifact_sha256: null, preprocessing_version: "p" },
+	quality: {
+		width: 640,
+		height: 480,
+		format: "JPEG",
+		file_size_bytes: 4,
+		blur_score: 120,
+		mean_luminance: 128,
+		warnings: [],
+		rejection_reason: null,
+	},
+	limitations: [{ id: "Perkiraan dari satu foto.", en: "An estimate from one photo." }],
+	next_action: { id: "Langkah", en: "Step" },
+	recommendations: [],
+	general_steps: [],
+};
+
+const blast = { id: "Blas", en: "Blast" };
+
+function diseaseResponse(overrides: Record<string, unknown>) {
+	return {
+		...base,
+		status: "abstain",
+		mode: "disease",
+		disease: {
+			accepted: false,
+			candidates: [{ class_id: "blast", label: blast, score: 0.6 }],
+			top_score: 0.6,
+			score_margin: 0.1,
+			calibration_status: "operating",
+			consistency_status: "stable",
+			view_count: 2,
+			top_class_agreement: 1,
+			top_score_spread: 0.04,
+			heatmap: null,
+			closest_match: null,
+		},
+		...overrides,
+	};
+}
+
+function mockAnalysis(body: unknown) {
+	const fetchMock = vi.fn().mockResolvedValue({
+		ok: true,
+		status: 200,
+		json: async () => body,
+	});
+	vi.stubGlobal("fetch", fetchMock);
+	return fetchMock;
+}
+
+function upload() {
+	fireEvent.change(screen.getByLabelText(/unggah foto/i), {
+		target: { files: [new File(["leaf"], "leaf.jpg", { type: "image/jpeg" })] },
+	});
+}
+
 afterEach(() => {
 	vi.unstubAllGlobals();
 	localStorage.clear();
 });
 
-describe("TUAI CV interface", () => {
-	it("starts in Indonesian with separate disease and visible-pest modes", () => {
+describe("TUAI Sigap", () => {
+	it("starts simply, in Indonesian, with the two checks", () => {
 		renderSigap();
 		expect(
-			screen.getByRole("heading", { name: /periksa fotonya lebih dulu/i }),
+			screen.getByRole("heading", { name: /cek daun dan hama padi/i }),
 		).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: /gejala daun/i })).toBeChecked();
+		expect(screen.getByRole("radio", { name: /cari hama/i })).not.toBeChecked();
+	});
+
+	it("never mentions the cloud service, consent, or unfinished work", () => {
+		renderSigap();
+		fireEvent.click(screen.getByRole("radio", { name: /cari hama/i }));
+		const page = document.body.textContent?.toLowerCase() ?? "";
+		for (const word of ["roboflow", "cloud", "fallback", "prototipe", "belum", "eksperimen"]) {
+			expect(page).not.toContain(word);
+		}
+		expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+	});
+
+	it("switches the whole interface to English", () => {
+		renderSigap();
+		fireEvent.click(screen.getByRole("button", { name: /english|^en$/i }));
 		expect(
-			screen.getByRole("radio", { name: /cek gejala daun/i }),
-		).toBeChecked();
-		expect(
-			screen.getByRole("radio", { name: /cari hama yang terlihat/i }),
-		).not.toBeChecked();
-		expect(
-			screen.getByText(/foto diproses saat ini saja/i),
+			screen.getByRole("heading", { name: /check rice leaves and pests/i }),
 		).toBeInTheDocument();
 	});
 
-	it("changes guidance when pest mode is selected", () => {
-		renderSigap();
-		fireEvent.click(
-			screen.getByRole("radio", { name: /cari hama yang terlihat/i }),
-		);
-		expect(screen.getAllByText(/pastikan serangga terlihat/i)).not.toHaveLength(
-			0,
-		);
-		expect(
-			screen.getByRole("radio", { name: /cari hama yang terlihat/i }),
-		).toBeChecked();
-		expect(
-			screen.getByRole("checkbox", { name: /izinkan fallback hama/i }),
-		).not.toBeChecked();
-		expect(
-			screen.getByText(/foto dikirim ke layanan cloud eksternal roboflow/i),
-		).toBeInTheDocument();
-	});
-
-	it("offers a complete English interface without changing the selected mode", () => {
-		renderSigap();
-		fireEvent.click(screen.getByRole("button", { name: /english/i }));
-		expect(
-			screen.getByRole("heading", { name: /check the photo first/i }),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText(/processes this photo for the current request/i),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: /bahasa indonesia/i }),
-		).toBeInTheDocument();
-	});
-
-	it("opens a task-specific camera with upload fallback", () => {
-		renderSigap();
-		fireEvent.click(screen.getByRole("button", { name: /buka kamera/i }));
-		const dialog = screen.getByRole("dialog", { name: /ambil foto langsung/i });
-		expect(
-			within(dialog).getByRole("radio", { name: /gejala daun/i }),
-		).toBeChecked();
-		expect(
-			within(dialog).getByRole("button", { name: /unggah foto/i }),
-		).toBeInTheDocument();
-	});
-
-	it("keeps disease and pest history in separate local lanes", () => {
-		renderSigap();
-		const history = screen.getByRole("region", { name: /riwayat observasi/i });
-		expect(
-			within(history).getByRole("tab", { name: /cek gejala daun/i }),
-		).toHaveAttribute("aria-selected", "true");
-		fireEvent.click(
-			within(history).getByRole("tab", { name: /cari hama yang terlihat/i }),
-		);
-		expect(
-			within(history).getByRole("tab", { name: /cari hama yang terlihat/i }),
-		).toHaveAttribute("aria-selected", "true");
-	});
-
-	it("requires a close-up leaf confirmation and hides abstained percentages", async () => {
-		const fetchMock = vi.fn().mockResolvedValue({
-			ok: true,
-			status: 200,
-			json: async () => ({
-				status: "abstain",
-				mode: "disease",
-				processing: "local",
-				score_kind: "model_score",
-				model: {
-					id: "prithivMLmods/Rice-Leaf-Disease",
-					revision: "170d10e",
-					artifact_sha256: null,
-					preprocessing_version:
-						"hf-auto-image-processor-slow@revision+exif-rgb+tta3-consistency-v2",
+	it("analyzes as soon as a photo is chosen and shows sourced steps", async () => {
+		const fetchMock = mockAnalysis(
+			diseaseResponse({
+				status: "ok",
+				disease: {
+					...diseaseResponse({}).disease,
+					accepted: true,
+					candidates: [{ class_id: "blast", label: blast, score: 0.9 }],
 				},
-				quality: {
-					width: 640,
-					height: 480,
-					format: "JPEG",
-					file_size_bytes: 4,
-					blur_score: 120,
-					mean_luminance: 128,
-					warnings: [],
-					rejection_reason: null,
-				},
-				limitations: [
+				recommendations: [
 					{
-						id: "Belum dikalibrasi dengan foto Lampung.",
-						en: "Not calibrated with Lampung photos.",
+						label: blast,
+						steps: [{ id: "Genangi sawah.", en: "Flood the field." }],
+						source_name: "IRRI Rice Knowledge Bank",
+						source_url: "https://www.knowledgebank.irri.org/x",
 					},
 				],
-				next_action: {
-					id: "Minta PPL memeriksa daun.",
-					en: "Ask an extension officer to inspect the leaf.",
-				},
-				disease: {
-					accepted: false,
-					candidates: [
-						{
-							class_id: "bacterial_leaf_blight",
-							label: {
-								id: "Hawar daun bakteri / kresek",
-								en: "Bacterial leaf blight",
-							},
-							score: 0.61,
-						},
-					],
-					top_score: 0.61,
-					score_margin: 0.1,
-					calibration_status: "unavailable",
-					consistency_status: "stable",
-					view_count: 3,
-					top_class_agreement: 1,
-					top_score_spread: 0.04,
-				},
 			}),
-		});
-		vi.stubGlobal("fetch", fetchMock);
-
-		renderSigap();
-		const file = new File(["leaf"], "leaf.jpg", { type: "image/jpeg" });
-		fireEvent.change(screen.getByLabelText(/unggah foto/i), {
-			target: { files: [file] },
-		});
-		const analyze = screen.getByRole("button", { name: /periksa foto/i });
-		expect(analyze).toBeDisabled();
-		fireEvent.click(
-			screen.getByRole("checkbox", { name: /konfirmasi subjek foto daun/i }),
 		);
-		expect(analyze).toBeEnabled();
-		fireEvent.click(analyze);
+		renderSigap();
+		upload();
 
 		expect(
-			await screen.findByText(/model belum dapat memberi indikasi/i),
+			await screen.findByRole("heading", { name: /kemungkinan: blas/i }),
 		).toBeInTheDocument();
-		expect(screen.getByText(/hawar daun bakteri/i)).toBeInTheDocument();
-		expect(screen.queryByText(/skor model 61.0%/i)).not.toBeInTheDocument();
-		expect(
-			screen.getByText(/peringkat mentah model untuk pemeriksaan teknis/i),
-		).toBeInTheDocument();
-		expect(screen.getByText(/nilai mentah 0.6100/i)).toBeInTheDocument();
+		expect(screen.getByText("Genangi sawah.")).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /irri/i })).toHaveAttribute(
+			"href",
+			"https://www.knowledgebank.irri.org/x",
+		);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/sigap/v1/analyze");
-		const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
-		expect(request.body).toBeInstanceOf(FormData);
-		expect((request.body as FormData).get("allow_remote_fallback")).toBe(
-			"false",
+		const body = (fetchMock.mock.calls[0]?.[1] as RequestInit).body as FormData;
+		expect(body.get("mode")).toBe("disease");
+		expect(body.get("live")).toBeNull();
+	});
+
+	it("says uncertain, with the closest match and no percentages", async () => {
+		mockAnalysis(
+			diseaseResponse({
+				disease: { ...diseaseResponse({}).disease, closest_match: blast },
+				general_steps: [{ id: "Foto ulang.", en: "Retake." }],
+			}),
 		);
-		expect((request.body as FormData).get("confirm_leaf_subject")).toBe("true");
+		renderSigap();
+		upload();
+
+		expect(
+			await screen.findByRole("heading", { name: /tidak pasti/i }),
+		).toBeInTheDocument();
+		expect(screen.getByText(/paling mirip: blas/i)).toBeInTheDocument();
+		expect(screen.getByText("Foto ulang.")).toBeInTheDocument();
+		expect(document.body.textContent).not.toMatch(/\d%/);
+	});
+
+	it("does not call an empty pest photo safe", async () => {
+		mockAnalysis({
+			...base,
+			status: "ok",
+			mode: "pest",
+			general_steps: [{ id: "Periksa pangkal rumpun.", en: "Check the base." }],
+			pest: {
+				detections: [],
+				image_width: 640,
+				image_height: 480,
+				calibration_status: "operating",
+			},
+		});
+		renderSigap();
+		fireEvent.click(screen.getByRole("radio", { name: /cari hama/i }));
+		upload();
+
+		expect(
+			await screen.findByRole("heading", { name: /tidak ada hama yang terlihat di foto/i }),
+		).toBeInTheDocument();
+		expect(screen.getByText("Periksa pangkal rumpun.")).toBeInTheDocument();
+	});
+
+	it("brings back the workbench, history lanes, and note", () => {
+		renderSigap();
+		expect(screen.getByText(/tidak ada foto dipilih/i)).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /pemeriksaan foto/i })).toBeInTheDocument();
+		expect(screen.getByRole("tab", { name: /cek gejala daun/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+		expect(screen.getByRole("heading", { name: /pemeriksaan awal/i })).toBeInTheDocument();
+	});
+
+	it("draws one box per detection and names each pest once", async () => {
+		const label = { id: "Wereng batang cokelat", en: "Brown planthopper" };
+		const detection = {
+			class_id: 7,
+			class_key: "brown_plant_hopper",
+			label,
+			score: 0.9,
+			accepted: true,
+			bbox: { x_min: 100, y_min: 100, x_max: 200, y_max: 200 },
+		};
+		mockAnalysis({
+			...base,
+			status: "ok",
+			mode: "pest",
+			pest: {
+				detections: [
+					detection,
+					{ ...detection, bbox: { x_min: 300, y_min: 100, x_max: 400, y_max: 200 } },
+				],
+				image_width: 640,
+				image_height: 480,
+				calibration_status: "operating",
+			},
+		});
+		renderSigap();
+		fireEvent.click(screen.getByRole("radio", { name: /cari hama/i }));
+		upload();
+
+		expect(await screen.findByText(/2 terlihat/i)).toBeInTheDocument();
+		expect(document.querySelectorAll(".detection-box")).toHaveLength(2);
+		expect(document.querySelectorAll(".detection-box span")).toHaveLength(1);
+	});
+
+	it("shows a clear error when the service is down", async () => {
+		vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
+		renderSigap();
+		upload();
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			/tidak tersedia saat ini/i,
+		);
+		expect(screen.getByRole("button", { name: /coba lagi/i })).toBeInTheDocument();
+	});
+
+	it("opens the camera dialog with both checks and an upload option", () => {
+		const getUserMedia = vi.fn().mockRejectedValue(new DOMException("no", "NotAllowedError"));
+		vi.stubGlobal("isSecureContext", true);
+		Object.defineProperty(navigator, "mediaDevices", {
+			configurable: true,
+			value: { getUserMedia },
+		});
+		renderSigap();
+		fireEvent.click(screen.getByRole("button", { name: /buka kamera/i }));
+		const dialog = screen.getByRole("dialog", { name: /ambil foto/i });
+		expect(within(dialog).getByRole("radio", { name: /gejala daun/i })).toBeChecked();
+		expect(within(dialog).getByRole("button", { name: /unggah foto/i })).toBeInTheDocument();
+		expect(getUserMedia).toHaveBeenCalledTimes(1);
 	});
 });

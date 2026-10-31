@@ -22,21 +22,14 @@ times, hashes, and failures in a dated private log; never tick an item from memo
 - [ ] `/api/sigap/v1/health` reports both exact revisions and readiness.
 - [ ] Prewarm both models, then record warm request p50/p95 and peak memory.
 - [ ] Restart once from cold state to confirm repeatability.
-- [ ] Confirm the optional Roboflow fallback is disabled for the offline rehearsal;
-      the normal demo must not depend on a cloud credential or network availability.
+- [ ] Disconnect the network and confirm pest photos still get an answer from the local
+      model, with no message to the user.
 
-## Optional hosted-fallback rehearsal
+## Roboflow rehearsal
 
-- [ ] Use only a newly rotated key supplied through `ROBOFLOW_API_KEY`; never copy it
-      into source, frontend configuration, screenshots, logs, or presentation files.
-- [ ] Confirm pest analysis does not contact Roboflow unless the server fallback is
-      enabled and the user explicitly checks the per-request consent control.
-- [ ] Confirm the result says it was processed by Roboflow cloud and the health response
-      reports `offline=false` while the fallback is enabled.
-- [ ] Confirm only brown planthopper and leaf folder are exposed; generic stem borer and
-      every other hosted class are ignored.
-- [ ] Disconnect the network and confirm hosted failure is explicit, while local disease
-      inference remains usable and no fake pest result appears.
+- [ ] Confirm `/api/sigap/v1/health` lists the Roboflow model as ready.
+- [ ] Check the remaining Roboflow credits on the account before the demo.
+- [ ] Never show the key in screenshots, logs, or presentation files.
 
 ## User flow
 

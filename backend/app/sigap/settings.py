@@ -46,7 +46,7 @@ class Settings:
     device: str
     preload: bool
     max_concurrency: int
-    roboflow_fallback_enabled: bool = False
+    roboflow_enabled: bool = False
     roboflow_api_url: str = "https://serverless.roboflow.com"
     roboflow_api_key: str | None = None
     roboflow_model_id: str = "rice-pest-jmdev/1"
@@ -65,7 +65,7 @@ class Settings:
             model_dir=model_dir,
             disease_dir=_resolve_path(
                 _env("TUAI_SIGAP_DISEASE_DIR", "JAGAPADI_CV_DISEASE_DIR"),
-                model_dir / "disease",
+                model_dir / "disease-efficientnet",
             ),
             pest_onnx=_resolve_path(
                 _env("TUAI_SIGAP_PEST_ONNX", "JAGAPADI_CV_PEST_ONNX"),
@@ -73,7 +73,7 @@ class Settings:
             ),
             calibration_path=_resolve_path(
                 _env("TUAI_SIGAP_CALIBRATION", "JAGAPADI_CV_CALIBRATION"),
-                prototype_root / "evaluation" / "frozen-thresholds.json",
+                prototype_root / "evaluation" / "operating-thresholds.json",
             ),
             offline=_env_bool(
                 "TUAI_SIGAP_OFFLINE",
@@ -90,9 +90,7 @@ class Settings:
                 "TUAI_SIGAP_MAX_CONCURRENCY",
                 _env_int("JAGAPADI_CV_MAX_CONCURRENCY", 1),
             ),
-            roboflow_fallback_enabled=_env_bool(
-                "TUAI_SIGAP_ROBOFLOW_FALLBACK", False
-            ),
+            roboflow_enabled=_env_bool("TUAI_SIGAP_ROBOFLOW", True),
             roboflow_api_url=(
                 os.getenv("TUAI_SIGAP_ROBOFLOW_API_URL", "https://serverless.roboflow.com")
                 .strip()

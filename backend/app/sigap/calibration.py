@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
@@ -16,7 +16,10 @@ from .constants import (
     PEST_PREPROCESSING_VERSION,
 )
 
-CalibrationStatus = Literal["unavailable", "partial", "frozen"]
+CalibrationStatus = Literal["unavailable", "partial", "operating", "frozen"]
+
+
+_USABLE = {"validated", "operating"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,7 +37,9 @@ class PestThreshold:
 class Calibration:
     disease: dict[str, DiseaseThreshold]
     pest: dict[int, PestThreshold]
+    pest_remote: dict[int, PestThreshold] = field(default_factory=dict)
     error: str | None = None
+    operating: bool = False
 
     @property
     def status(self) -> CalibrationStatus:
@@ -42,6 +47,8 @@ class Calibration:
         total = len(DISEASE_CLASSES) + len(PEST_CLASSES)
         if count == 0:
             return "unavailable"
+        if self.operating:
+            return "operating"
         return "frozen" if count == total else "partial"
 
     @classmethod
@@ -54,8 +61,8 @@ class Calibration:
             return cls.unavailable()
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
-            if raw.get("status") != "frozen":
-                raise ValueError("threshold file status must be 'frozen'")
+            if raw.get("status") not in {"frozen", "operating"}:
+                raise ValueError("threshold file status must be 'frozen' or 'operating'")
             if raw.get("disease_model_revision") != DISEASE_MODEL_REVISION:
                 raise ValueError("disease revision does not match the locked model")
             if raw.get("pest_model_revision") != PEST_MODEL_REVISION:
@@ -69,7 +76,7 @@ class Calibration:
 
             disease: dict[str, DiseaseThreshold] = {}
             for class_id, values in raw.get("disease", {}).items():
-                if class_id not in DISEASE_CLASSES or values.get("status") != "validated":
+                if class_id not in DISEASE_CLASSES or values.get("status") not in _USABLE:
                     continue
                 min_score = float(values["min_score"])
                 min_margin = float(values["min_margin"])
@@ -77,16 +84,25 @@ class Calibration:
                     raise ValueError(f"invalid disease threshold for {class_id}")
                 disease[class_id] = DiseaseThreshold(min_score, min_margin)
 
-            pest: dict[int, PestThreshold] = {}
             pest_keys = {metadata["key"]: index for index, metadata in PEST_CLASSES.items()}
-            for class_key, values in raw.get("pest", {}).items():
-                if class_key not in pest_keys or values.get("status") != "validated":
-                    continue
-                min_score = float(values["min_score"])
-                if not 0 <= min_score <= 1:
-                    raise ValueError(f"invalid pest threshold for {class_key}")
-                pest[pest_keys[class_key]] = PestThreshold(min_score)
-            return cls(disease=disease, pest=pest)
+
+            def pest_thresholds(section: str) -> dict[int, PestThreshold]:
+                parsed: dict[int, PestThreshold] = {}
+                for class_key, values in raw.get(section, {}).items():
+                    if class_key not in pest_keys or values.get("status") not in _USABLE:
+                        continue
+                    min_score = float(values["min_score"])
+                    if not 0 <= min_score <= 1:
+                        raise ValueError(f"invalid pest threshold for {class_key}")
+                    parsed[pest_keys[class_key]] = PestThreshold(min_score)
+                return parsed
+
+            return cls(
+                disease=disease,
+                pest=pest_thresholds("pest"),
+                pest_remote=pest_thresholds("pest_remote"),
+                operating=raw.get("status") == "operating",
+            )
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             return cls.unavailable(error=f"Invalid calibration file: {exc}")
 

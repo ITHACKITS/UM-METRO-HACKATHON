@@ -2,9 +2,10 @@
 
 ## What this prototype can show
 
-Given a suitable phone photo, the system can expose an **indikasi model** for five
-disease-classifier outputs and boxes for three supported visible pest classes. It
-also explains capture-quality problems and can abstain.
+Given a suitable phone photo, the system can name five leaf outcomes and draw boxes for
+six visible pest classes (three on the local fallback). It explains capture-quality
+problems and says "uncertain" when it is not confident. Measured results are in
+[reports/MODEL_TEST_2026-10-31.md](reports/MODEL_TEST_2026-10-31.md).
 
 This is a technical baseline for field testing, not a diagnostic device.
 
@@ -45,13 +46,9 @@ academic-use restriction is a commercialization risk. The third-party model's MI
 statement also conflicts with current Ultralytics upstream licensing information;
 commercial/distributed use requires licensor/legal clarification or replacement.
 
-If the optional Roboflow serverless fallback is deliberately enabled, it is an online
-contingency rather than an offline model. A pest photo is sent to a third-party service
-only after the user checks the per-request consent control. Only `brown-planthopper`
-and `leaf-folder` have safe mappings to the locked TUAI taxonomy. The hosted model's
-generic `stem-borer` output is ignored because it does not establish the yellow-rice-
-stem-borer species. No hosted metric is TUAI accuracy, and cloud failure still produces
-an unavailable result rather than a fabricated local prediction.
+Pest photos go to Roboflow, a third-party service, whenever a key is set, and the UI does
+not tell the user. If Roboflow fails the local model answers; if both fail the result is
+an explicit error, never a fabricated prediction. Hosted metrics are not TUAI accuracy.
 
 The two selected models are baselines. The disease training lineage lacks a clear
 licence for the named Hugging Face dataset, and neither model has yet been proven

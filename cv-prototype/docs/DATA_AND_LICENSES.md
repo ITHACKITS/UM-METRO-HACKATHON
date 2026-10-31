@@ -11,13 +11,13 @@ availability on the internet is not permission to redistribute it.
 | Paddy Doctor | paper/repository/Kaggle terms differ by artifact | future secondary benchmark research | confirm the exact image source and applicable terms before download/use |
 | IP102 | free for academic use according to source repository | pest lineage and academic evaluation | do not redistribute images or claim commercial clearance |
 | Local Lampung photos | written owner consent plus expert review | decisive field audit | raw photos, identities, signatures, exact coordinates, and consent documents stay out of Git |
-| Roboflow `capstone-aedws/rice-pest-jmdev`, CC BY 4.0 | optional cloud fallback lineage | runtime fallback only with explicit per-request consent; published metrics are not TUAI accuracy | sends the submitted pest photo to an external service; only two semantically compatible classes are mapped |
+| Roboflow `capstone-aedws/rice-pest-jmdev`, CC BY 4.0 | hosted pest detector lineage | runtime fallback only with explicit per-request consent; published metrics are not TUAI accuracy | sends the submitted pest photo to an external service; only two semantically compatible classes are mapped |
 
 ## Frozen model artifacts
 
 | Model | Revision | Repository licence statement | Project caveat |
 | --- | --- | --- | --- |
-| `prithivMLmods/Rice-Leaf-Disease` | `170d10e070c308e0e5337690d67371825591f35b` | Apache-2.0 | model licence does not cure unclear training-data rights; verify every downloaded filename/hash |
+| `Huyt/rice-leaf-disease-efficientnet-b0` | `a12e09fd765eda2b846836a965e951151a9125f7` | Apache-2.0 | training-dataset licence is not stated on the card; verify before commercial use |
 | `underdogquality/yolo11s-pest-detection` | `b64a9302e50ae089e52b770fe0d054ac77c1c3d8` | MIT stated by third-party repository; upstream Ultralytics terms conflict/require clarification | IP102 academic-use lineage and Ultralytics licensing are downstream/commercial blockers |
 
 The tracked model lock is authoritative for URLs, revisions, expected files,

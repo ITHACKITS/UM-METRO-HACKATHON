@@ -10,7 +10,6 @@ import "./styles/global.css";
 const Landing = lazy(() => import("./landing/Landing"));
 const Workspace = lazy(() => import("./app/Workspace"));
 const Officer = lazy(() => import("./app/Officer"));
-const Sigap = lazy(() => import("./app/Sigap"));
 const Credits = lazy(() => import("./components/Credits"));
 const Sigap = lazy(() => import("./sigap/Sigap"));
 

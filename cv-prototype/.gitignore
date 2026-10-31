@@ -16,6 +16,7 @@ htmlcov/
 *.safetensors
 
 # Photos and generated evaluation material must never enter Git
+.eval-data/
 uploads/
 private-data/
 evaluation/private/

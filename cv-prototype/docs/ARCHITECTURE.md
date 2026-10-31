@@ -34,12 +34,14 @@ flowchart LR
     U[Farmer or PPL] --> W[React mobile web UI :5173/sigap]
     W -->|multipart file and explicit mode| A[FastAPI :8000/api/sigap/v1]
     A --> G[In-memory decode, EXIF transpose, size and quality gate]
-    G -->|disease| D[SigLIP2 disease adapter]
+    G -->|disease| D[EfficientNet-B0 ONNX disease adapter]
     G -->|pest| P[YOLO ONNX pest adapter]
-    P -. local unavailable + explicit consent .-> RF[Roboflow serverless fallback]
+    G -->|pest photo, first choice| RF[Roboflow serverless]
+    RF -. on failure .-> P
+    RF --> Q
     D --> Q[Decision and abstention policy]
     P --> Q
-    T[Frozen calibration thresholds] --> Q
+    T[Operating thresholds] --> Q
     Q --> W
     M[Expert-labelled manifest] --> E[Offline evaluator]
     E --> T
@@ -73,9 +75,9 @@ symptoms. Pest detection localizes only three visible insect classes.
 
 ### Model adapters
 
-- Disease: `prithivMLmods/Rice-Leaf-Disease` at immutable revision
-  `170d10e070c308e0e5337690d67371825591f35b`, using its supplied 224 px
-  processor and local PyTorch/Transformers inference.
+- Disease: `Huyt/rice-leaf-disease-efficientnet-b0` at revision
+  `a12e09fd765eda2b846836a965e951151a9125f7`, exported to ONNX with a second class-map
+  output and run through ONNX Runtime.
 - Pest: `underdogquality/yolo11s-pest-detection` at revision
   `b64a9302e50ae089e52b770fe0d054ac77c1c3d8`. A disposable preparation
   environment converts its pickle checkpoint to ONNX. The application runtime
@@ -85,17 +87,13 @@ Both are lazily loaded. Health remains reachable when an artifact is missing and
 reports the exact readiness error. An analysis request never falls back to fake
 predictions.
 
-The disease adapter batches three deterministic views (full image, horizontal mirror,
-and centered 82% crop), averages their class scores, and exposes top-class agreement
-and score spread. The decision layer rejects inconsistent views even if the averaged
-softmax score is high. This can improve prediction stability but cannot make a
-closed-set model recognize arbitrary out-of-distribution content.
+The disease adapter scores the photo and its mirror image, and the decision layer rejects
+a result when they disagree. Its class map, the classifier applied to the final 7x7 feature
+map, averages to the logit and drives the on-photo highlight.
 
-The optional Roboflow fallback is disabled by default and cannot be invoked without
-the request's `allow_remote_fallback=true`. It uses header-based authentication, never
-stores the key in source, reports `processing=roboflow_cloud`, and maps only
-`brown-planthopper` and `leaf-folder`. The generic cloud `stem-borer` class is not
-treated as yellow rice stem borer.
+Pest photos go to Roboflow first when a key is set, and the local ONNX adapter answers if
+that fails. Live camera frames reverse the order to save credits. Authentication stays in
+a header, and `processing` records which detector answered.
 
 ### Decision policy
 

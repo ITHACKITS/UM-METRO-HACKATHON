@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Prepare the two pinned models without committing any model artifact.
 
-The disease model contains safetensors and is downloaded directly into the local
-cache. The pest source is a pickle-based .pt file: it is held only in a temporary
+The disease weights are safetensors, so they load safely and are exported to ONNX here.
+The pest source is a pickle-based .pt file: it is held only in a temporary
 directory, hash-verified, converted to ONNX, and removed with that directory.
-Run the pest command in a disposable environment with no secrets.
+Run the pest command only through scripts/prepare_pest_sandboxed.sh, which isolates it.
 """
 
 from __future__ import annotations
@@ -71,42 +71,97 @@ def package_versions(names: Iterable[str]) -> dict[str, str]:
 
 
 def prepare_disease(lock: dict[str, Any]) -> None:
+    """Download the pinned safetensors weights and export them to the runtime ONNX file."""
     try:
-        from huggingface_hub import snapshot_download
+        import numpy as np
+        import onnxruntime as ort
+        import timm
+        import torch
+        from huggingface_hub import hf_hub_download
+        from safetensors.torch import load_file
     except ImportError as exc:
         raise RuntimeError("Install requirements-model-tools.txt first") from exc
 
     model = lock["models"]["disease"]
-    target = MODEL_ROOT / "disease"
-    expected_files = [item["path"] for item in model["files"]]
-    print(f"Downloading only {', '.join(expected_files)} at revision {model['revision']}...")
-    snapshot_download(
-        repo_id=model["id"],
-        revision=model["revision"],
-        allow_patterns=expected_files,
-        local_dir=target,
-    )
-
-    hashes: dict[str, str] = {}
-    for item in model["files"]:
-        path = target / item["path"]
-        hashes[item["path"]] = require_hash(path, item["sha256"])
-        if "size_bytes" in item and path.stat().st_size != item["size_bytes"]:
-            raise RuntimeError(
-                f"Size mismatch for {path}: expected {item['size_bytes']}, got {path.stat().st_size}"
+    expected = {item["path"]: item["sha256"] for item in model["files"]}
+    with tempfile.TemporaryDirectory(prefix="tuai-disease-export-") as directory:
+        paths = {
+            name: Path(
+                hf_hub_download(
+                    repo_id=model["id"],
+                    filename=name,
+                    revision=model["revision"],
+                    local_dir=directory,
+                )
             )
+            for name in expected
+        }
+        for name, digest in expected.items():
+            require_hash(paths[name], digest)
+
+        network = timm.create_model(
+            model["architecture"], num_classes=len(model["labels"]), pretrained=False
+        )
+        network.load_state_dict(load_file(str(paths["model.safetensors"])))
+        network.eval()
+
+        class WithClassMaps(torch.nn.Module):
+            """Adds the classifier applied to each feature-map cell as a second output."""
+
+            def __init__(self, inner: torch.nn.Module) -> None:
+                super().__init__()
+                self.inner = inner
+
+            def forward(self, pixels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+                features = self.inner.forward_features(pixels)
+                logits = self.inner.forward_head(features)
+                classifier = self.inner.classifier
+                maps = torch.einsum("bchw,kc->bkhw", features, classifier.weight)
+                return logits, maps + classifier.bias[None, :, None, None]
+
+        wrapped = WithClassMaps(network).eval()
+        sample = torch.randn(1, 3, *model["input_size"])
+        target = MODEL_ROOT / "disease-efficientnet" / "model.onnx"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        staged = target.with_suffix(".onnx.tmp")
+        torch.onnx.export(
+            wrapped,
+            sample,
+            str(staged),
+            input_names=["pixel_values"],
+            output_names=["logits", "cam"],
+            opset_version=model["conversion"]["opset"],
+            dynamic_axes={"pixel_values": {0: "b"}, "logits": {0: "b"}, "cam": {0: "b"}},
+            dynamo=False,
+        )
+
+        # Check the exported graph against PyTorch before it replaces the runtime file.
+        session = ort.InferenceSession(str(staged), providers=["CPUExecutionProvider"])
+        exported_logits, exported_maps = session.run(None, {"pixel_values": sample.numpy()})
+        with torch.inference_mode():
+            source_logits = network(sample).numpy()
+        drift = float(np.abs(exported_logits - source_logits).max())
+        if drift > 1e-3:
+            raise RuntimeError(f"ONNX logits drifted from PyTorch by {drift}")
+        map_gap = float(np.abs(exported_maps.mean(axis=(2, 3)) - exported_logits).max())
+        if map_gap > 1e-3:
+            raise RuntimeError(f"Class maps do not average to the logits (gap {map_gap})")
+        staged.replace(target)
 
     provenance = load_provenance()
     provenance["disease"] = {
         "model_id": model["id"],
         "revision": model["revision"],
         "preprocessing_version": model["preprocessing_version"],
-        "files": hashes,
+        "files": expected,
+        "artifact_sha256": sha256(target),
+        "artifact_path": str(target.relative_to(PROJECT)) if target.is_relative_to(PROJECT) else str(target),
         "prepared_at": datetime.now(timezone.utc).isoformat(),
-        "validation_status": "hash_verified",
+        "validation_status": "graph_parity_verified",
+        "max_logit_drift": drift,
     }
     save_provenance(provenance)
-    print(f"Disease model prepared at {target}")
+    print(f"Disease ONNX prepared at {target}; logit drift {drift:.2e}")
 
 
 def box_rows(result: Any, supported: set[int], minimum_score: float = 0.25) -> list[dict[str, Any]]:
@@ -299,11 +354,11 @@ def prepare_pest(lock: dict[str, Any], fixtures: list[Path], acknowledged: bool)
             onnx_model = YOLO(str(converted_path), task="detect")
             for fixture in fixtures:
                 source_result = source_model.predict(
-                    source=str(fixture), imgsz=640, conf=0.001, iou=0.7, verbose=False, device="cpu"
+                    source=str(fixture), imgsz=640, conf=0.05, iou=0.45, verbose=False, device="cpu"
                 )[0]
                 source_fixture_results[fixture] = source_result
                 onnx_result = onnx_model.predict(
-                    source=str(fixture), imgsz=640, conf=0.001, iou=0.7, verbose=False, device="cpu"
+                    source=str(fixture), imgsz=640, conf=0.05, iou=0.45, verbose=False, device="cpu"
                 )[0]
                 fixture_results.append(
                     compare_fixture_results(source_result, onnx_result, supported, fixture)
@@ -318,8 +373,8 @@ def prepare_pest(lock: dict[str, Any], fixtures: list[Path], acknowledged: bool)
             # Check the exact preprocessing and decoder used by FastAPI as well as
             # Ultralytics' own ONNX path. This catches label-order/output-shape and
             # letterbox-coordinate regressions before the pickle source disappears.
-            sys.path.insert(0, str(PROJECT / "backend"))
-            from app.models.pest import PestAdapter
+            sys.path.insert(0, str(PROJECT.parent / "backend"))
+            from app.sigap.models.pest import PestAdapter
             from PIL import Image
 
             backend_adapter = PestAdapter(converted_path)
@@ -371,7 +426,7 @@ def prepare_pest(lock: dict[str, Any], fixtures: list[Path], acknowledged: bool)
 def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(description=__doc__)
     subcommands = command.add_subparsers(dest="command", required=True)
-    subcommands.add_parser("disease", help="Download and hash-check the pinned safetensors model")
+    subcommands.add_parser("disease", help="Download the pinned safetensors weights and export the runtime ONNX")
     pest = subcommands.add_parser("pest", help="Convert the pinned pickle checkpoint to runtime ONNX")
     pest.add_argument(
         "--fixture",

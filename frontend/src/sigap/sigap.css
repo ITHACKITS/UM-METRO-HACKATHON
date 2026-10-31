@@ -1,4 +1,5 @@
-/* TUAI Sigap — the approved "Bengkel Foto" working surface. */
+/* TUAI Sigap: the approved "Bengkel Foto" working surface, with the photo and its
+   result side by side ("Foto dan Bukti"). */
 .sigap-shell {
   --sigap-paper: #f4ead9;
   --sigap-paper-2: #e8dfd0;
@@ -110,10 +111,8 @@
 .sigap-shell .photo-empty small { font-size: 12px; }
 .sigap-shell .preview-card { min-width: 0; align-self: stretch; display: grid; grid-template-rows: 1fr auto; }
 .sigap-shell .result-media { min-width: 0; display: flex; align-items: center; justify-content: center; background: #121b16; }
-.sigap-shell .result-image-wrap { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+.sigap-shell .result-image-wrap { position: relative; display: inline-block; max-width: 100%; overflow: hidden; line-height: 0; }
 .sigap-shell .result-image { width: auto; height: auto; max-width: 100%; max-height: 620px; object-fit: contain; }
-.sigap-shell .preview-probe { display: none; }
-.sigap-shell .preview-fallback { min-height: 360px; display: grid; place-items: center; padding: 30px; margin: 0; text-align: center; color: var(--sigap-muted); }
 .sigap-shell .file-row { min-width: 0; min-height: 68px; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--sigap-line); background: var(--sigap-paper); }
 .sigap-shell .file-row div { min-width: 0; display: grid; }
 .sigap-shell .file-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
@@ -138,16 +137,6 @@
 .sigap-shell .capture-guidance summary { padding: 12px 0; color: var(--sigap-teal-dark); font-size: 13px; font-weight: 800; cursor: pointer; }
 .sigap-shell .capture-guidance ul { margin: 0 0 14px; padding-left: 20px; }
 .sigap-shell .capture-guidance li { margin: 6px 0; color: var(--sigap-muted); font-size: 12px; }
-.sigap-shell .cloud-fallback-consent,
-.sigap-shell .subject-confirmation { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; margin-top: 14px; padding: 12px; border: 1px solid var(--sigap-line); background: var(--sigap-paper-2); cursor: pointer; }
-.sigap-shell .cloud-fallback-consent input,
-.sigap-shell .subject-confirmation input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--sigap-teal-dark); }
-.sigap-shell .cloud-fallback-consent span,
-.sigap-shell .subject-confirmation span { display: grid; gap: 3px; }
-.sigap-shell .cloud-fallback-consent strong,
-.sigap-shell .subject-confirmation strong { font-size: 12px; }
-.sigap-shell .cloud-fallback-consent small,
-.sigap-shell .subject-confirmation small { color: var(--sigap-muted); font-size: 11px; line-height: 1.45; text-wrap: pretty; }
 .sigap-shell .action-row { display: flex; gap: 9px; margin-top: auto; padding-top: 18px; }
 .sigap-shell .analyze-button,
 .sigap-shell .cancel-button { min-height: 50px; border: 0; font-weight: 800; cursor: pointer; }
@@ -155,68 +144,19 @@
 .sigap-shell .analyze-button:hover:not(:disabled) { background: var(--sigap-teal-dark); }
 .sigap-shell .analyze-button:disabled { cursor: not-allowed; opacity: .48; }
 .sigap-shell .cancel-button { padding: 0 17px; border: 1px solid var(--sigap-line); background: transparent; }
-.sigap-shell .native-camera-fallback { align-self: center; margin-top: 10px; color: var(--sigap-teal-dark); font-size: 12px; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .sigap-shell .spinner { width: 18px; height: 18px; border: 2px solid rgb(244 234 217 / 35%); border-top-color: var(--sigap-paper); border-radius: 50%; animation: sigap-spin .8s linear infinite; }
 @keyframes sigap-spin { to { transform: rotate(360deg); } }
 .sigap-shell .error-message { display: flex; align-items: flex-start; gap: 10px; margin-top: 13px; padding: 12px; color: #6f2a0e; background: #f1d2c3; }
 .sigap-shell .error-message > span { flex: none; font-weight: 900; }
 .sigap-shell .error-message p { margin: 0; font-size: 12px; }
-
-.sigap-shell .result-anchor { margin-top: 38px; scroll-margin-top: 20px; }
-.sigap-shell .result-experience { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(0, 1.1fr); border: 1px solid var(--sigap-line); }
-.sigap-shell .result-visual { min-width: 0; min-height: 540px; display: grid; border-right: 1px solid var(--sigap-line); background: #121b16; }
-.sigap-shell .result-visual .result-media { min-height: 100%; }
-.sigap-shell .result-visual .result-image { max-height: 720px; }
-.sigap-shell .result-visual .preview-fallback { color: var(--sigap-paper-2); }
 .sigap-shell .result-card { overflow: hidden; border: 1px solid var(--sigap-line); background: rgb(255 255 255 / 20%); }
-.sigap-shell .result-experience .result-card { border: 0; }
 .sigap-shell .result-heading { padding: 25px 28px; border-bottom: 1px solid var(--sigap-line); }
 .sigap-shell .result-heading h2 { margin: 0; font-size: 26px; letter-spacing: -.025em; }
 .sigap-shell .result-heading p { margin: 5px 0 0; color: var(--sigap-muted); font-size: 12px; }
-.sigap-shell .candidate-section { padding: 24px 28px; }
-.sigap-shell .candidate-section h3,
-.sigap-shell .result-detail h3 { margin: 0 0 11px; font-size: 14px; }
-.sigap-shell .candidate-list,
-.sigap-shell .detection-list { padding: 0; margin: 0; list-style: none; }
-.sigap-shell .candidate-list li,
-.sigap-shell .detection-list li { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid rgb(27 42 35 / 18%); }
-.sigap-shell .candidate-list li > div { display: flex; align-items: center; gap: 11px; }
-.sigap-shell .candidate-rank { color: var(--sigap-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.sigap-shell .candidate-primary strong { color: var(--sigap-teal-dark); font-size: 17px; }
-.sigap-shell .score-pill { flex: none; padding: 4px 8px; border: 1px solid var(--sigap-teal-dark); color: var(--sigap-teal-dark); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.sigap-shell .score-note { margin: 13px 0 0; color: var(--sigap-muted); font-size: 12px; }
-.sigap-shell .raw-candidates { border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
-.sigap-shell .raw-candidates summary { padding: 13px 0; color: var(--sigap-teal-dark); font-size: 13px; font-weight: 800; cursor: pointer; }
-.sigap-shell .raw-candidates > p { margin: 0 0 12px; max-width: 70ch; color: var(--sigap-muted); font-size: 12px; text-wrap: pretty; }
-.sigap-shell .raw-candidates ol { margin: 0 0 12px; padding: 0; list-style: none; }
-.sigap-shell .raw-candidates li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 8px 0; border-top: 1px solid rgb(27 42 35 / 12%); font-size: 12px; }
-.sigap-shell .raw-candidates li > span { color: var(--sigap-muted); font-variant-numeric: tabular-nums; }
-.sigap-shell .raw-candidates code { color: var(--sigap-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-.sigap-shell .result-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); }
-.sigap-shell .result-detail { padding: 23px 28px; }
-.sigap-shell .result-grid .result-detail + .result-detail { border-left: 1px solid var(--sigap-line); }
-.sigap-shell .result-detail p,
-.sigap-shell .result-detail li { color: var(--sigap-muted); font-size: 13px; }
-.sigap-shell .result-detail p { margin: 0; }
-.sigap-shell .result-detail ul { margin: 0; padding-left: 18px; }
-.sigap-shell .image-meta { margin-top: 9px !important; font-size: 12px !important; }
-.sigap-shell .limitations-panel { background: var(--sigap-paper-2); }
-.sigap-shell .provenance { padding: 18px 28px 23px; }
-.sigap-shell .provenance summary { color: var(--sigap-teal-dark); cursor: pointer; font-size: 13px; font-weight: 800; }
-.sigap-shell .provenance dl { margin: 16px 0 0; display: grid; gap: 8px; }
-.sigap-shell .provenance dl div { display: grid; grid-template-columns: 130px 1fr; gap: 10px; font-size: 12px; }
-.sigap-shell .provenance dt { color: var(--sigap-muted); }
-.sigap-shell .provenance dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.sigap-shell .no-detections { padding: 24px 28px; background: #eee0bd; }
-.sigap-shell .no-detections p { margin: 6px 0 0; font-size: 13px; }
-.sigap-shell .detection-list li { justify-content: flex-start; }
-.sigap-shell .detection-list .score-pill { margin-left: auto; }
-.sigap-shell .detection-dot { width: 10px; height: 10px; flex: none; background: var(--sigap-grain); }
 .sigap-shell .detection-box { position: absolute; border: 2px solid var(--sigap-grain); pointer-events: none; }
 .sigap-shell .detection-box-tentative { border-style: dashed; opacity: .82; }
 .sigap-shell .detection-box span { position: absolute; left: -2px; bottom: 100%; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 7px; color: var(--sigap-paper); background: #744a0c; font-size: 12px; line-height: 1.2; }
 .sigap-shell .result-actions { display: flex; gap: 10px; padding: 14px; border: 1px solid var(--sigap-line); border-top: 0; }
-.sigap-shell .result-link { display: inline-flex; align-items: center; justify-content: center; color: inherit; text-decoration: none; }
 
 .sigap-shell .history-card { margin-top: 42px; border-top: 1px solid var(--sigap-line); border-bottom: 1px solid var(--sigap-line); padding: 25px 0; }
 .sigap-shell .history-heading { display: flex; justify-content: space-between; gap: 20px; }
@@ -236,7 +176,6 @@
 .sigap-shell .history-list span,
 .sigap-shell .history-list small { color: var(--sigap-muted); font-size: 12px; }
 .sigap-shell .history-list strong { color: var(--sigap-teal-dark); font-size: 15px; }
-.sigap-shell .history-list em { width: max-content; padding: 3px 7px; border: 1px solid #8a5b16; color: #70460b; font-size: 12px; font-style: normal; font-weight: 800; }
 .sigap-shell .history-list button { min-height: 40px; flex: none; padding: 8px 12px; border: 1px solid var(--sigap-danger); color: var(--sigap-danger); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
 .sigap-shell .disclaimer-card { display: flex; align-items: flex-start; gap: 13px; margin-top: 28px; padding: 18px 0; border-bottom: 1px solid var(--sigap-line); }
 .sigap-shell .disclaimer-card > span { flex: none; color: var(--sigap-teal-dark); }
@@ -253,13 +192,15 @@
 .sigap-shell .camera-mode-tabs label.camera-mode-active { border-color: var(--sigap-teal); background: var(--sigap-teal-dark); }
 .sigap-shell .camera-mode-tabs input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .sigap-shell .camera-viewport { position: relative; min-height: 300px; overflow: hidden; display: grid; place-items: center; background: #050806; }
-.sigap-shell .camera-viewport video { width: 100%; max-height: 68dvh; object-fit: contain; }
+/* The stage takes the video's exact shape, so overlay percentages line up with the frame. */
+.sigap-shell .camera-stage { position: relative; width: 100%; max-width: 100%; max-height: 62dvh; overflow: hidden; }
+.sigap-shell .camera-stage video { display: block; width: 100%; height: 100%; object-fit: contain; }
 .sigap-shell .camera-guide { position: absolute; border: 2px solid rgb(255 255 255 / 88%); pointer-events: none; }
-.sigap-shell .camera-guide-disease { inset: 9% 22%; }
-.sigap-shell .camera-guide-pest { width: min(36%, 220px); aspect-ratio: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+/* Matches the square the leaf model actually reads: 87.5% of the short side, centered. */
+.sigap-shell .camera-guide-disease { top: 50%; left: 50%; height: 87.5%; aspect-ratio: 1; max-width: 87.5%; transform: translate(-50%, -50%); }
 .sigap-shell .camera-guide > span { position: absolute; left: -2px; top: -2px; padding: 6px 9px; color: var(--sigap-ink); background: var(--sigap-paper); font-size: 12px; font-weight: 800; }
-.sigap-shell .camera-viewport p { position: absolute; inset: auto 14px 14px; margin: 0; padding: 10px 13px; color: var(--sigap-paper); background: rgb(27 42 35 / 90%); font-size: 12px; text-align: center; }
-.sigap-shell .camera-viewport .camera-error { background: #852f0e; }
+.sigap-shell .camera-viewport > p { position: absolute; inset: auto 14px 14px; margin: 0; padding: 10px 13px; color: var(--sigap-paper); background: rgb(27 42 35 / 90%); font-size: 12px; text-align: center; }
+.sigap-shell .camera-viewport > .camera-error { background: #852f0e; }
 .sigap-shell .camera-tip { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; padding: 13px 0; border-bottom: 1px solid rgb(244 234 217 / 35%); }
 .sigap-shell .camera-tip strong { font-size: 13px; }
 .sigap-shell .camera-tip span { font-size: 12px; line-height: 1.45; }
@@ -269,6 +210,41 @@
 .sigap-shell .camera-controls .cancel-button { color: var(--sigap-paper); border-color: rgb(244 234 217 / 55%); }
 
 .sigap-shell > footer { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 34px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid rgb(27 42 35 / 24%); color: var(--sigap-muted); font-size: 12px; }
+
+/* Result inside the workbench panel */
+.sigap-shell .quality-panel-result { padding: 0; }
+.sigap-shell .quality-panel-result .result-card { border: 0; background: transparent; }
+.sigap-shell .quality-row-compact { align-items: center; }
+.sigap-shell .action-row .analyze-loading:disabled { opacity: 1; background: var(--sigap-teal-dark); }
+.sigap-shell .error-message { align-items: center; }
+.sigap-shell .error-message p { flex: 1; }
+.sigap-shell .error-message button { flex: none; min-height: 40px; padding: 6px 12px; border: 1px solid currentColor; background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.sigap-shell .next-steps { padding: 22px 28px; }
+.sigap-shell .next-steps h3 { margin: 0 0 11px; font-size: 14px; }
+.sigap-shell .next-steps h4 { margin: 14px 0 6px; font-size: 13px; }
+.sigap-shell .next-steps ol { margin: 0; padding-left: 20px; }
+.sigap-shell .next-steps li { margin: 7px 0; color: var(--sigap-ink); font-size: 14px; line-height: 1.5; text-wrap: pretty; }
+.sigap-shell .source-line { margin: 11px 0 0; color: var(--sigap-muted); font-size: 12px; }
+.sigap-shell .source-line a { color: var(--sigap-teal-dark); font-weight: 700; }
+.sigap-shell .pest-counts { margin: 11px 0 0; padding: 0; list-style: none; }
+.sigap-shell .pest-counts li { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; border-top: 1px solid rgb(27 42 35 / 18%); font-size: 14px; }
+.sigap-shell .pest-counts span { flex: none; color: var(--sigap-muted); }
+.sigap-shell .photo-note { margin: 0; padding: 0 28px 16px; color: #7b4a09; font-size: 12px; }
+.sigap-shell .about-result { padding: 15px 28px; border-top: 1px solid var(--sigap-line); }
+.sigap-shell .about-result summary { color: var(--sigap-teal-dark); font-size: 13px; font-weight: 800; cursor: pointer; }
+.sigap-shell .about-result p { margin: 10px 0 0; color: var(--sigap-muted); font-size: 12px; text-wrap: pretty; }
+.sigap-shell .quality-panel-result .result-actions { padding: 14px 28px 22px; border: 0; }
+.sigap-shell .quality-panel-result .result-actions > * { flex: 1; }
+
+/* What the model found, drawn over the photo */
+.sigap-shell .detection-box-inside span { top: 0; left: 0; bottom: auto; }
+.sigap-shell .disease-heatmap { position: absolute; pointer-events: none; }
+
+/* Camera: live status line */
+.sigap-shell .camera-live-found { color: var(--sigap-grain); }
+/* Ink on the ink panel made the shutter invisible. */
+.sigap-shell .camera-controls .analyze-button { background: var(--sigap-teal-dark); }
+.sigap-shell .camera-controls .analyze-button:hover:not(:disabled) { background: var(--sigap-teal); }
 
 @media (max-width: 780px) {
   .sigap-shell .site-header { width: calc(100% - 28px); height: 66px; }
@@ -280,11 +256,6 @@
   .sigap-shell .photo-workbench { grid-template-columns: 1fr; }
   .sigap-shell .photo-stage { min-height: 390px; border-right: 0; border-bottom: 1px solid var(--sigap-line); }
   .sigap-shell .quality-panel { min-height: 390px; }
-  .sigap-shell .result-grid { grid-template-columns: 1fr; }
-  .sigap-shell .result-experience { grid-template-columns: 1fr; }
-  .sigap-shell .result-visual { min-height: 440px; border-right: 0; border-bottom: 1px solid var(--sigap-line); }
-  .sigap-shell .result-grid .result-detail + .result-detail { border-left: 0; border-top: 1px solid var(--sigap-line); }
-  .sigap-shell .provenance dl div { grid-template-columns: 1fr; gap: 2px; }
   .sigap-shell .camera-dialog { padding: 0; }
   .sigap-shell .camera-panel { min-height: 100dvh; max-height: 100dvh; width: 100%; }
 }
@@ -296,16 +267,13 @@
   .sigap-shell .photo-stage { min-height: 340px; }
   .sigap-shell .photo-empty { align-items: flex-start; padding: 28px 20px; }
   .sigap-shell .quality-panel { padding: 19px; }
-  .sigap-shell .candidate-list li,
-  .sigap-shell .detection-list li { align-items: flex-start; flex-wrap: wrap; }
   .sigap-shell .result-heading,
-  .sigap-shell .candidate-section,
-  .sigap-shell .result-detail,
-  .sigap-shell .no-detections,
-  .sigap-shell .provenance { padding-left: 19px; padding-right: 19px; }
+  .sigap-shell .next-steps,
+  .sigap-shell .about-result,
+  .sigap-shell .photo-note,
+  .sigap-shell .quality-panel-result .result-actions { padding-left: 19px; padding-right: 19px; }
   .sigap-shell .result-actions { flex-direction: column; }
   .sigap-shell .history-list li { align-items: flex-start; flex-direction: column; }
-  .sigap-shell .result-visual { min-height: 360px; }
   .sigap-shell .camera-panel { padding: 14px; }
   .sigap-shell .camera-tip { grid-template-columns: 1fr; }
   .sigap-shell .camera-tip small { grid-column: 1; }

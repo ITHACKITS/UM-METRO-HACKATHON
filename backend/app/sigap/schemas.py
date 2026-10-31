@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+CalibrationStatus = Literal["unavailable", "partial", "operating", "frozen"]
+
 
 class BilingualText(BaseModel):
     id: str
@@ -35,6 +37,27 @@ class ModelProvenance(BaseModel):
     preprocessing_version: str
 
 
+class BoundingBox(BaseModel):
+    x_min: float = Field(ge=0)
+    y_min: float = Field(ge=0)
+    x_max: float = Field(ge=0)
+    y_max: float = Field(ge=0)
+
+
+class DiseaseHeatmap(BaseModel):
+    """Per-cell influence (0-1) on the top class, over the photo region the model saw."""
+
+    grid: list[list[float]]
+    region: BoundingBox
+
+
+class Recommendation(BaseModel):
+    label: BilingualText
+    steps: list[BilingualText]
+    source_name: str
+    source_url: str
+
+
 class DiseaseCandidate(BaseModel):
     class_id: str
     label: BilingualText
@@ -46,18 +69,13 @@ class DiseaseResult(BaseModel):
     candidates: list[DiseaseCandidate]
     top_score: float | None = Field(default=None, ge=0, le=1)
     score_margin: float | None = Field(default=None, ge=0, le=1)
-    calibration_status: Literal["unavailable", "partial", "frozen"]
+    calibration_status: CalibrationStatus
     consistency_status: Literal["not_checked", "stable", "unstable"] = "not_checked"
     view_count: int = Field(default=0, ge=0)
     top_class_agreement: float | None = Field(default=None, ge=0, le=1)
     top_score_spread: float | None = Field(default=None, ge=0, le=1)
-
-
-class BoundingBox(BaseModel):
-    x_min: float = Field(ge=0)
-    y_min: float = Field(ge=0)
-    x_max: float = Field(ge=0)
-    y_max: float = Field(ge=0)
+    heatmap: DiseaseHeatmap | None = None
+    closest_match: BilingualText | None = None
 
 
 class PestDetection(BaseModel):
@@ -73,7 +91,7 @@ class PestResult(BaseModel):
     detections: list[PestDetection]
     image_width: int = Field(ge=1)
     image_height: int = Field(ge=1)
-    calibration_status: Literal["unavailable", "partial", "frozen"]
+    calibration_status: CalibrationStatus
 
 
 class AnalysisBase(BaseModel):
@@ -86,6 +104,8 @@ class AnalysisBase(BaseModel):
     quality: QualityReport
     limitations: list[BilingualText]
     next_action: BilingualText
+    recommendations: list[Recommendation] = Field(default_factory=list)
+    general_steps: list[BilingualText] = Field(default_factory=list)
 
 
 class DiseaseAnalysisResponse(AnalysisBase):
@@ -135,7 +155,7 @@ class HealthResponse(BaseModel):
     version: str
     offline: bool
     runtime: RuntimeHealth
-    calibration_status: Literal["unavailable", "partial", "frozen"]
+    calibration_status: CalibrationStatus
     models: list[ModelHealth]
 
 

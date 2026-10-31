@@ -4,7 +4,7 @@ import { assessPhotoMetrics } from "./photoQuality";
 
 describe("photo preflight assessment", () => {
   it("uses the stricter minimum image side for visible-pest mode", () => {
-    const metrics = { width: 400, height: 400, meanLuminance: 120, detailScore: 12 };
+    const metrics = { width: 300, height: 300, meanLuminance: 120, detailScore: 12 };
     expect(assessPhotoMetrics(metrics, "disease").resolution).toBe("good");
     expect(assessPhotoMetrics(metrics, "pest").resolution).toBe("warning");
   });

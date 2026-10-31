@@ -7,13 +7,13 @@ and licences must be regenerated from the final lockfiles before release.
 
 ### Rice leaf disease classifier
 
-- Source: <https://huggingface.co/prithivMLmods/Rice-Leaf-Disease>
-- Revision: `170d10e070c308e0e5337690d67371825591f35b`
+- Source: <https://huggingface.co/Huyt/rice-leaf-disease-efficientnet-b0>
+- Revision: `a12e09fd765eda2b846836a965e951151a9125f7`
 - Repository licence statement: Apache License 2.0
 - Required notice: retain the Apache-2.0 licence/notice associated with downloaded
   artifacts.
-- Risk: the named training dataset has no declared reuse licence. Treat the model
-  as a prototype baseline and do not imply commercial clearance.
+- Risk: the model card does not state the licence of its training dataset. Do not imply
+  commercial clearance until that is confirmed.
 
 ### Rice pest detector
 
@@ -30,21 +30,15 @@ and licences must be regenerated from the final lockfiles before release.
   override upstream obligations. Commercial/distributed use is blocked pending
   licensor/legal clarification, full compliance, or model replacement.
 
-### Optional Roboflow hosted pest fallback
+### Roboflow hosted pest detector
 
 - Source project: <https://universe.roboflow.com/capstone-aedws/rice-pest-jmdev>
 - Hosted model ID: `rice-pest-jmdev/1`
 - Project licence statement: CC BY 4.0
-- Runtime role: optional serverless contingency when the local ONNX pest detector is
-  unavailable. It is disabled by default and requires both server configuration and
-  per-request user consent because the submitted photo leaves the local device.
-- Compatible outputs: `brown-planthopper` maps to the existing brown-planthopper class;
-  `leaf-folder` maps to the existing rice-leaf-roller class. Other hosted labels are
-  ignored. In particular, generic `stem-borer` is not treated as yellow rice stem borer.
-- Credential handling: the API key is supplied only through `ROBOFLOW_API_KEY`; it must
-  never be committed, placed in client code, printed in logs, or embedded in a URL.
-- Claim boundary: project/model-card metrics are third-party provenance, not TUAI
-  performance. The hosted service is not available during a network-offline demo.
+- Runtime role: first choice for pest photos when a key is set. The submitted photo
+  leaves the local device.
+- Outputs: all six hosted labels. Generic `stem-borer` stays separate from the local
+  yellow-rice-borer class.
 
 ### Conversion tooling
 
@@ -62,7 +56,7 @@ upstream model provenance, and applicable licence terms or replace the detector.
 - Paddy Doctor: use deferred until artifact-specific terms are confirmed.
 - IP102: academic evaluation/lineage only; images not distributed.
 - `sharmin3/Rice-Leaf-Disease`: no declared licence; documentation only.
-- Roboflow `rice-pest-jmdev/1`: hosted fallback only; no source images are bundled.
+- Roboflow `rice-pest-jmdev/1`: hosted detector; no source images are bundled.
 
 See [DATA_AND_LICENSES.md](DATA_AND_LICENSES.md) for the binding project roles.
 

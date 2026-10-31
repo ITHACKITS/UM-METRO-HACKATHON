@@ -91,10 +91,9 @@ Multipart form fields:
 | --- | --- | --- |
 | `file` | yes | JPEG, PNG, WebP, HEIC, or HEIF photo, at most 12 MiB compressed and 25 MP decoded |
 | `mode` | yes | Exactly `disease` or `pest` |
-| `confirm_leaf_subject` | disease | Boolean. Must be `true` to confirm that the image is a close-up of one rice leaf, not a whole field, panicle, or insect. |
-| `allow_remote_fallback` | no | Boolean, default `false`. For pest mode only, permits Roboflow cloud use if the local ONNX model fails. |
+| `live` | no | Boolean, default `false`. Marks a camera preview frame: pest frames try the local model first, to save Roboflow credits. |
 
-Shortest side: disease 224 px; pest 480 px. The server does not persist the file.
+Shortest side: disease 160 px; pest 360 px. The server does not persist the file.
 
 ### Shared result
 
@@ -162,12 +161,13 @@ Candidates are model indications. The model's `healthy` class must be displayed 
 “tidak ada gejala penyakit target yang dikenali pada foto ini,” not “safe” or a
 definitive healthy diagnosis.
 
-Disease inference averages the unchanged locked processor output across the full
-image, a horizontal mirror, and a centered 82% crop. A future calibrated result can
-be accepted only when all three views agree on the top class and the top-class score
-spread is at most 0.25. These are conservative stability guards, not measured accuracy
-improvements or semantic proof that an image contains a rice leaf. Abstained candidate
-scores remain raw technical evidence and must not be emphasized as percentages.
+Disease inference averages the photo and its mirror image. A result is named only when
+the class is one of the five measured ones, its score and margin clear
+`evaluation/operating-thresholds.json`, and both views agree. `disease.heatmap` holds a
+7x7 grid (0-1) over the center square the model read, and appears only on a named
+disease. `disease.closest_match` appears on some uncertain results, and is never
+"healthy". Every response carries `recommendations` (sourced steps per named class) or
+`general_steps`.
 
 ### Pest member
 
@@ -216,8 +216,8 @@ Errors use:
 | `422` | invalid mode, corrupt image, or decode/validation failure |
 | `503` | selected model is not ready; never replaced by a fabricated result |
 
-The stable `remote_fallback_requires_consent` error is returned when the local pest
-model is unavailable, the cloud fallback is configured, and the request did not opt in.
+Pest photos try Roboflow first, then the local model, and `processing` records which one
+answered. `503` means both failed.
 
 Exact error text is not a stable API field; `detail.code` is.
 

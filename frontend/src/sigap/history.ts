@@ -1,3 +1,4 @@
+import { copy } from "./copy";
 import type { AnalysisMode, AnalysisResponse, Language } from "./types";
 
 export const HISTORY_KEY = "tuai-sigap-observations-v1";
@@ -55,7 +56,9 @@ export function saveObservation(
 ): ObservationRecord[] {
 	const top =
 		response.mode === "disease"
-			? response.disease.candidates[0]
+			? response.disease.accepted
+				? response.disease.candidates[0]
+				: null
 			: response.pest.detections[0];
 	const record: ObservationRecord = {
 		id:
@@ -64,9 +67,11 @@ export function saveObservation(
 		createdAt: new Date().toISOString(),
 		mode: response.mode,
 		status: response.status,
-		primaryLabel:
-			top?.label[language] ??
-			(language === "id" ? "Tidak ada kandidat" : "No candidate"),
+		primaryLabel: top
+			? top.label[language]
+			: response.mode === "pest" && response.status === "ok"
+				? copy[language].noCandidate
+				: copy[language].uncertainTitle,
 		modelScore: top?.score ?? null,
 		nextAction: response.next_action[language],
 		reviewStatus: "not_reviewed",

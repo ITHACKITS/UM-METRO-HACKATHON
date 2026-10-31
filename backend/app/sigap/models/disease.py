@@ -1,4 +1,10 @@
-"""Frozen rice-leaf disease model adapter."""
+"""Rice-leaf disease classifier running from a local ONNX export.
+
+Model: Huyt/rice-leaf-disease-efficientnet-b0 (Apache-2.0), exported by
+cv-prototype/scripts/prepare_models.py. The export has a second output, a class map: the
+classifier weights applied to the final 7x7 feature map. Its mean equals the class logit,
+so it shows which parts of the photo actually drove that class.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +12,7 @@ import importlib.util
 import threading
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageOps
 
 from ..constants import (
@@ -13,8 +20,9 @@ from ..constants import (
     DISEASE_MODEL_ID,
     DISEASE_MODEL_REVISION,
     DISEASE_PREPROCESSING_VERSION,
+    DISEASE_RAW_LABELS,
 )
-from ..schemas import ModelHealth, ModelProvenance
+from ..schemas import BoundingBox, DiseaseHeatmap, ModelHealth, ModelProvenance
 from .base import (
     DiseaseInference,
     DiseasePrediction,
@@ -24,18 +32,31 @@ from .base import (
     sha256_file,
 )
 
+INPUT_SIZE = 224
+CROP_PCT = 0.875
+MEAN = np.asarray([0.485, 0.456, 0.406], dtype=np.float32)
+STD = np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
+
 
 def _canonical_class(raw_label: str) -> str | None:
-    normalized = raw_label.strip().lower().replace("-", " ").replace("_", " ")
-    normalized = " ".join(normalized.split())
     for class_id, metadata in DISEASE_CLASSES.items():
-        aliases = {
-            str(alias).strip().lower().replace("_", " ").replace("-", " ")
-            for alias in metadata["aliases"]
-        }
-        if normalized in aliases:
+        if raw_label in metadata["aliases"]:
             return class_id
     return None
+
+
+def _softmax(logits: np.ndarray) -> np.ndarray:
+    shifted = logits - logits.max(axis=-1, keepdims=True)
+    exponent = np.exp(shifted)
+    return exponent / exponent.sum(axis=-1, keepdims=True)
+
+
+def center_crop_box(width: int, height: int) -> tuple[float, float, float, float]:
+    """Return the square region of the original photo that the model actually sees."""
+    side = min(width, height) * CROP_PCT
+    left = (width - side) / 2
+    top = (height - side) / 2
+    return left, top, left + side, top + side
 
 
 class DiseaseAdapter(ModelAdapter):
@@ -47,32 +68,18 @@ class DiseaseAdapter(ModelAdapter):
     def __init__(self, model_dir: Path, device_preference: str = "auto") -> None:
         self.model_dir = model_dir
         self.device_preference = device_preference
-        self._model = None
-        self._processor = None
-        self._torch = None
-        self._device = "cpu"
+        self._session = None
         self._error: str | None = None
         self._artifact_hash: str | None = None
         self._load_lock = threading.Lock()
 
     @property
-    def weight_path(self) -> Path | None:
-        for name in ("model.safetensors", "pytorch_model.bin"):
-            candidate = self.model_dir / name
-            if candidate.is_file():
-                return candidate
-        return None
-
-    def _runtime_available(self) -> bool:
-        return bool(
-            importlib.util.find_spec("torch")
-            and importlib.util.find_spec("transformers")
-        )
+    def onnx_path(self) -> Path:
+        return self.model_dir / "model.onnx"
 
     def provenance(self) -> ModelProvenance:
-        weight = self.weight_path
-        if self._artifact_hash is None and weight:
-            self._artifact_hash = sha256_file(weight)
+        if self._artifact_hash is None and self.onnx_path.is_file():
+            self._artifact_hash = sha256_file(self.onnx_path)
         return ModelProvenance(
             id=self.model_id,
             revision=self.revision,
@@ -81,162 +88,133 @@ class DiseaseAdapter(ModelAdapter):
         )
 
     def health(self) -> ModelHealth:
-        artifact = self.weight_path
-        if self._model is not None:
+        runtime = bool(importlib.util.find_spec("onnxruntime"))
+        if self._session is not None:
             state = "ready"
         elif self._error:
             state = "error"
-        elif not artifact or not (self.model_dir / "config.json").is_file():
-            state = "unavailable"
-        elif not self._runtime_available():
+        elif not self.onnx_path.is_file() or not runtime:
             state = "unavailable"
         else:
             state = "unloaded"
-        provenance = self.provenance()
         error = self._error
         if state == "unavailable" and error is None:
-            if not artifact:
-                error = "Prepared disease weights are absent. Run model preflight."
-            elif not self._runtime_available():
-                error = "Disease runtime dependencies are not installed."
-            else:
-                error = "Disease model config.json is absent."
+            error = (
+                "ONNX Runtime is not installed."
+                if self.onnx_path.is_file()
+                else "Prepared disease ONNX model is absent."
+            )
         return ModelHealth(
             mode="disease",
             id=self.model_id,
             revision=self.revision,
             state=state,
             ready=state in {"unloaded", "ready"},
-            loaded=self._model is not None,
-            artifact_sha256=provenance.artifact_sha256,
+            loaded=self._session is not None,
+            artifact_sha256=self.provenance().artifact_sha256,
             error=error,
         )
 
     def load(self) -> None:
-        if self._model is not None:
+        if self._session is not None:
             return
         with self._load_lock:
-            if self._model is not None:
+            if self._session is not None:
                 return
-            weight = self.weight_path
-            if not weight or not (self.model_dir / "config.json").is_file():
-                raise ModelUnavailableError(
-                    "Prepared disease model is absent; run the offline preflight first."
-                )
-            if not self._runtime_available():
-                raise ModelUnavailableError(
-                    "Install the disease runtime dependencies before inference."
-                )
+            if not self.onnx_path.is_file():
+                raise ModelUnavailableError("Prepared disease ONNX model is absent.")
+            if not importlib.util.find_spec("onnxruntime"):
+                raise ModelUnavailableError("Install ONNX Runtime before disease inference.")
             try:
-                import torch
-                from transformers import AutoImageProcessor, AutoModelForImageClassification
+                import onnxruntime as ort
 
-                if self.device_preference == "cuda":
-                    if not torch.cuda.is_available():
-                        raise ModelUnavailableError("CUDA was requested but is unavailable.")
-                    device = "cuda"
-                elif self.device_preference == "cpu":
-                    device = "cpu"
-                else:
-                    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-                processor = AutoImageProcessor.from_pretrained(
-                    self.model_dir,
-                    local_files_only=True,
-                    trust_remote_code=False,
-                    use_fast=False,
+                self._session = ort.InferenceSession(
+                    str(self.onnx_path), providers=["CPUExecutionProvider"]
                 )
-                model = AutoModelForImageClassification.from_pretrained(
-                    self.model_dir, local_files_only=True, trust_remote_code=False
-                )
-                model.eval()
-                model.to(device)
-                self._torch = torch
-                self._processor = processor
-                self._model = model
-                self._device = device
-                self._artifact_hash = sha256_file(weight)
+                self._artifact_hash = sha256_file(self.onnx_path)
                 self._error = None
-            except ModelUnavailableError:
-                raise
             except Exception as exc:
                 self._error = f"{type(exc).__name__}: {exc}"
                 raise ModelUnavailableError(
-                    "The prepared disease model could not be loaded; inspect health details."
+                    "The prepared disease ONNX model could not be loaded."
                 ) from exc
 
     @staticmethod
-    def _views(image: Image.Image) -> list[Image.Image]:
-        """Return deterministic views that preserve the locked processor contract."""
+    def _preprocess(image: Image.Image) -> np.ndarray:
+        """Match the model card: bicubic resize, 0.875 center crop, ImageNet norm."""
         width, height = image.size
-        crop_width = max(1, round(width * 0.82))
-        crop_height = max(1, round(height * 0.82))
-        left = (width - crop_width) // 2
-        top = (height - crop_height) // 2
-        center_crop = image.crop((left, top, left + crop_width, top + crop_height))
-        return [image, ImageOps.mirror(image), center_crop]
+        short_side = int(np.floor(INPUT_SIZE / CROP_PCT))
+        scale = short_side / min(width, height)
+        resized_w, resized_h = round(width * scale), round(height * scale)
+        resized = image.resize((resized_w, resized_h), Image.Resampling.BICUBIC)
+        left = int(round((resized_w - INPUT_SIZE) / 2))
+        top = int(round((resized_h - INPUT_SIZE) / 2))
+        cropped = resized.crop((left, top, left + INPUT_SIZE, top + INPUT_SIZE))
+        array = (np.asarray(cropped, dtype=np.float32) / 255.0 - MEAN) / STD
+        return array.transpose(2, 0, 1)
 
     def predict(self, image: Image.Image) -> DiseaseInference:
         self.load()
-        assert self._model is not None
-        assert self._processor is not None
-        assert self._torch is not None
+        assert self._session is not None
         try:
-            views = self._views(image)
-            inputs = self._processor(images=views, return_tensors="pt")
-            inputs = {key: value.to(self._device) for key, value in inputs.items()}
-            with self._torch.inference_mode():
-                logits = self._model(**inputs).logits
-                probabilities = (
-                    self._torch.softmax(logits, dim=-1).detach().cpu().tolist()
-                )
+            views = np.stack(
+                [self._preprocess(image), self._preprocess(ImageOps.mirror(image))]
+            )
+            logits, class_maps = self._session.run(None, {"pixel_values": views})
+            if logits.shape[1] != len(DISEASE_RAW_LABELS):
+                raise ModelInferenceError("Disease output does not match the class list.")
+            probabilities = _softmax(logits)
 
-            id_to_label = getattr(self._model.config, "id2label", {})
-            class_ids: list[str] = []
-            for index in range(len(probabilities[0])):
-                raw_label = str(id_to_label.get(index, id_to_label.get(str(index), index)))
+            mean_scores: dict[str, float] = {}
+            for index, raw_label in enumerate(DISEASE_RAW_LABELS):
                 class_id = _canonical_class(raw_label)
                 if class_id is None:
-                    raise ModelInferenceError(
-                        "Disease label order does not match the locked five-class contract."
-                    )
-                class_ids.append(class_id)
-            if len(class_ids) != len(DISEASE_CLASSES):
-                raise ModelInferenceError(
-                    "Disease label order does not match the locked five-class contract."
+                    raise ModelInferenceError("Unknown disease label in the class list.")
+                # Leaf and neck blast share a class here, so their scores add up.
+                mean_scores[class_id] = mean_scores.get(class_id, 0.0) + float(
+                    probabilities[:, index].mean()
                 )
-
-            mean_scores = [
-                sum(view[index] for view in probabilities) / len(probabilities)
-                for index in range(len(class_ids))
-            ]
             predictions = sorted(
-                (
-                    DiseasePrediction(class_id=class_id, score=float(mean_scores[index]))
-                    for index, class_id in enumerate(class_ids)
-                ),
+                (DiseasePrediction(class_id=key, score=value) for key, value in mean_scores.items()),
                 key=lambda item: item.score,
                 reverse=True,
             )
+
             top_class = predictions[0].class_id
-            top_index = class_ids.index(top_class)
-            view_top_classes = [
-                class_ids[max(range(len(view)), key=view.__getitem__)]
-                for view in probabilities
+            view_classes = [
+                _canonical_class(DISEASE_RAW_LABELS[int(view.argmax())]) for view in probabilities
             ]
-            agreement = sum(item == top_class for item in view_top_classes) / len(views)
-            top_scores = [view[top_index] for view in probabilities]
-            spread = max(top_scores) - min(top_scores)
-            stable = agreement == 1.0 and spread <= 0.25
+            agreement = sum(item == top_class for item in view_classes) / len(view_classes)
+            top_indices = [
+                index
+                for index, raw_label in enumerate(DISEASE_RAW_LABELS)
+                if _canonical_class(raw_label) == top_class
+            ]
+            top_scores = probabilities[:, top_indices].sum(axis=1)
+
+            # Highlight from the unmirrored view, using its strongest raw class.
+            best_raw = max(top_indices, key=lambda index: float(probabilities[0, index]))
+            class_map = class_maps[0, best_raw]
+            spread = float(class_map.max() - class_map.min())
+            grid = (class_map - class_map.min()) / spread if spread > 1e-6 else class_map * 0
+            x_min, y_min, x_max, y_max = center_crop_box(*image.size)
             return DiseaseInference(
                 predictions=predictions,
-                view_count=len(views),
+                view_count=len(view_classes),
                 top_class_agreement=float(agreement),
-                top_score_spread=float(spread),
-                stable=stable,
+                top_score_spread=float(top_scores.max() - top_scores.min()),
+                stable=agreement == 1.0,
+                heatmap=DiseaseHeatmap(
+                    grid=[[round(float(cell), 3) for cell in row] for row in grid],
+                    region=BoundingBox(
+                        x_min=round(x_min, 2),
+                        y_min=round(y_min, 2),
+                        x_max=round(x_max, 2),
+                        y_max=round(y_max, 2),
+                    ),
+                ),
             )
         except ModelInferenceError:
             raise
         except Exception as exc:
             raise ModelInferenceError("Disease inference failed.") from exc
-

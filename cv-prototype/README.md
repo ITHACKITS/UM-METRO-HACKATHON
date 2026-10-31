@@ -1,6 +1,6 @@
 # TUAI Sigap — Cek Daun & Hama
 
-A mobile-first TUAI Sigap prototype for screening rice-leaf symptoms and three visible
+A mobile-first TUAI Sigap prototype for screening rice-leaf symptoms and six visible
 rice pests from a phone photo. It is a separate feature boundary inside the canonical
 TUAI web/API runtime, alongside—not mixed with—the weather/satellite workflows.
 
@@ -15,24 +15,23 @@ or recommend pesticide products or doses.
 
 ## What is implemented
 
-- Two explicit photo modes with different instructions:
+- Two photo modes:
   - leaf symptoms: bacterial leaf blight/kresek, blast, brown spot, tungro, and
-    “no target symptom recognized”;
-  - visible pests: rice leaf roller, yellow rice stem borer, and brown planthopper.
+    "no recognized symptom";
+  - visible pests: brown planthopper, green leafhopper, leaf folder, rice bug, stem
+    borer, and whorl maggot (the local fallback covers only the first and third, plus
+    yellow stem borer).
 - Canonical React/Vite UI at `/sigap` on port `5173`, backed by the isolated
   `/api/sigap/v1` FastAPI namespace on port `8000`.
 - Safe in-memory decoding for JPEG, PNG, WebP, and HEIC; EXIF correction, 12 MB and
   25 MP limits, minimum resolution, and exposure/blur guidance.
-- Lazy, offline model adapters: pinned SigLIP2 disease inference and ONNX Runtime pest
-  detection. The application runtime never opens the source `.pt` pickle.
-- Optional, consent-gated Roboflow serverless pest fallback for
-  `rice-pest-jmdev/1`. Local ONNX is always tried first; the fallback is disabled by
-  default and never receives a photo without a request-level opt-in.
-- Honest abstention: without a frozen local calibration file, candidates may be shown
-  as model scores but are not accepted as validated results.
-- Disease hardening: explicit close-up-leaf confirmation plus batched full/mirrored/
-  centered-crop consistency. Unstable views cannot be accepted, and abstained raw
-  scores are de-emphasized as technical evidence rather than confidence percentages.
+- Disease model: `Huyt/rice-leaf-disease-efficientnet-b0`, run locally through ONNX
+  Runtime, with a highlight showing the area that drove the result.
+- Pest detection: Roboflow `rice-pest-jmdev/1` first, local YOLO ONNX if that fails. Live
+  camera frames use the local model first to save credits. **Pest photos leave the
+  device when Roboflow is used, and the UI does not say so.**
+- A result is named only above measured thresholds; otherwise it says uncertain. Every
+  result has next steps, sourced from IRRI where a class is named.
 - Exact model revisions/hashes, preparation and offline preflight, source-vs-ONNX
   conversion checks, evaluation manifests, threshold selection, aggregate reporting,
   tests, and a staged-file boundary guard.
@@ -42,10 +41,10 @@ not in Git.
 
 ## Current evidence status
 
-The software path can be tested with synthetic fixtures, but no project performance
-claim is complete until the team supplies consented, independently labelled Lampung
-photos and an agronomy/PPL reviewer. The model-card number is not TUAI accuracy.
-Classes without sufficient independent examples remain `not_testable`.
+Results on public photos are in
+[docs/reports/MODEL_TEST_2026-10-31.md](docs/reports/MODEL_TEST_2026-10-31.md), including
+weak spots such as blast. Lampung photos and PPL review are still needed for a field
+claim. Model-card numbers are not TUAI accuracy.
 
 ## First-time setup
 
@@ -82,24 +81,20 @@ python3.12 -m venv .model-tools-venv
 .model-tools-venv/bin/pip install -r requirements-model-tools.txt
 ```
 
-Download and verify only the three required disease files:
+Download the pinned disease weights and export the runtime ONNX:
 
 ```bash
 .model-tools-venv/bin/python scripts/prepare_models.py disease
 ```
 
-The pest source is a hash-pinned pickle checkpoint. Loading any third-party pickle can
-execute code. Use the disposable environment with no credentials or unrelated data,
-and provide one or more licensed/consented fixture photos for parity checking:
+The pest source is a pickle file, and loading a pickle can run code, so convert it in an
+offline Podman container that cannot see your keys:
 
 ```bash
-.model-tools-venv/bin/python scripts/prepare_models.py pest \
-  --acknowledge-pickle-risk \
-  --fixture /absolute/path/to/licensed-pest-photo-1.jpg \
-  --fixture /absolute/path/to/licensed-pest-photo-2.jpg
+scripts/prepare_pest_sandboxed.sh
 ```
 
-The converter verifies the source SHA-256, validates the ONNX graph, compares supported
+Without Podman, `scripts/prepare_models.py pest` does the same conversion unisolated. It verifies the source SHA-256, validates the ONNX graph, compares supported
 detections, boxes, and score drift through both Ultralytics export inference and the
 actual TUAI Sigap runtime decoder, copies only `.models/pest/model.onnx`, records local
 provenance, and deletes the temporary `.pt`. At least one fixture must produce a
@@ -130,22 +125,25 @@ Open:
 Stop both with `Ctrl+C`. Uploaded bytes and decoded images are released after each
 request; the prototype has no upload or history directory at runtime.
 
-### Optional Roboflow pest fallback
+### Roboflow pest detection
 
-The local pest ONNX remains the preferred path. If it is unavailable, an operator may
-enable the external fallback in `backend/.env`:
+Set the key in `backend/.env`. Never commit it. Without a key, the local model handles
+everything.
 
 ```dotenv
-TUAI_SIGAP_ROBOFLOW_FALLBACK=1
-ROBOFLOW_API_KEY=replace-with-a-rotated-key
+TUAI_SIGAP_ROBOFLOW=1
+ROBOFLOW_API_KEY=your-key
 TUAI_SIGAP_ROBOFLOW_MODEL_ID=rice-pest-jmdev/1
 ```
 
-Never commit the key. Pest requests still use the cloud only when the UI checkbox sends
-`allow_remote_fallback=true`. The fallback maps only `brown-planthopper` and
-`leaf-folder`; its generic `stem-borer` output is intentionally ignored because it
-cannot substantiate the narrower yellow-rice-borer label. Cloud operation requires
-network access and is reported in result provenance and limitations.
+### Try the sample photos
+
+`.eval-data/samples/` is a local, ignored folder of test photos. With `npm run dev`
+running, send them all through the API with:
+
+```bash
+../.venv/bin/python scripts/test_samples.py
+```
 
 ### Run only one side
 

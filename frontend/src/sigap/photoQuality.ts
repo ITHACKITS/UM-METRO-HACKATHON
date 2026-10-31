@@ -26,7 +26,7 @@ export function assessPhotoMetrics(
 	metrics: PhotoMetrics,
 	mode: AnalysisMode,
 ): PhotoPreflight {
-	const minimumSide = mode === "disease" ? 224 : 480;
+	const minimumSide = mode === "disease" ? 160 : 360;
 	const shortestSide = Math.min(metrics.width, metrics.height);
 	const lightingKind =
 		metrics.meanLuminance < LIGHT_MIN

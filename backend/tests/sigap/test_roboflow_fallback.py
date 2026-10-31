@@ -1,7 +1,9 @@
-"""Roboflow fallback contract and consent tests."""
+"""Roboflow-first detection and silent local fallback tests."""
 
 from __future__ import annotations
 
+import base64
+import io
 from dataclasses import dataclass
 
 import httpx
@@ -9,8 +11,9 @@ import pytest
 from conftest import FakePestAdapter, image_bytes
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from PIL import Image
 
-from app.sigap.calibration import Calibration
+from app.sigap.calibration import Calibration, PestThreshold
 from app.sigap.errors import APIError, api_error_handler, validation_error_handler
 from app.sigap.models.base import ModelUnavailableError
 from app.sigap.models.roboflow_pest import RoboflowPestAdapter
@@ -53,7 +56,7 @@ class MissingPestAdapter(FakePestAdapter):
         )
 
 
-def test_remote_adapter_maps_only_semantically_compatible_classes() -> None:
+def test_remote_adapter_keeps_generic_stem_borer_separate() -> None:
     adapter = remote_adapter(
         {
             "predictions": [
@@ -84,38 +87,39 @@ def test_remote_adapter_maps_only_semantically_compatible_classes() -> None:
             ]
         }
     )
-    from PIL import Image
-
     predictions = adapter.predict(Image.new("RGB", (640, 640), "green"))
-    assert [item.class_id for item in predictions] == [7, 0]
+    assert [item.class_id for item in predictions] == [102, 7, 0]
 
 
-@pytest.mark.anyio
-async def test_remote_fallback_requires_explicit_request_consent(
-    settings, disease_adapter, pest_adapter
-) -> None:
-    local = MissingPestAdapter(predictions=pest_adapter.predictions)
-    remote = remote_adapter(
+PLANTHOPPER = {
+    "predictions": [
         {
-            "predictions": [
-                {
-                    "class": "brown-planthopper",
-                    "confidence": 0.91,
-                    "x": 120,
-                    "y": 140,
-                    "width": 80,
-                    "height": 100,
-                }
-            ]
+            "class": "brown-planthopper",
+            "confidence": 0.91,
+            "x": 120,
+            "y": 140,
+            "width": 80,
+            "height": 100,
         }
-    )
-    service = InferenceService(
+    ]
+}
+
+
+def service_with(settings, disease_adapter, local, remote) -> InferenceService:
+    return InferenceService(
         settings,
         disease_adapter=disease_adapter,
         pest_adapter=local,
         roboflow_adapter=remote,
-        calibration=Calibration.unavailable(),
+        calibration=Calibration(
+            disease={},
+            pest={7: PestThreshold(0.5)},
+            pest_remote={7: PestThreshold(0.6)},
+        ),
     )
+
+
+async def post_pest(service: InferenceService, data: dict | None = None) -> httpx.Response:
     app = FastAPI()
     app.add_exception_handler(APIError, api_error_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
@@ -123,23 +127,90 @@ async def test_remote_fallback_requires_explicit_request_consent(
     transport = httpx.ASGITransport(app=app)
     try:
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            without_consent = await client.post(
+            return await client.post(
                 "/api/sigap/v1/analyze",
-                data={"mode": "pest"},
-                files={"file": ("pest.jpg", image_bytes(), "image/jpeg")},
-            )
-            with_consent = await client.post(
-                "/api/sigap/v1/analyze",
-                data={"mode": "pest", "allow_remote_fallback": "true"},
+                data={"mode": "pest", **(data or {})},
                 files={"file": ("pest.jpg", image_bytes(), "image/jpeg")},
             )
     finally:
         service.close()
 
-    assert without_consent.status_code == 503
-    assert without_consent.json()["detail"]["code"] == "remote_fallback_requires_consent"
-    assert with_consent.status_code == 200
-    body = with_consent.json()
+
+@pytest.mark.anyio
+async def test_photo_goes_to_roboflow_first(settings, disease_adapter, pest_adapter) -> None:
+    service = service_with(settings, disease_adapter, pest_adapter, remote_adapter(PLANTHOPPER))
+    response = await post_pest(service)
+    body = response.json()
+    assert response.status_code == 200
     assert body["processing"] == "roboflow_cloud"
     assert body["model"]["id"] == "roboflow/rice-pest-jmdev"
-    assert body["pest"]["detections"][0]["class_id"] == 7
+    assert body["pest"]["detections"][0]["accepted"] is True
+    assert pest_adapter.calls == 0
+
+
+@pytest.mark.anyio
+async def test_roboflow_failure_falls_back_without_telling_the_user(
+    settings, disease_adapter, pest_adapter
+) -> None:
+    def failing(url, **kwargs):
+        raise httpx.ConnectError("offline")
+
+    remote = remote_adapter(PLANTHOPPER)
+    remote._sender = failing
+    service = service_with(settings, disease_adapter, pest_adapter, remote)
+    response = await post_pest(service)
+    body = response.json()
+    assert response.status_code == 200
+    assert body["processing"] == "local"
+    assert pest_adapter.calls == 1
+    text = str(body["limitations"]) + str(body["next_action"]) + str(body["general_steps"])
+    assert "roboflow" not in text.lower()
+    assert "cloud" not in text.lower()
+
+
+@pytest.mark.anyio
+async def test_live_frames_stay_local_when_the_local_model_works(
+    settings, disease_adapter, pest_adapter
+) -> None:
+    service = service_with(settings, disease_adapter, pest_adapter, remote_adapter(PLANTHOPPER))
+    body = (await post_pest(service, {"live": "true"})).json()
+    assert body["processing"] == "local"
+    assert pest_adapter.calls == 1
+
+
+@pytest.mark.anyio
+async def test_both_detectors_failing_is_a_clean_503(settings, disease_adapter, pest_adapter) -> None:
+    def failing(url, **kwargs):
+        raise httpx.ConnectError("offline")
+
+    local = MissingPestAdapter(predictions=pest_adapter.predictions)
+    remote = remote_adapter(PLANTHOPPER)
+    remote._sender = failing
+    service = service_with(settings, disease_adapter, local, remote)
+    response = await post_pest(service)
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "model_unavailable"
+
+
+def test_large_photos_are_shrunk_and_boxes_map_back_to_the_original() -> None:
+    sizes: list[tuple[int, int]] = []
+
+    def sender(url, **kwargs):
+        decoded = Image.open(io.BytesIO(base64.b64decode(kwargs["content"])))
+        sizes.append(decoded.size)
+        return httpx.Response(
+            200,
+            json={
+                "predictions": [
+                    {"class": "rice-bug", "confidence": 0.9, "x": 640, "y": 360, "width": 128, "height": 72}
+                ]
+            },
+            request=httpx.Request("POST", url),
+        )
+
+    adapter = remote_adapter({})
+    adapter._sender = sender
+    prediction = adapter.predict(Image.new("RGB", (2560, 1440), "green"))[0]
+    assert sizes == [(1280, 720)]
+    assert prediction.bbox.x_min == pytest.approx(1152)
+    assert prediction.bbox.x_max == pytest.approx(1408)

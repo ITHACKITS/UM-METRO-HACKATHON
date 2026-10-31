@@ -1,4 +1,4 @@
-"""Consent-gated Roboflow serverless fallback for visible rice pests."""
+"""Roboflow serverless detector: the first choice for pest photos when a key is set."""
 
 from __future__ import annotations
 
@@ -18,13 +18,19 @@ from ..constants import (
 from ..schemas import BoundingBox, ModelHealth, ModelProvenance
 from .base import ModelAdapter, ModelInferenceError, ModelUnavailableError, PestPrediction
 
-# The cloud model has six labels. Only two are semantically compatible with the
-# frozen TUAI Sigap taxonomy. Its generic `stem-borer` label must not be silently
-# presented as the narrower yellow rice stem borer class.
+# All six labels of rice-pest-jmdev/1. `stem-borer` keeps its own generic class and is
+# never presented as the narrower yellow rice stem borer from the local detector.
 ROBOFLOW_CLASS_MAP = {
     "brown-planthopper": 7,
     "leaf-folder": 0,
+    "green-leafhopper": 100,
+    "rice-bug": 101,
+    "stem-borer": 102,
+    "whorl-maggot": 103,
 }
+
+# Larger phone photos gain nothing at this model's input size and only slow the upload.
+MAX_UPLOAD_SIDE = 1280
 
 
 def _normalise_label(value: object) -> str:
@@ -75,13 +81,13 @@ class RoboflowPestAdapter(ModelAdapter):
     def health(self) -> ModelHealth:
         error: str | None = None
         if not self.enabled:
-            error = "Roboflow fallback is disabled."
+            error = "Roboflow is disabled."
         elif not self.api_key:
             error = "ROBOFLOW_API_KEY is not configured."
         elif not self.api_url.startswith("https://"):
-            error = "Roboflow fallback requires an HTTPS API URL."
+            error = "Roboflow requires an HTTPS API URL."
         elif self.remote_model_id != "rice-pest-jmdev/1":
-            error = "The configured Roboflow model is outside the approved fallback lock."
+            error = "The configured Roboflow model is not the approved one."
         return ModelHealth(
             mode="pest",
             id=self.provenance().id,
@@ -95,9 +101,11 @@ class RoboflowPestAdapter(ModelAdapter):
 
     def load(self) -> None:
         if not self.ready:
-            raise ModelUnavailableError(self.health().error or "Roboflow fallback is unavailable.")
+            raise ModelUnavailableError(self.health().error or "Roboflow is unavailable.")
 
-    def _decode(self, payload: Any, image_size: tuple[int, int]) -> list[PestPrediction]:
+    def _decode(
+        self, payload: Any, image_size: tuple[int, int], scale: float = 1.0
+    ) -> list[PestPrediction]:
         if not isinstance(payload, dict) or not isinstance(payload.get("predictions"), list):
             raise ModelInferenceError("Roboflow returned an invalid object-detection response.")
 
@@ -110,10 +118,10 @@ class RoboflowPestAdapter(ModelAdapter):
             if class_id is None:
                 continue
             try:
-                center_x = float(item["x"])
-                center_y = float(item["y"])
-                width = float(item["width"])
-                height = float(item["height"])
+                center_x = float(item["x"]) / scale
+                center_y = float(item["y"]) / scale
+                width = float(item["width"]) / scale
+                height = float(item["height"]) / scale
                 score = float(item["confidence"])
             except (KeyError, TypeError, ValueError):
                 continue
@@ -139,8 +147,15 @@ class RoboflowPestAdapter(ModelAdapter):
 
     def predict(self, image: Image.Image) -> list[PestPrediction]:
         self.load()
+        scale = min(1.0, MAX_UPLOAD_SIDE / max(image.size))
+        upload = image
+        if scale < 1.0:
+            upload = image.resize(
+                (round(image.width * scale), round(image.height * scale)),
+                Image.Resampling.BILINEAR,
+            )
         buffer = io.BytesIO()
-        image.save(buffer, format="JPEG", quality=90)
+        upload.save(buffer, format="JPEG", quality=90)
         encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
         endpoint = f"{self.api_url}/{self.remote_model_id}"
         try:
@@ -149,14 +164,15 @@ class RoboflowPestAdapter(ModelAdapter):
                 content=encoded,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded",
                 },
                 params={"confidence": 0.05},
-                timeout=self.timeout_seconds,
+                # A dead network should reach the local model quickly.
+                timeout=httpx.Timeout(self.timeout_seconds, connect=4.0),
             )
             response.raise_for_status()
             payload = response.json()
         except (httpx.HTTPError, ValueError, TypeError) as exc:
             # Never include a URL, response body, or auth header in public errors.
-            raise ModelInferenceError("Roboflow pest fallback request failed.") from exc
-        return self._decode(payload, image.size)
+            raise ModelInferenceError("Roboflow pest request failed.") from exc
+        return self._decode(payload, image.size, scale)

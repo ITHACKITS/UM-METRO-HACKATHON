@@ -2,91 +2,108 @@
 export type Language = "id" | "en";
 export type AnalysisMode = "disease" | "pest";
 export type AnalysisStatus = "ok" | "abstain" | "retake";
+type CalibrationStatus = "unavailable" | "partial" | "operating" | "frozen";
 
 export interface LocalizedText {
-  id: string;
-  en: string;
+	id: string;
+	en: string;
 }
 
 export interface ModelProvenance {
-  id: string;
-  revision: string;
-  artifact_sha256: string | null;
-  preprocessing_version: string;
+	id: string;
+	revision: string;
+	artifact_sha256: string | null;
+	preprocessing_version: string;
 }
 
 export interface QualityWarning {
-  code: string;
-  message: LocalizedText;
+	code: string;
+	message: LocalizedText;
 }
 
 export interface ImageQuality {
-  width: number;
-  height: number;
-  format: string;
-  file_size_bytes: number;
-  blur_score: number | null;
-  mean_luminance: number | null;
-  warnings: QualityWarning[];
-  rejection_reason?: LocalizedText | null;
+	width: number;
+	height: number;
+	format: string;
+	file_size_bytes: number;
+	blur_score: number | null;
+	mean_luminance: number | null;
+	warnings: QualityWarning[];
+	rejection_reason?: LocalizedText | null;
+}
+
+export interface Recommendation {
+	label: LocalizedText;
+	steps: LocalizedText[];
+	source_name: string;
+	source_url: string;
 }
 
 interface AnalysisBase {
-  status: AnalysisStatus;
-  mode: AnalysisMode;
-  score_kind: "model_score";
-  processing: "local" | "roboflow_cloud";
-  model: ModelProvenance;
-  quality: ImageQuality;
-  limitations: LocalizedText[];
-  next_action: LocalizedText;
+	status: AnalysisStatus;
+	mode: AnalysisMode;
+	score_kind: "model_score";
+	processing: "local" | "roboflow_cloud";
+	model: ModelProvenance;
+	quality: ImageQuality;
+	limitations: LocalizedText[];
+	next_action: LocalizedText;
+	recommendations: Recommendation[];
+	general_steps: LocalizedText[];
 }
 
 export interface DiseaseCandidate {
-  class_id: string;
-  label: LocalizedText;
-  score: number;
+	class_id: string;
+	label: LocalizedText;
+	score: number;
+}
+
+export interface BoundingBox {
+	x_min: number;
+	y_min: number;
+	x_max: number;
+	y_max: number;
+}
+
+export interface DiseaseHeatmap {
+	grid: number[][];
+	region: BoundingBox;
 }
 
 export interface DiseaseAnalysisResponse extends AnalysisBase {
-  mode: "disease";
-  disease: {
-    accepted: boolean;
-    candidates: DiseaseCandidate[];
-    top_score: number | null;
-    score_margin: number | null;
-    calibration_status: "unavailable" | "partial" | "frozen";
+	mode: "disease";
+	disease: {
+		accepted: boolean;
+		candidates: DiseaseCandidate[];
+		top_score: number | null;
+		score_margin: number | null;
+		calibration_status: CalibrationStatus;
 		consistency_status: "not_checked" | "stable" | "unstable";
 		view_count: number;
 		top_class_agreement: number | null;
 		top_score_spread: number | null;
-  };
-}
-
-export interface BoundingBox {
-  x_min: number;
-  y_min: number;
-  x_max: number;
-  y_max: number;
+		heatmap: DiseaseHeatmap | null;
+		closest_match: LocalizedText | null;
+	};
 }
 
 export interface PestDetection {
-  class_id: number;
-  class_key: string;
-  label: LocalizedText;
-  score: number;
-  accepted: boolean;
-  bbox: BoundingBox;
+	class_id: number;
+	class_key: string;
+	label: LocalizedText;
+	score: number;
+	accepted: boolean;
+	bbox: BoundingBox;
 }
 
 export interface PestAnalysisResponse extends AnalysisBase {
-  mode: "pest";
-  pest: {
-    detections: PestDetection[];
-    image_width: number;
-    image_height: number;
-    calibration_status: "unavailable" | "partial" | "frozen";
-  };
+	mode: "pest";
+	pest: {
+		detections: PestDetection[];
+		image_width: number;
+		image_height: number;
+		calibration_status: CalibrationStatus;
+	};
 }
 
 export type AnalysisResponse = DiseaseAnalysisResponse | PestAnalysisResponse;
